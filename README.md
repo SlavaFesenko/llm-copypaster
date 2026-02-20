@@ -1,6 +1,6 @@
 # llm-copypaster
 
-VS Code extension that turns the “Editor ↔ LLM” loop into a predictable pipeline: copy code context as **file listings**, then take the LLM’s output from the clipboard, **validate → sanitize → apply** it back to your workspace (with room for guided retry and future patch-like strategies).
+VS Code extension that turns the “Editor ↔ LLM” loop into a predictable pipeline: copy code context as concatenated **file listings**, then take the LLM’s output from the clipboard, **validate → sanitize → apply** it back to your workspace (with guided retry direction and future output strategies).
 
 ## Why
 
@@ -13,28 +13,29 @@ If you’re already using:
 
 ## Core workflow
 
-1. **Editor → LLM (context)**
+1. Editor → LLM (context)
 
 - Collect files from VS Code (active file / open tabs / tab group / selected in Explorer)
 - Deduplicate by workspace-relative path
-- Output as concatenated file listings (optionally with a “response format prompt”)
+- Output as concatenated file listings
+- Optionally add a “response format prompt” that forces a strict, parseable reply format
 
-2. **LLM → Editor (apply)**
+2. LLM → Editor (apply)
 
 - Read raw LLM output from clipboard
-- **Validate** it into a structured “files payload”
-- **Sanitize**: strip fences, remove wrapper text, fix common artifacts
-- **Apply** changes through VS Code API (create/update; “delete” can be a marker strategy in baseline)
+- Validate it into a structured “files payload”
+- Sanitize: strip fences, remove wrapper text, fix common artifacts
+- Apply changes through VS Code API (create/update; “delete” is baseline-defined as “mark for deletion”, exact policy is configurable / TBD)
 
 ## Features
 
 ### Clipboard payload validation
 
-Recognizes typical “LLM listing” shapes (headers + content, fenced blocks, multiple header variants), and reports parse errors clearly.
+Recognizes typical “LLM listing” shapes (path headers + content, fenced blocks, multiple header variants), and reports parse errors clearly.
 
 ### Sanitization rules (regex) with exclusions
 
-Sanitization is rule-based, ordered, and each rule can be disabled for:
+Sanitization is rule-based and ordered, and each rule can be disabled for:
 
 - specific languages
 - specific paths / path patterns
@@ -49,11 +50,37 @@ Designed to avoid “all-or-nothing” where possible:
 
 ### Response strategies (formats)
 
-Baseline strategy is **full-output**: LLM returns full file contents as concatenated listings (easy to parse and apply). Future: replace-blocks (patch-ish, not git diff).
+Baseline is **full-output** (LLM returns full file contents). Future direction: replace-blocks (patch-ish, not git diff).
+
+## Output formats
+
+There are two important formats in the baseline spec: one for “context you send to the LLM”, and one for “response you want back”.
+
+### 1) LLM context format (Editor → LLM)
+
+Baseline context format is a concatenation of per-file fenced listings, each containing a path marker and then the raw file content.
+
+Conceptual example:
+
+```ts
+// # src/app/app.component.ts
+// (file content here)
+```
+
+(Exact language tag behavior is configurable.)
+
+### 2) LLM response format (LLM → Editor)
+
+The extension can optionally add a “response format prompt” so the LLM replies in a strict format. One supported direction is an **extension-response protocol**: a raw concatenation of file listings with headers of the form:
+
+- `# relative/path.ext`
+- followed immediately by the full file content
+
+This is intentionally boring and strict, because it’s robust and easy to validate/sanitize/apply.
 
 ## Commands
 
-Planned / baseline command set (names may evolve, but the concepts are stable):
+Planned / baseline command set (names may evolve, concepts are stable):
 
 - Copy context:
   - Copy Active File as LLM Context
@@ -68,25 +95,12 @@ Planned / baseline command set (names may evolve, but the concepts are stable):
   - Sanitize Clipboard Payload
   - Copy Guided Retry Prompt (Last Error)
 
-## Output formats (what the LLM should return)
-
-### Baseline: full file listings
-
-The LLM should return a raw concatenation of file listings where each file begins with a path header and then the full content.
-
-Example (conceptual):
-
-- `# relative/path.ext`
-- followed by the full file content
-
-This is the “most boring” format — and that’s the point: it’s robust.
-
 ## Configuration
 
 This project targets:
 
 - VS Code settings (short/simple knobs)
-- plus a workspace config file (for longer prompts / large rule sets), e.g.:
+- plus a workspace config file for larger configs and prompts:
   - `.llm-copypaster.json`
 
 Config areas include:
@@ -100,14 +114,14 @@ Config areas include:
 
 You can adopt this incrementally:
 
-- Use llm-copypaster for **validation + sanitization** first
+- Use llm-copypaster for validation + sanitization first
 - Keep using RonPark / context-copy temporarily
 - Gradually replace both with native modules (EditorToLlm + Files Patcher)
 
 ## Known limitations (baseline)
 
-- “Delete” is not necessarily a hard delete in baseline; it can be implemented as a marker/comment or “move to trash folder”, depending on config/iteration.
-- Guided retry is a core direction; early iterations may store limited context compared to the full envisioned flow.
+- “Delete” is baseline-described as “mark for deletion”; the concrete policy (hard delete vs marker vs move) is TBD / config-defined
+- Guided retry is a core direction; early iterations may store limited context compared to the full envisioned flow
 
 ## Roadmap
 
@@ -119,4 +133,15 @@ You can adopt this incrementally:
 
 ## Contributing
 
-If you want to contribute, align changes with the project BL doc (baseline spec): modules, formats, invariants, and UX expectations should remain consistent.
+If you want to contribute, align changes with the BL doc (baseline spec): modules, formats, invariants, and UX expectations should remain consistent.
+
+## License
+
+Apache License 2.0 (Apache-2.0)
+
+See:
+
+- LICENSE
+- NOTICE
+
+Copyright 2026 Viacheslav Fesenko
