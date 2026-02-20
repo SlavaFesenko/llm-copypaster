@@ -9,6 +9,12 @@
   "categories": [
     "Other"
   ],
+  "activationEvents": [
+    "onCommand:llm-copypaster.helloWorld",
+    "onCommand:llm-copypaster.applyClipboardToFiles",
+    "onCommand:llm-copypaster.validateClipboardPayload",
+    "onCommand:llm-copypaster.sanitizeClipboardPayload"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [

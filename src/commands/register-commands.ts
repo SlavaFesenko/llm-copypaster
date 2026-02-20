@@ -4,7 +4,21 @@ import { EditorToLlmModule } from '../editor-to-llm/editor-to-llm-module';
 import { GuidedRetryStore } from '../llm-to-editor/guided-retry/guided-retry-store';
 import { LlmToEditorModule } from '../llm-to-editor/llm-to-editor-module';
 import { OutputChannelLogger } from '../utils/output-channel-logger';
-import { commandIds } from './command-ids';
+
+export const commandIds = {
+  copyActiveFileAsLlmContext: 'llm-copypaster.copyActiveFileAsLlmContext',
+  copyAllOpenFilesAsLlmContext: 'llm-copypaster.copyAllOpenFilesAsLlmContext',
+  copySelectedExplorerFilesAsLlmContext: 'llm-copypaster.copySelectedExplorerFilesAsLlmContext',
+  copyLlmContextWithResponseFormatPrompt: 'llm-copypaster.copyLlmContextWithResponseFormatPrompt',
+  copyLlmContextWithoutResponseFormatPrompt: 'llm-copypaster.copyLlmContextWithoutResponseFormatPrompt',
+
+  applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
+  validateClipboardPayload: 'llm-copypaster.validateClipboardPayload',
+  sanitizeClipboardPayload: 'llm-copypaster.sanitizeClipboardPayload',
+  copyGuidedRetryPromptLastError: 'llm-copypaster.copyGuidedRetryPromptLastError',
+} as const;
+
+export type CommandId = (typeof commandIds)[keyof typeof commandIds];
 
 export interface RegisterCommandsDeps {
   editorToLlmModule: EditorToLlmModule;
