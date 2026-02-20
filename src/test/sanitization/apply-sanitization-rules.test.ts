@@ -5,13 +5,13 @@ import { applySanitizationRules } from '../../llm-to-editor/sanitization/sanitiz
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
 
-describe('applySanitizationRules', () => {
+suite('applySanitizationRules', () => {
   const defaultConfig = buildDefaultConfig();
 
   const cases = [...buildStripCodefenceCases()];
 
   for (const testCase of cases) {
-    it(testCase.name, () => {
+    test(testCase.name, () => {
       const { logger, warnCalls } = createLoggerMock();
 
       const outputText = applySanitizationRules(testCase.inputText, testCase.fileMeta, defaultConfig, logger);
@@ -21,7 +21,7 @@ describe('applySanitizationRules', () => {
     });
   }
 
-  it('logs warn and keeps output unchanged when rule RegExp construction fails', () => {
+  test('logs warn and keeps output unchanged when rule RegExp construction fails', () => {
     const { logger, warnCalls } = createLoggerMock();
 
     const invalidRule: LlmCopypasterSanitizationRule = {

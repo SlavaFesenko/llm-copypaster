@@ -15,33 +15,6 @@
         "kind": "build",
         "isDefault": true
       }
-    },
-    {
-      "label": "Stage all + lint-staged + unstage",
-      "dependsOrder": "sequence",
-      "dependsOn": ["Git stage all", "Run lint-staged", "Git unstage all"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Git stage all",
-      "type": "shell",
-      "command": "git",
-      "args": ["add", "-A"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Run lint-staged",
-      "type": "shell",
-      "command": "npx",
-      "args": ["lint-staged"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Git unstage all",
-      "type": "shell",
-      "command": "git",
-      "args": ["reset"],
-      "problemMatcher": []
     }
   ]
 }
