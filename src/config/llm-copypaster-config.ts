@@ -28,7 +28,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     sanitizationRules: [
       {
         id: 'strip-codefence',
-        pattern: '`{3}[^\r\n]*\r?\n?',
+        pattern: '`{3}[^\r\n]*', // Matches a triple-backtick fence marker with an optional language tag on the same line (does not consume the newline)
         replaceWith: '',
         disabledForLanguages: ['markdown'],
         disabledForPaths: ['docs/'],
