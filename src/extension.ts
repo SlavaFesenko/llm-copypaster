@@ -2,11 +2,11 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-import { registerCommands } from './commands/register-commands';
 import { ConfigService } from './config/config-service';
 import { EditorToLlmModule } from './editor-to-llm/editor-to-llm-module';
 import { GuidedRetryStore } from './llm-to-editor/guided-retry/guided-retry-store';
 import { LlmToEditorModule } from './llm-to-editor/llm-to-editor-module';
+import { registerCommands } from './register-commands';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 // This method is called when your extension is activated

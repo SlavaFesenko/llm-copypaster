@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 
-import { EditorToLlmModule } from '../editor-to-llm/editor-to-llm-module';
-import { GuidedRetryStore } from '../llm-to-editor/guided-retry/guided-retry-store';
-import { LlmToEditorModule } from '../llm-to-editor/llm-to-editor-module';
-import { OutputChannelLogger } from '../utils/output-channel-logger';
+import { EditorToLlmModule } from './editor-to-llm/editor-to-llm-module';
+import { GuidedRetryStore } from './llm-to-editor/guided-retry/guided-retry-store';
+import { LlmToEditorModule } from './llm-to-editor/llm-to-editor-module';
+import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {
   helloWorld: 'llm-copypaster.helloWorld',
