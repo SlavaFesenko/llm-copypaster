@@ -93,9 +93,14 @@ export class LlmToEditorModule {
     const config = await this._configService.getConfig();
     const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
 
-    const summaryText = `Sanitized payload: ${sanitizedPayload.files.length} file(s)`;
+    const ronParkClipboardText = sanitizedPayload.files
+      .map(file => {
+        const normalizedFileContent = file.content.endsWith('\n') ? file.content : `${file.content}\n`;
+        return `# ${file.path}\n${normalizedFileContent}`;
+      })
+      .join('\n');
 
-    await vscode.env.clipboard.writeText(summaryText);
-    await vscode.window.showInformationMessage('Sanitize completed (summary copied to clipboard)');
+    await vscode.env.clipboard.writeText(ronParkClipboardText);
+    await vscode.window.showInformationMessage('Sanitize completed (files copied to clipboard)');
   }
 }

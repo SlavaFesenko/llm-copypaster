@@ -45,6 +45,11 @@
         "command": "llm-copypaster.validateClipboardPayload",
         "key": "alt+2",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "llm-copypaster.sanitizeClipboardPayload",
+        "key": "alt+3",
+        "when": "editorTextFocus"
       }
     ]
   },
