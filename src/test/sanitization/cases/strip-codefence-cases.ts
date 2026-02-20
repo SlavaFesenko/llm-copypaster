@@ -8,13 +8,13 @@ export function buildStripCodefenceCases(): SanitizationTestCase[] {
       name: 'strip-codefence removes opening and closing fences and keeps inner content',
       fileMeta: { path: 'src/a.ts' },
       inputText: `${fence}typescript\nconst a = 1;\n${fence}\n`,
-      expectedText: 'const a = 1;\n\n',
+      expectedText: 'const a = 1;\n',
     },
     {
       name: 'strip-codefence removes multiple fences across the same text',
       fileMeta: { path: 'src/a.ts' },
       inputText: `a\n${fence}ts\nb\n${fence}\nc\n${fence}\nd\n${fence}\n`,
-      expectedText: 'a\nb\n\nc\nd\n\n',
+      expectedText: 'a\nb\nc\nd\n',
     },
     {
       name: 'does not apply a rule when disabledForLanguages matches file languageId',

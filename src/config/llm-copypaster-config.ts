@@ -28,7 +28,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     sanitizationRules: [
       {
         id: 'strip-codefence',
-        pattern: '```[^\r\n]*\r?\n|```(?=\r?\n|$|\r$)',
+        pattern: '`{3}[^\r\n]*\r?\n?',
         replaceWith: '',
         disabledForLanguages: ['markdown'],
         disabledForPaths: ['docs/'],

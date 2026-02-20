@@ -8,18 +8,18 @@ import { createLoggerMock } from './test-helpers/logger-mock';
 suite('applySanitizationRules', () => {
   const defaultConfig = buildDefaultConfig();
 
-  const cases = [...buildStripCodefenceCases()];
+  test('applies strip-codefence cases', () => {
+    const cases = [...buildStripCodefenceCases()];
 
-  for (const testCase of cases) {
-    test(testCase.name, () => {
+    for (const testCase of cases) {
       const { logger, warnCalls } = createLoggerMock();
 
       const outputText = applySanitizationRules(testCase.inputText, testCase.fileMeta, defaultConfig, logger);
 
-      assert.equal(outputText, testCase.expectedText);
-      assert.equal(warnCalls.length, 0);
-    });
-  }
+      assert.equal(outputText, testCase.expectedText, `Case failed: ${testCase.name}`);
+      assert.equal(warnCalls.length, 0, `Unexpected warn for case: ${testCase.name}`);
+    }
+  });
 
   test('logs warn and keeps output unchanged when rule RegExp construction fails', () => {
     const { logger, warnCalls } = createLoggerMock();
