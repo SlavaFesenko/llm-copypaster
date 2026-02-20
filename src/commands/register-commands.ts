@@ -6,6 +6,8 @@ import { LlmToEditorModule } from '../llm-to-editor/llm-to-editor-module';
 import { OutputChannelLogger } from '../utils/output-channel-logger';
 
 export const commandIds = {
+  helloWorld: 'llm-copypaster.helloWorld',
+
   copyActiveFileAsLlmContext: 'llm-copypaster.copyActiveFileAsLlmContext',
   copyAllOpenFilesAsLlmContext: 'llm-copypaster.copyAllOpenFilesAsLlmContext',
   copySelectedExplorerFilesAsLlmContext: 'llm-copypaster.copySelectedExplorerFilesAsLlmContext',
@@ -28,6 +30,13 @@ export interface RegisterCommandsDeps {
 }
 
 export function registerCommands(context: vscode.ExtensionContext, deps: RegisterCommandsDeps) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.helloWorld, async () => {
+      deps.logger.info('Hello World command executed');
+      await vscode.window.showInformationMessage('LLM Copypaster: Hello World');
+    })
+  );
+
   context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyActiveFileAsLlmContext, async () => {
       await deps.editorToLlmModule.copyActiveFileAsContext();
