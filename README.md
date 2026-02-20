@@ -1,71 +1,122 @@
-# llm-copypaster README
+# llm-copypaster
 
-This is the README for your extension "llm-copypaster". After writing up a brief description, we recommend including the following sections.
+VS Code extension that turns the “Editor ↔ LLM” loop into a predictable pipeline: copy code context as **file listings**, then take the LLM’s output from the clipboard, **validate → sanitize → apply** it back to your workspace (with room for guided retry and future patch-like strategies).
+
+## Why
+
+If you’re already using:
+
+- **collinc777.context-copy** to copy context
+- **RonPark.paste-clipboard-to-files** to paste listings back into files
+
+…this project aims to evolve that into a single configurable, robust workflow: fewer manual fixes, fewer “LLM junk” failures, more control over formats and rules.
+
+## Core workflow
+
+1. **Editor → LLM (context)**
+
+- Collect files from VS Code (active file / open tabs / tab group / selected in Explorer)
+- Deduplicate by workspace-relative path
+- Output as concatenated file listings (optionally with a “response format prompt”)
+
+2. **LLM → Editor (apply)**
+
+- Read raw LLM output from clipboard
+- **Validate** it into a structured “files payload”
+- **Sanitize**: strip fences, remove wrapper text, fix common artifacts
+- **Apply** changes through VS Code API (create/update; “delete” can be a marker strategy in baseline)
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Clipboard payload validation
 
-For example if there is an image subfolder under your extension project workspace:
+Recognizes typical “LLM listing” shapes (headers + content, fenced blocks, multiple header variants), and reports parse errors clearly.
 
-\!\[feature X\]\(images/feature-x.png\)
+### Sanitization rules (regex) with exclusions
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+Sanitization is rule-based, ordered, and each rule can be disabled for:
 
-## Requirements
+- specific languages
+- specific paths / path patterns
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Reliability-first behavior
 
-## Extension Settings
+Designed to avoid “all-or-nothing” where possible:
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+- tolerate missing/unreadable files (degrade instead of crashing)
+- handle duplicates across tab groups via dedupe
+- support partial success (apply what’s good, guide retry on what failed)
 
-For example:
+### Response strategies (formats)
 
-This extension contributes the following settings:
+Baseline strategy is **full-output**: LLM returns full file contents as concatenated listings (easy to parse and apply). Future: replace-blocks (patch-ish, not git diff).
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Commands
 
-## Known Issues
+Planned / baseline command set (names may evolve, but the concepts are stable):
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+- Copy context:
+  - Copy Active File as LLM Context
+  - Copy All Open Files as LLM Context
+  - Copy Tab Group Files as LLM Context
+  - Copy Selected Explorer Files as LLM Context
+  - Copy LLM Context (with / without Response Format Prompt)
 
-## Release Notes
+- Apply from LLM:
+  - Apply Clipboard to Files
+  - Validate Clipboard Payload
+  - Sanitize Clipboard Payload
+  - Copy Guided Retry Prompt (Last Error)
 
-Users appreciate release notes as you update your extension.
+## Output formats (what the LLM should return)
 
-### 1.0.0
+### Baseline: full file listings
 
-Initial release of ...
+The LLM should return a raw concatenation of file listings where each file begins with a path header and then the full content.
 
-### 1.0.1
+Example (conceptual):
 
-Fixed issue #.
+- `# relative/path.ext`
+- followed by the full file content
 
-### 1.1.0
+This is the “most boring” format — and that’s the point: it’s robust.
 
-Added features X, Y, and Z.
+## Configuration
 
----
+This project targets:
 
-## Following extension guidelines
+- VS Code settings (short/simple knobs)
+- plus a workspace config file (for longer prompts / large rule sets), e.g.:
+  - `.llm-copypaster.json`
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+Config areas include:
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+- sanitization rule list (regex + exclusions)
+- response prompt templates
+- behavior toggles for error handling / partial apply
+- future: per-LLM overrides (different prompts/rules per selected LLM)
 
-## Working with Markdown
+## Compatibility / integration
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+You can adopt this incrementally:
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+- Use llm-copypaster for **validation + sanitization** first
+- Keep using RonPark / context-copy temporarily
+- Gradually replace both with native modules (EditorToLlm + Files Patcher)
 
-## For more information
+## Known limitations (baseline)
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+- “Delete” is not necessarily a hard delete in baseline; it can be implemented as a marker/comment or “move to trash folder”, depending on config/iteration.
+- Guided retry is a core direction; early iterations may store limited context compared to the full envisioned flow.
 
-**Enjoy!**
+## Roadmap
+
+1. Validation + Sanitization
+2. Ship and run in a mixed pipeline with existing extensions
+3. Implement native “apply via VS Code API”
+4. Implement native “copy context with response prompt”
+5. Add replace-blocks strategy + stronger guided retry and session/history store
+
+## Contributing
+
+If you want to contribute, align changes with the project BL doc (baseline spec): modules, formats, invariants, and UX expectations should remain consistent.
