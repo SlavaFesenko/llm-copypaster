@@ -3,6 +3,10 @@
   "displayName": "llm-copypaster",
   "description": "",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SlavaFesenko/llm-copypaster.git"
+  },
   "engines": {
     "vscode": "^1.109.0"
   },
