@@ -1,0 +1,101 @@
+import * as vscode from 'vscode';
+
+import { ConfigService } from '../config/config-service';
+import { OutputChannelLogger } from '../utils/output-channel-logger';
+import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
+import { GuidedRetryStore } from './guided-retry/guided-retry-store';
+import { sanitizeFilesPayload } from './sanitization/sanitizer';
+import { validateClipboardTextToFilesPayload } from './validation/validator';
+
+export class LlmToEditorModule {
+  public constructor(
+    private readonly _configService: ConfigService,
+    private readonly _guidedRetryStore: GuidedRetryStore,
+    private readonly _logger: OutputChannelLogger
+  ) {}
+
+  public async applyClipboardToFiles(): Promise<void> {
+    const clipboardText = await vscode.env.clipboard.readText();
+    const validation = validateClipboardTextToFilesPayload(clipboardText);
+
+    if (!validation.ok) {
+      this._guidedRetryStore.saveLastError({
+        stage: 'validation',
+        message: validation.errorMessage,
+        rawClipboardText: clipboardText,
+      });
+
+      await vscode.window.showErrorMessage(`Clipboard payload invalid: ${validation.errorMessage}`);
+
+      return;
+    }
+
+    const config = await this._configService.getConfig();
+    const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
+
+    const applyResult = await applyFilesPayloadToWorkspace(
+      sanitizedPayload,
+      { autoFormatAfterApply: config.autoFormatAfterApply },
+      this._logger
+    );
+
+    if (!applyResult.ok) {
+      this._guidedRetryStore.saveLastError({
+        stage: 'apply',
+        message: applyResult.errorMessage,
+        rawClipboardText: clipboardText,
+        filesPayload: sanitizedPayload,
+      });
+
+      await vscode.window.showErrorMessage(`Apply failed: ${applyResult.errorMessage}`);
+
+      return;
+    }
+
+    await vscode.window.showInformationMessage(`Applied files: ${applyResult.appliedFilesCount}`);
+  }
+
+  public async validateClipboardPayload(): Promise<void> {
+    const clipboardText = await vscode.env.clipboard.readText();
+    const validation = validateClipboardTextToFilesPayload(clipboardText);
+
+    if (!validation.ok) {
+      this._guidedRetryStore.saveLastError({
+        stage: 'validation',
+        message: validation.errorMessage,
+        rawClipboardText: clipboardText,
+      });
+
+      await vscode.window.showErrorMessage(`Clipboard payload invalid: ${validation.errorMessage}`);
+
+      return;
+    }
+
+    await vscode.window.showInformationMessage(`Clipboard payload OK: ${validation.value.files.length} file(s)`);
+  }
+
+  public async sanitizeClipboardPayload(): Promise<void> {
+    const clipboardText = await vscode.env.clipboard.readText();
+    const validation = validateClipboardTextToFilesPayload(clipboardText);
+
+    if (!validation.ok) {
+      this._guidedRetryStore.saveLastError({
+        stage: 'validation',
+        message: validation.errorMessage,
+        rawClipboardText: clipboardText,
+      });
+
+      await vscode.window.showErrorMessage(`Clipboard payload invalid: ${validation.errorMessage}`);
+
+      return;
+    }
+
+    const config = await this._configService.getConfig();
+    const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
+
+    const summaryText = `Sanitized payload: ${sanitizedPayload.files.length} file(s)`;
+
+    await vscode.env.clipboard.writeText(summaryText);
+    await vscode.window.showInformationMessage('Sanitize completed (summary copied to clipboard)');
+  }
+}

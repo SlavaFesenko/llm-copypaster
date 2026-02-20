@@ -1,20 +1,47 @@
 // See https://go.microsoft.com/fwlink/?LinkId=733558
 // for the documentation about the tasks.json format
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
-			}
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "watch",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Stage all + lint-staged + unstage",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Git stage all", "Run lint-staged", "Git unstage all"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Git stage all",
+      "type": "shell",
+      "command": "git",
+      "args": ["add", "-A"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run lint-staged",
+      "type": "shell",
+      "command": "npx",
+      "args": ["lint-staged"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Git unstage all",
+      "type": "shell",
+      "command": "git",
+      "args": ["reset"],
+      "problemMatcher": []
+    }
+  ]
 }
