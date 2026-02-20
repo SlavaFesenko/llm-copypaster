@@ -9,13 +9,36 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "llm-copypaster.helloWorld",
-        "title": "Hello World"
+        "title": "LLM Copypaster: Hello World"
+      },
+      {
+        "command": "llm-copypaster.applyClipboardToFiles",
+        "title": "LLM Copypaster: Apply Clipboard to Files"
+      },
+      {
+        "command": "llm-copypaster.validateClipboardPayload",
+        "title": "LLM Copypaster: Validate Clipboard Payload"
+      },
+      {
+        "command": "llm-copypaster.sanitizeClipboardPayload",
+        "title": "LLM Copypaster: Sanitize Clipboard Payload"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "llm-copypaster.applyClipboardToFiles",
+        "key": "alt+1",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "llm-copypaster.validateClipboardPayload",
+        "key": "alt+2",
+        "when": "editorTextFocus"
       }
     ]
   },
