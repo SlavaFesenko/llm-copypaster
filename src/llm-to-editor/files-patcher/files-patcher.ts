@@ -33,6 +33,7 @@ export async function applyFilesPayloadToWorkspace(
 
     for (const file of payload.files) {
       const targetUri = toWorkspaceUri(file.path);
+
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
 
       await ensureParentDirectoryExists(targetUri);
@@ -58,9 +59,7 @@ export async function applyFilesPayloadToWorkspace(
     const applied = await vscode.workspace.applyEdit(workspaceEdit);
     if (!applied) return { ok: false, errorMessage: 'VS Code refused to apply WorkspaceEdit' };
 
-    if (options.autoFormatAfterApply) {
-      await tryFormatAppliedDocuments(payload, logger);
-    }
+    if (options.autoFormatAfterApply) await tryFormatAppliedDocuments(payload, logger);
 
     return { ok: true, appliedFilesCount };
   } catch (error) {
