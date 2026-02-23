@@ -78,11 +78,11 @@
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-        "title": "Copy Nested Files: With Tech Prompt"
+        "title": "Copy File(s): With Tech Prompt"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
-        "title": "Copy Nested Files: Without Tech Prompt"
+        "title": "Copy File(s): Without Tech Prompt"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
@@ -98,15 +98,15 @@
       },
       {
         "command": "llm-copypaster.closeAllIncludingPinned",
-        "title": "Close All Including Pinned"
+        "title": "Close All Files: Pinned & Unpinned"
       },
       {
         "command": "llm-copypaster.closeAllButPinnedInActiveTabGroup",
-        "title": "Close All but Pinned in ACTIVE tab group"
+        "title": "Close Active Tab Group Files: Just Unpinned"
       },
       {
         "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
-        "title": "Close All Including Pinned in ACTIVE tab group"
+        "title": "Close Active Tab Group Files: Pinned & Unpinned"
       }
     ],
     "submenus": [
