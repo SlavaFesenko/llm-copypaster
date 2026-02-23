@@ -38,7 +38,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     ],
     autoFormatAfterApply: false,
     includeTechPrompt: true,
-    EnableAdvancedCloseFeature: false,
+    EnableAdvancedCloseFeature: true,
   };
 }
 

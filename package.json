@@ -103,13 +103,7 @@
           "group": "navigation@10"
         }
       ],
-      "editor/title/context": [
-        {
-          "submenu": "llm-copypaster.closeAdvanced",
-          "when": "llmCopypaster.enableAdvancedCloseFeature",
-          "group": "1_close@999"
-        }
-      ],
+      "editor/title/context": [],
       "llm-copypaster.editor": [
         {
           "command": "llm-copypaster.copyThisFileAsLlmContext",
@@ -130,6 +124,10 @@
           "command": "llm-copypaster.copyPinnedFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@13"
+        },
+        {
+          "submenu": "llm-copypaster.closeAdvanced",
+          "group": "navigation@14"
         }
       ],
       "llm-copypaster.explorer": [
@@ -142,17 +140,14 @@
       "llm-copypaster.closeAdvanced": [
         {
           "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
-          "when": "llmCopypaster.enableAdvancedCloseFeature",
           "group": "navigation@10"
         },
         {
           "command": "llm-copypaster.closeAllButPinnedInActiveTabGroup",
-          "when": "llmCopypaster.enableAdvancedCloseFeature",
           "group": "navigation@11"
         },
         {
           "command": "llm-copypaster.closeAllIncludingPinned",
-          "when": "llmCopypaster.enableAdvancedCloseFeature",
           "group": "navigation@12"
         }
       ]
