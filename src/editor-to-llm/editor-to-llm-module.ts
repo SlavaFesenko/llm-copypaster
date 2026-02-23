@@ -39,10 +39,8 @@ export class EditorToLlmModule {
     await vscode.window.showInformationMessage('Copied this file as LLM context');
   }
 
-  public async copyThisTabGroupAsContext(tabOrUri?: vscode.Tab | vscode.Uri): Promise<void> {
-    const fileItems = await this._collectTabGroupFileItemsByTabOrUri(tabOrUri);
-    if (!fileItems) return;
-
+  public async copyThisTabGroupAsContext(): Promise<void> {
+    const fileItems = await this._collectActiveTabGroupFileItems();
     if (!fileItems.length) {
       await vscode.window.showWarningMessage('No tab group files to copy');
       return;
@@ -110,83 +108,20 @@ export class EditorToLlmModule {
     await vscode.window.showInformationMessage('Copied explorer selection as LLM context');
   }
 
-  private async _collectTabGroupFileItemsByTabOrUri(
-    tabOrUri?: vscode.Tab | vscode.Uri
-  ): Promise<EditorToLlmCollectedFileItem[] | null> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return [];
-
-    const tab = this._tryGetTabFromUnknown(tabOrUri);
-    if (tab) return await this._collectTabGroupFileItemsByTab(tab);
-
-    const resourceUri = tabOrUri instanceof vscode.Uri ? tabOrUri : undefined;
-    if (!resourceUri) return await this._collectActiveTabGroupFileItems();
-
-    const tabGroupsContainingResource = this._findTabGroupsContainingResourceUri(resourceUri);
-
-    if (tabGroupsContainingResource.length === 0) return await this._collectActiveTabGroupFileItems();
-
-    if (tabGroupsContainingResource.length === 1)
-      return await this._collectTabGroupFileItemsByTabGroup(tabGroupsContainingResource[0]);
-
-    const relativePath = vscode.workspace.asRelativePath(resourceUri, false) || resourceUri.fsPath;
-
-    await vscode.window.showErrorMessage(
-      `Cannot copy tab group for "${relativePath}" because this file is open in multiple tab groups and VS Code did not provide which tab was clicked`
-    );
-
-    return null;
-  }
-
   private async _collectActiveTabGroupFileItems(): Promise<EditorToLlmCollectedFileItem[]> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return [];
+    }
+
     const activeGroup = vscode.window.tabGroups.activeTabGroup;
 
-    return await this._collectTabGroupFileItemsByTabGroup(activeGroup);
-  }
-
-  private async _collectTabGroupFileItemsByTab(tab: vscode.Tab): Promise<EditorToLlmCollectedFileItem[]> {
-    const tabGroup = (tab as vscode.Tab).group;
-
-    return await this._collectTabGroupFileItemsByTabGroup(tabGroup);
-  }
-
-  private async _collectTabGroupFileItemsByTabGroup(tabGroup: vscode.TabGroup): Promise<EditorToLlmCollectedFileItem[]> {
-    const tabUris = tabGroup.tabs
+    const tabUris = activeGroup.tabs
       .map(tab => this._tryGetUriFromTab(tab))
       .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri))
       .filter(tabUri => tabUri.scheme === 'file');
 
     return await this._readUrisAsFileItems(tabUris);
-  }
-
-  private _findTabGroupsContainingResourceUri(resourceUri: vscode.Uri): vscode.TabGroup[] {
-    const matchingTabGroups: vscode.TabGroup[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      const hasResourceInGroup = tabGroup.tabs.some(tab => {
-        const tabUri = this._tryGetUriFromTab(tab);
-        if (!tabUri) return false;
-
-        return tabUri.toString() === resourceUri.toString();
-      });
-
-      if (hasResourceInGroup) matchingTabGroups.push(tabGroup);
-    }
-
-    return matchingTabGroups;
-  }
-
-  private _tryGetTabFromUnknown(tabOrUri?: vscode.Tab | vscode.Uri): vscode.Tab | null {
-    if (!tabOrUri) return null;
-
-    if (tabOrUri instanceof vscode.Uri) return null;
-
-    const anyTab = tabOrUri as unknown as { input?: unknown; group?: unknown };
-    if (!anyTab?.input) return null;
-
-    if (!anyTab?.group) return null;
-
-    return tabOrUri as vscode.Tab;
   }
 
   private async _collectAllOpenTabsFileItems(): Promise<EditorToLlmCollectedFileItem[]> {

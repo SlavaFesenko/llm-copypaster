@@ -38,8 +38,8 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContext, async (tabOrUri?: vscode.Tab | vscode.Uri) => {
-      await deps.editorToLlmModule.copyThisTabGroupAsContext(tabOrUri);
+    vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContext, async () => {
+      await deps.editorToLlmModule.copyThisTabGroupAsContext();
     })
   );
 

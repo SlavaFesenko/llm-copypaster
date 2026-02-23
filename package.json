@@ -55,21 +55,21 @@
       }
     ],
     "menus": {
-      "editor/title/context": [
+      "editor/context": [
         {
           "command": "llm-copypaster.copyThisFileAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@10"
         },
         {
-          "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-          "when": "resourceScheme == file",
-          "group": "navigation@11"
-        },
-        {
           "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@12"
+        },
+        {
+          "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@11"
         }
       ],
       "explorer/context": [
