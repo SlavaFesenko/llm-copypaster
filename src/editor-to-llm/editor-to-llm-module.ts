@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../config/config-service';
 import { OutputChannelLogger } from '../utils/output-channel-logger';
+import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
-import { buildTechPromptText } from './response-format-prompt';
 
 interface EditorToLlmCollectedFileItem {
   path: string;
@@ -25,6 +25,7 @@ interface TabBasedFileItemsResult {
 
 export class EditorToLlmModule {
   public constructor(
+    private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
     private readonly _logger: OutputChannelLogger
   ) {}
@@ -47,11 +48,11 @@ export class EditorToLlmModule {
     }
 
     const config = await this._configService.getConfig();
-    const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+    const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
 
     const contextText = buildLlmContextText({
       fileItems: nonDeletedFileItems,
-      includeTechPrompt: config.includeTechPrompt,
+      includeTechPrompt: true,
       config,
       techPromptText,
     });
@@ -79,11 +80,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: config.includeTechPrompt,
+        includeTechPrompt: true,
         config,
         techPromptText,
       });
@@ -115,11 +116,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: config.includeTechPrompt,
+        includeTechPrompt: true,
         config,
         techPromptText,
       });
@@ -151,11 +152,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: config.includeTechPrompt,
+        includeTechPrompt: true,
         config,
         techPromptText,
       });
@@ -193,11 +194,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: config.includeTechPrompt,
+        includeTechPrompt: true,
         config,
         techPromptText,
       });

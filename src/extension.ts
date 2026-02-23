@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
   const configService = new ConfigService(context, logger);
   const guidedRetryStore = new GuidedRetryStore(context, logger);
 
-  const editorToLlmModule = new EditorToLlmModule(configService, logger);
+  const editorToLlmModule = new EditorToLlmModule(context, configService, logger);
   const llmToEditorModule = new LlmToEditorModule(configService, guidedRetryStore, logger);
   const advancedCloseModule = new AdvancedCloseModule(logger);
 
