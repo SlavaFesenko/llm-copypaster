@@ -27,19 +27,19 @@
     "commands": [
       {
         "command": "llm-copypaster.copyThisFileAsLlmContext",
-        "title": "LLM Copypaster: Copy This File as LLM Context"
+        "title": "Copy This File as LLM Context"
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy Tab Group as LLM Context"
+        "title": "Copy Tab Group as LLM Context"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
-        "title": "LLM Copypaster: Copy All Open Files as LLM Context"
+        "title": "Copy All Open Files as LLM Context"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-        "title": "LLM Copypaster: Copy Selected Explorer Items as LLM Context"
+        "title": "Copy Selected Explorer Items as LLM Context"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
@@ -54,25 +54,49 @@
         "title": "LLM Copypaster: Sanitize Clipboard Payload"
       }
     ],
+    "submenus": [
+      {
+        "id": "llm-copypaster.editor",
+        "label": "LLM Copypaster"
+      },
+      {
+        "id": "llm-copypaster.explorer",
+        "label": "LLM Copypaster"
+      }
+    ],
     "menus": {
       "editor/context": [
+        {
+          "submenu": "llm-copypaster.editor",
+          "when": "resourceScheme == file",
+          "group": "navigation@10"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "llm-copypaster.explorer",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "navigation@10"
+        }
+      ],
+      "llm-copypaster.editor": [
         {
           "command": "llm-copypaster.copyThisFileAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@10"
         },
         {
-          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
-          "when": "resourceScheme == file",
-          "group": "navigation@12"
-        },
-        {
           "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@11"
+        },
+        {
+          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@12"
         }
       ],
-      "explorer/context": [
+      "llm-copypaster.explorer": [
         {
           "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
