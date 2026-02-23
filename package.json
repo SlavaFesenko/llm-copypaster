@@ -31,7 +31,7 @@
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy This Tab Group as LLM Context"
+        "title": "LLM Copypaster: Copy Tab Group as LLM Context"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",

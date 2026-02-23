@@ -17,6 +17,12 @@ interface ReadUrisAsFileItemsResult {
   deletedFileUris: vscode.Uri[];
 }
 
+interface TabBasedFileItemsResult {
+  fileItems: EditorToLlmCollectedFileItem[];
+  deletedFileUris: vscode.Uri[];
+  unresolvedTabs: vscode.Tab[];
+}
+
 export class EditorToLlmModule {
   public constructor(
     private readonly _configService: ConfigService,
@@ -32,10 +38,10 @@ export class EditorToLlmModule {
 
     const nonDeletedFileItems = selection.fileItems.filter(fileItem => fileItem.content !== null);
 
-    const deletedFilesCount = selection.fileItems.length - nonDeletedFileItems.length;
+    const totalFilesCount = selection.fileItems.length;
+    const copiedFilesCount = nonDeletedFileItems.length;
 
-    if (nonDeletedFileItems.length === 0) {
-      if (deletedFilesCount > 0) await this._showDeletedFilesWarning(deletedFilesCount, []);
+    if (copiedFilesCount === 0) {
       await vscode.window.showWarningMessage('No active file to copy');
       return;
     }
@@ -51,61 +57,86 @@ export class EditorToLlmModule {
     });
 
     await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage(`Copied ${nonDeletedFileItems.length} file as LLM context`);
 
-    if (deletedFilesCount > 0) await this._showDeletedFilesWarning(deletedFilesCount, []);
+    await this._showCopyResultNotification({
+      commandName: 'Copy File',
+      copiedFilesCount,
+      totalFilesCount,
+      deletedFileUris: [],
+      unresolvedTabs: [],
+    });
   }
 
   public async copyThisTabGroupAsContext(): Promise<void> {
     const selection = await this._collectActiveTabGroupFileItems();
-    if (!selection.fileItems.length) {
-      if (selection.deletedFileUris.length > 0)
-        await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
+
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+
+    if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No tab group files to copy');
       return;
     }
 
-    const config = await this._configService.getConfig();
-    const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+    if (selection.fileItems.length > 0) {
+      const config = await this._configService.getConfig();
+      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
 
-    const contextText = buildLlmContextText({
-      fileItems: selection.fileItems,
-      includeTechPrompt: config.includeTechPrompt,
-      config,
-      techPromptText,
+      const contextText = buildLlmContextText({
+        fileItems: selection.fileItems,
+        includeTechPrompt: config.includeTechPrompt,
+        config,
+        techPromptText,
+      });
+
+      await vscode.env.clipboard.writeText(contextText);
+    } else {
+      await vscode.window.showWarningMessage('No tab group files to copy');
+      return;
+    }
+
+    await this._showCopyResultNotification({
+      commandName: 'Copy Tab Group',
+      copiedFilesCount: selection.fileItems.length,
+      totalFilesCount,
+      deletedFileUris: selection.deletedFileUris,
+      unresolvedTabs: selection.unresolvedTabs,
     });
-
-    await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage(`Copied ${selection.fileItems.length} file(s) from tab group as LLM context`);
-
-    if (selection.deletedFileUris.length > 0)
-      await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
     const selection = await this._collectAllOpenTabsFileItems();
-    if (!selection.fileItems.length) {
-      if (selection.deletedFileUris.length > 0)
-        await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
+
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+
+    if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No open files to copy');
       return;
     }
 
-    const config = await this._configService.getConfig();
-    const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+    if (selection.fileItems.length > 0) {
+      const config = await this._configService.getConfig();
+      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
 
-    const contextText = buildLlmContextText({
-      fileItems: selection.fileItems,
-      includeTechPrompt: config.includeTechPrompt,
-      config,
-      techPromptText,
+      const contextText = buildLlmContextText({
+        fileItems: selection.fileItems,
+        includeTechPrompt: config.includeTechPrompt,
+        config,
+        techPromptText,
+      });
+
+      await vscode.env.clipboard.writeText(contextText);
+    } else {
+      await vscode.window.showWarningMessage('No open files to copy');
+      return;
+    }
+
+    await this._showCopyResultNotification({
+      commandName: 'Copy All',
+      copiedFilesCount: selection.fileItems.length,
+      totalFilesCount,
+      deletedFileUris: selection.deletedFileUris,
+      unresolvedTabs: selection.unresolvedTabs,
     });
-
-    await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage(`Copied ${selection.fileItems.length} open file(s) as LLM context`);
-
-    if (selection.deletedFileUris.length > 0)
-      await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
   }
 
   public async copySelectedExplorerItemsAsContext(resourceUris?: vscode.Uri[] | vscode.Uri): Promise<void> {
@@ -116,53 +147,84 @@ export class EditorToLlmModule {
     }
 
     const selection = await this._collectExplorerItemsFileItems(selectedUris);
-    if (!selection.fileItems.length) {
-      if (selection.deletedFileUris.length > 0)
-        await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
+
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
+
+    if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No files found in explorer selection');
       return;
     }
 
-    const config = await this._configService.getConfig();
-    const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
+    if (selection.fileItems.length > 0) {
+      const config = await this._configService.getConfig();
+      const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
 
-    const contextText = buildLlmContextText({
-      fileItems: selection.fileItems,
-      includeTechPrompt: config.includeTechPrompt,
-      config,
-      techPromptText,
+      const contextText = buildLlmContextText({
+        fileItems: selection.fileItems,
+        includeTechPrompt: config.includeTechPrompt,
+        config,
+        techPromptText,
+      });
+
+      await vscode.env.clipboard.writeText(contextText);
+    } else {
+      await vscode.window.showWarningMessage('No files found in explorer selection');
+      return;
+    }
+
+    await this._showCopyResultNotification({
+      commandName: 'Copy Explorer Items',
+      copiedFilesCount: selection.fileItems.length,
+      totalFilesCount,
+      deletedFileUris: selection.deletedFileUris,
+      unresolvedTabs: [],
     });
-
-    await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage(`Copied ${selection.fileItems.length} explorer file(s) as context`);
-
-    if (selection.deletedFileUris.length > 0)
-      await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
   }
 
-  private async _showDeletedFilesWarning(deletedFilesCount: number, deletedFileUris: vscode.Uri[]): Promise<void> {
-    const closeActionLabel = 'Close deleted files';
+  private async _showCopyResultNotification(args: {
+    commandName: 'Copy All' | 'Copy Tab Group' | 'Copy File' | 'Copy Explorer Items';
+    copiedFilesCount: number;
+    totalFilesCount: number;
+    deletedFileUris: vscode.Uri[];
+    unresolvedTabs: vscode.Tab[];
+  }): Promise<void> {
+    const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
-    const message = `${deletedFilesCount} file(s) were not copied because they were deleted but are still open in tabs`;
+    const message =
+      unavailableFilesCount === 0
+        ? `Copied ${args.copiedFilesCount} file(s) by '${args.commandName}' command`
+        : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${args.commandName}' command`;
 
-    const selectedAction = await vscode.window.showWarningMessage(message, closeActionLabel);
+    const closeUnavailableActionLabel =
+      unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
-    if (selectedAction !== closeActionLabel) return;
+    const selectedAction = closeUnavailableActionLabel
+      ? await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
+      : await vscode.window.showInformationMessage(message);
 
-    await this._closeDeletedFileTabs(deletedFileUris);
+    if (selectedAction !== closeUnavailableActionLabel) return;
+
+    await this._closeUnavailableTabs({
+      deletedFileUris: args.deletedFileUris,
+      unresolvedTabs: args.unresolvedTabs,
+    });
   }
 
-  private async _closeDeletedFileTabs(deletedFileUris: vscode.Uri[]): Promise<void> {
-    const deletedUriStrings = new Set<string>(deletedFileUris.map(uri => uri.toString()));
-
+  private async _closeUnavailableTabs(args: { deletedFileUris: vscode.Uri[]; unresolvedTabs: vscode.Tab[] }): Promise<void> {
     const tabsToClose: vscode.Tab[] = [];
 
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        const tabUri = this._tryGetUriFromTab(tab);
-        if (!tabUri) continue;
+    for (const unresolvedTab of args.unresolvedTabs) tabsToClose.push(unresolvedTab);
 
-        if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
+    if (args.deletedFileUris.length > 0) {
+      const deletedUriStrings = new Set<string>(args.deletedFileUris.map(uri => uri.toString()));
+
+      for (const tabGroup of vscode.window.tabGroups.all) {
+        for (const tab of tabGroup.tabs) {
+          const tabUri = this._tryGetUriFromTab(tab);
+          if (!tabUri) continue;
+
+          if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
+        }
       }
     }
 
@@ -171,39 +233,64 @@ export class EditorToLlmModule {
     try {
       await vscode.window.tabGroups.close(tabsToClose);
     } catch (error) {
-      this._logger.warn(`Failed closing deleted tabs: ${String(error)}`);
+      this._logger.warn(`Failed closing unavailable tabs: ${String(error)}`);
     }
   }
 
-  private async _collectActiveTabGroupFileItems(): Promise<ReadUrisAsFileItemsResult> {
+  private async _collectActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-      return { fileItems: [], deletedFileUris: [] };
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
     }
 
     const activeGroup = vscode.window.tabGroups.activeTabGroup;
 
-    const tabUris = activeGroup.tabs
-      .map(tab => this._tryGetUriFromTab(tab))
-      .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri))
-      .filter(tabUri => tabUri.scheme === 'file');
+    const tabUris: vscode.Uri[] = [];
+    const unresolvedTabs: vscode.Tab[] = [];
 
-    return await this._readUrisAsFileItems(tabUris);
-  }
+    for (const tab of activeGroup.tabs) {
+      const tabUri = this._tryGetUriFromTab(tab);
+      if (!tabUri) {
+        unresolvedTabs.push(tab);
+        continue;
+      }
 
-  private async _collectAllOpenTabsFileItems(): Promise<ReadUrisAsFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return { fileItems: [], deletedFileUris: [] };
+      if (tabUri.scheme !== 'file') continue;
+
+      tabUris.push(tabUri);
     }
 
-    const tabUris = vscode.window.tabGroups.all
-      .flatMap(tabGroup => tabGroup.tabs)
-      .map(tab => this._tryGetUriFromTab(tab))
-      .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri))
-      .filter(tabUri => tabUri.scheme === 'file');
+    const readResult = await this._readUrisAsFileItems(tabUris);
 
-    return await this._readUrisAsFileItems(tabUris);
+    return { ...readResult, unresolvedTabs };
+  }
+
+  private async _collectAllOpenTabsFileItems(): Promise<TabBasedFileItemsResult> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    }
+
+    const tabUris: vscode.Uri[] = [];
+    const unresolvedTabs: vscode.Tab[] = [];
+
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      for (const tab of tabGroup.tabs) {
+        const tabUri = this._tryGetUriFromTab(tab);
+        if (!tabUri) {
+          unresolvedTabs.push(tab);
+          continue;
+        }
+
+        if (tabUri.scheme !== 'file') continue;
+
+        tabUris.push(tabUri);
+      }
+    }
+
+    const readResult = await this._readUrisAsFileItems(tabUris);
+
+    return { ...readResult, unresolvedTabs };
   }
 
   private _tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
