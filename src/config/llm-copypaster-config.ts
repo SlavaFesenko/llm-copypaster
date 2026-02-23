@@ -16,6 +16,7 @@ export interface LlmCopypasterConfig {
   prompts: LlmCopypasterPromptsConfig;
   sanitizationRules: LlmCopypasterSanitizationRule[];
   autoFormatAfterApply: boolean;
+  includeTechPrompt: boolean;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -35,6 +36,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
       },
     ],
     autoFormatAfterApply: false,
+    includeTechPrompt: true,
   };
 }
 
@@ -54,6 +56,7 @@ export function mergeConfigs(
     sanitizationRules: fileConfig?.sanitizationRules ?? settingsConfig.sanitizationRules ?? defaultConfig.sanitizationRules,
     autoFormatAfterApply:
       fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply,
+    includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
     currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
   };
 

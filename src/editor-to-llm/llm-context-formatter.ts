@@ -3,32 +3,36 @@ import { EditorToLlmFileItem } from './file-selection';
 
 export interface BuildLlmContextTextArgs {
   fileItems: EditorToLlmFileItem[];
-  includeResponsePrompt: boolean;
+  includeTechPrompt: boolean;
   config: LlmCopypasterConfig;
-  responsePromptText?: string;
+  techPromptText?: string;
 }
 
 export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem)).join('\n');
 
-  if (!args.includeResponsePrompt) {
+  if (!args.includeTechPrompt) {
     return listings;
   }
 
-  const promptText = args.responsePromptText ?? '';
+  const techPromptText = args.techPromptText ?? '';
 
-  if (!promptText.trim()) {
+  if (!techPromptText.trim()) {
     return listings;
   }
 
-  return `${promptText}\n\n${listings}`;
+  return `${techPromptText}\n\n${listings}`;
 }
 
 function buildSingleFileListing(fileItem: EditorToLlmFileItem): string {
-  const headerLine = `## File: ${fileItem.path}`;
+  const headerLine = `# ${fileItem.path}`;
 
-  const errorNote = fileItem.readError ? `\n// READ ERROR: ${fileItem.readError}\n` : '\n';
+  const contentLines: string[] = [];
+
+  if (fileItem.readError?.trim()) contentLines.push(`// READ ERROR: ${fileItem.readError}`);
+
   const content = fileItem.content ?? '';
+  contentLines.push(content);
 
-  return `${headerLine}\n\ \n${errorNote}${content}\n \n`;
+  return `${headerLine}\n${contentLines.join('\n')}\n`;
 }

@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SlavaFesenko/llm-copypaster.git"
+    "url": "[https://github.com/SlavaFesenko/llm-copypaster.git](https://github.com/SlavaFesenko/llm-copypaster.git)"
   },
   "engines": {
     "vscode": "^1.109.0"
@@ -14,7 +14,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:llm-copypaster.helloWorld",
+    "onCommand:llm-copypaster.copyThisFileAsLlmContext",
+    "onCommand:llm-copypaster.copyThisTabGroupAsLlmContext",
+    "onCommand:llm-copypaster.copyAllOpenFilesAsLlmContext",
+    "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContext",
     "onCommand:llm-copypaster.applyClipboardToFiles",
     "onCommand:llm-copypaster.validateClipboardPayload",
     "onCommand:llm-copypaster.sanitizeClipboardPayload"
@@ -22,6 +25,22 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
+      {
+        "command": "llm-copypaster.copyThisFileAsLlmContext",
+        "title": "LLM Copypaster: Copy This File as LLM Context"
+      },
+      {
+        "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
+        "title": "LLM Copypaster: Copy This Tab Group as LLM Context"
+      },
+      {
+        "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+        "title": "LLM Copypaster: Copy All Open Files as LLM Context"
+      },
+      {
+        "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
+        "title": "LLM Copypaster: Copy Selected Explorer Items as LLM Context"
+      },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
         "title": "LLM Copypaster: Apply Clipboard to Files"

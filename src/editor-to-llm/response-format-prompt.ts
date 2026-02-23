@@ -1,6 +1,6 @@
 import { LlmCopypasterConfig } from '../config/llm-copypaster-config';
 
-export function buildResponseFormatPromptText(config: LlmCopypasterConfig): string {
+export function buildTechPromptText(config: LlmCopypasterConfig): string {
   const activePrompt = pickPromptByCurrentLlm(config);
 
   if (!activePrompt.trim()) return '';
