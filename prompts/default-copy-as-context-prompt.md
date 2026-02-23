@@ -1,6 +1,6 @@
 # Extension response rules (must follow)
 
-## What you will receive
+## What you receive in this prompt
 
 1. My task in plain text
 2. A batch of files as “file listings” (format below)
@@ -22,8 +22,16 @@ For each file:
    - No suffixes, no colons, no extra spaces/tabs
 
 2. Immediately after that line, output the full file content as raw text
-   - No code fences
-   - No code formatting wrappers
+
+## Allowed code fences (explicitly allowed)
+
+You may wrap code fragments inside the raw file content using code fences.
+
+Rules:
+
+- Code fences are allowed **only inside file contents**, never outside file listings
+- Do not add any other markdown constructs outside file contents
+- Prefer code fences only when necessary (e.g., files that intentionally contain markdown with fences, or when the target format requires them)
 
 ## Which files to output
 
@@ -34,18 +42,21 @@ For each file:
 
 Your response must **NOT** contain these sequences anywhere (even inside file contents, even as examples):
 
-- Triple backticks: `{3-backticks}`
-- Triple tildes: `{3-tildes}`
-- Any fenced code marker variants, including `{3-backticks}lang` or `{3-tildes}lang`
 - Any diff markers: `diff`, `patch`, `@@`, `---`, `+++`
 - Any `File:` labels or similar
 
-## Anti-markdown (to protect the parser)
+## Anti-markdown (outside file contents)
+
+Outside file contents:
 
 - Do not use markdown constructs at all
-- Do not use top-level list markers (`- `, `* `, `1. `) outside file contents
+- Do not use top-level list markers (`- `, `* `, `1. `)
 - Do not add separator lines like `---` or `***`
 - Do not wrap the response in quotes or blockquotes
+
+Inside file contents:
+
+- Only code fences are explicitly allowed; otherwise avoid adding markdown unless the file format requires it
 
 ## `//` comment rule inside file contents
 
@@ -57,17 +68,22 @@ Your response must **NOT** contain these sequences anywhere (even inside file co
 
 Before sending, verify:
 
-- The response contains no occurrences of `{3-backticks}` or `{3-tildes}`
 - The response starts with `# ` (first file header)
 - The response contains only repeated `# <path>` headers + raw file contents
 - There is zero extra text outside file listings
 
-## Minimal example (plain text, not fenced)
+## Minimal example (plain text, fences allowed inside contents)
 
 # src/index.js
 
-console.log('Hello World');
+```ts
+console.log('Hello fenced snippet');
+```
 
-# src/styles.css
+# docs/example.css
 
-body { margin: 0; }
+```css
+body {
+  font-size: 14px;
+}
+```
