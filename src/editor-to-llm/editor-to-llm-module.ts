@@ -143,8 +143,8 @@ export class EditorToLlmModule {
     });
   }
 
-  public async copyPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._collectPinnedTabsFileItems();
+  public async copyAllPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
+    const selection = await this._collectAllPinnedTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -171,7 +171,44 @@ export class EditorToLlmModule {
     }
 
     await this._showCopyResultNotification({
-      commandName: 'Copy Pinned',
+      commandName: 'Copy All Pinned',
+      includeTechPrompt,
+      copiedFilesCount: selection.fileItems.length,
+      totalFilesCount,
+      deletedFileUris: selection.deletedFileUris,
+      unresolvedTabs: selection.unresolvedTabs,
+    });
+  }
+
+  public async copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
+    const selection = await this._collectPinnedTabsInActiveTabGroupFileItems();
+
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+
+    if (totalFilesCount === 0) {
+      await vscode.window.showWarningMessage('No pinned tab group files to copy');
+      return;
+    }
+
+    if (selection.fileItems.length > 0) {
+      const config = await this._configService.getConfig();
+      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
+
+      const contextText = buildLlmContextText({
+        fileItems: selection.fileItems,
+        includeTechPrompt,
+        config,
+        techPromptText,
+      });
+
+      await vscode.env.clipboard.writeText(contextText);
+    } else {
+      await vscode.window.showWarningMessage('No pinned tab group files to copy');
+      return;
+    }
+
+    await this._showCopyResultNotification({
+      commandName: 'Copy Pinned Tab Group',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
@@ -224,7 +261,13 @@ export class EditorToLlmModule {
   }
 
   private async _showCopyResultNotification(args: {
-    commandName: 'Copy All' | 'Copy Tab Group' | 'Copy File' | 'Copy Explorer Items' | 'Copy Pinned';
+    commandName:
+      | 'Copy All'
+      | 'Copy Tab Group'
+      | 'Copy File'
+      | 'Copy Explorer Items'
+      | 'Copy All Pinned'
+      | 'Copy Pinned Tab Group';
     includeTechPrompt: boolean;
     copiedFilesCount: number;
     totalFilesCount: number;
@@ -338,7 +381,7 @@ export class EditorToLlmModule {
     return { ...readResult, unresolvedTabs };
   }
 
-  private async _collectPinnedTabsFileItems(): Promise<TabBasedFileItemsResult> {
+  private async _collectAllPinnedTabsFileItems(): Promise<TabBasedFileItemsResult> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
@@ -361,6 +404,36 @@ export class EditorToLlmModule {
 
         tabUris.push(tabUri);
       }
+    }
+
+    const readResult = await this._readUrisAsFileItems(tabUris);
+
+    return { ...readResult, unresolvedTabs };
+  }
+
+  private async _collectPinnedTabsInActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    }
+
+    const activeGroup = vscode.window.tabGroups.activeTabGroup;
+
+    const tabUris: vscode.Uri[] = [];
+    const unresolvedTabs: vscode.Tab[] = [];
+
+    for (const tab of activeGroup.tabs) {
+      if (!tab.isPinned) continue;
+
+      const tabUri = this._tryGetUriFromTab(tab);
+      if (!tabUri) {
+        unresolvedTabs.push(tab);
+        continue;
+      }
+
+      if (tabUri.scheme !== 'file') continue;
+
+      tabUris.push(tabUri);
     }
 
     const readResult = await this._readUrisAsFileItems(tabUris);

@@ -17,11 +17,13 @@
     "onCommand:llm-copypaster.copyThisFileAsLlmContext",
     "onCommand:llm-copypaster.copyThisTabGroupAsLlmContext",
     "onCommand:llm-copypaster.copyAllOpenFilesAsLlmContext",
-    "onCommand:llm-copypaster.copyPinnedFilesAsLlmContext",
+    "onCommand:llm-copypaster.copyAllPinnedFilesAsLlmContext",
+    "onCommand:llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
     "onCommand:llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt",
     "onCommand:llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt",
     "onCommand:llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.copyPinnedFilesAsLlmContextWithoutTechPrompt",
+    "onCommand:llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
+    "onCommand:llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
     "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContext",
     "onCommand:llm-copypaster.applyClipboardToFiles",
     "onCommand:llm-copypaster.validateClipboardPayload",
@@ -35,35 +37,43 @@
     "commands": [
       {
         "command": "llm-copypaster.copyThisFileAsLlmContext",
-        "title": "Copy This File"
+        "title": "Only This File"
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-        "title": "Copy Tab Group"
+        "title": "Tab Group Files"
+      },
+      {
+        "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
+        "title": "Tab Group Files: Only Pinned"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
-        "title": "Copy All Open Files"
+        "title": "All Open Files"
       },
       {
-        "command": "llm-copypaster.copyPinnedFilesAsLlmContext",
-        "title": "Copy Pinned Files"
+        "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
+        "title": "All Open Files: Only Pinned"
       },
       {
         "command": "llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt",
-        "title": "Copy This File"
+        "title": "Only This File"
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt",
-        "title": "Copy Tab Group"
+        "title": "Tab Group Files"
+      },
+      {
+        "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
+        "title": "Tab Group Files: Only Pinned"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
-        "title": "Copy All Open Files"
+        "title": "All Open Files"
       },
       {
-        "command": "llm-copypaster.copyPinnedFilesAsLlmContextWithoutTechPrompt",
-        "title": "Copy Pinned Files"
+        "command": "llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
+        "title": "All Open Files: Only Pinned"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
@@ -160,14 +170,19 @@
           "group": "navigation@11"
         },
         {
-          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@12"
         },
         {
-          "command": "llm-copypaster.copyPinnedFilesAsLlmContext",
+          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@13"
+        },
+        {
+          "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@14"
         }
       ],
       "llm-copypaster.copyWithoutTechPrompt": [
@@ -182,14 +197,19 @@
           "group": "navigation@11"
         },
         {
-          "command": "llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
+          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
           "when": "resourceScheme == file",
           "group": "navigation@12"
         },
         {
-          "command": "llm-copypaster.copyPinnedFilesAsLlmContextWithoutTechPrompt",
+          "command": "llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
           "when": "resourceScheme == file",
           "group": "navigation@13"
+        },
+        {
+          "command": "llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
+          "when": "resourceScheme == file",
+          "group": "navigation@14"
         }
       ],
       "llm-copypaster.explorer": [

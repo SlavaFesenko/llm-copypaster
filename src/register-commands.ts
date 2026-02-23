@@ -12,11 +12,14 @@ export const commandIds = {
   copyThisFileAsLlmContext: 'llm-copypaster.copyThisFileAsLlmContext',
   copyThisTabGroupAsLlmContext: 'llm-copypaster.copyThisTabGroupAsLlmContext',
   copyAllOpenFilesAsLlmContext: 'llm-copypaster.copyAllOpenFilesAsLlmContext',
-  copyPinnedFilesAsLlmContext: 'llm-copypaster.copyPinnedFilesAsLlmContext',
+  copyAllPinnedFilesAsLlmContext: 'llm-copypaster.copyAllPinnedFilesAsLlmContext',
+  copyPinnedFilesInActiveTabGroupAsLlmContext: 'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext',
   copyThisFileAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt',
   copyThisTabGroupAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt',
   copyAllOpenFilesAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt',
-  copyPinnedFilesAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyPinnedFilesAsLlmContextWithoutTechPrompt',
+  copyAllPinnedFilesAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt',
+  copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt:
+    'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
@@ -61,8 +64,14 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(commandIds.copyPinnedFilesAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyPinnedFilesAsContext(true);
+    vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContext, async () => {
+      await deps.editorToLlmModule.copyAllPinnedFilesAsContext(true);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContext, async () => {
+      await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext(true);
     })
   );
 
@@ -85,8 +94,14 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(commandIds.copyPinnedFilesAsLlmContextWithoutTechPrompt, async () => {
-      await deps.editorToLlmModule.copyPinnedFilesAsContext(false);
+    vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContextWithoutTechPrompt, async () => {
+      await deps.editorToLlmModule.copyAllPinnedFilesAsContext(false);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt, async () => {
+      await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext(false);
     })
   );
 
