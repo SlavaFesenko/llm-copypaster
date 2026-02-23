@@ -51,7 +51,7 @@ export class EditorToLlmModule {
     });
 
     await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage('Copied this file as LLM context');
+    await vscode.window.showInformationMessage(`Copied ${nonDeletedFileItems.length} file as LLM context`);
 
     if (deletedFilesCount > 0) await this._showDeletedFilesWarning(deletedFilesCount, []);
   }
@@ -76,7 +76,7 @@ export class EditorToLlmModule {
     });
 
     await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage('Copied this tab group as LLM context');
+    await vscode.window.showInformationMessage(`Copied ${selection.fileItems.length} file(s) from tab group as LLM context`);
 
     if (selection.deletedFileUris.length > 0)
       await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
@@ -102,7 +102,7 @@ export class EditorToLlmModule {
     });
 
     await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage('Copied all open files as LLM context');
+    await vscode.window.showInformationMessage(`Copied ${selection.fileItems.length} open file(s) as LLM context`);
 
     if (selection.deletedFileUris.length > 0)
       await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
@@ -134,7 +134,7 @@ export class EditorToLlmModule {
     });
 
     await vscode.env.clipboard.writeText(contextText);
-    await vscode.window.showInformationMessage('Copied explorer selection as LLM context');
+    await vscode.window.showInformationMessage(`Copied ${selection.fileItems.length} explorer file(s) as context`);
 
     if (selection.deletedFileUris.length > 0)
       await this._showDeletedFilesWarning(selection.deletedFileUris.length, selection.deletedFileUris);
