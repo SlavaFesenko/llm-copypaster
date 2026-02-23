@@ -23,10 +23,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "llm-copypaster.helloWorld",
-        "title": "LLM Copypaster: Hello World"
-      },
-      {
         "command": "llm-copypaster.applyClipboardToFiles",
         "title": "LLM Copypaster: Apply Clipboard to Files"
       },

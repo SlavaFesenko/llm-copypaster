@@ -30,12 +30,7 @@ export interface RegisterCommandsDeps {
 }
 
 export function registerCommands(context: vscode.ExtensionContext, deps: RegisterCommandsDeps) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand(commandIds.helloWorld, async () => {
-      deps.logger.info('Hello World command executed');
-      await vscode.window.showInformationMessage('LLM Copypaster: Hello World');
-    })
-  );
+  // #region Editor 2 LLM
 
   context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyActiveFileAsLlmContext, async () => {
@@ -70,6 +65,10 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     })
   );
 
+  // #endregion
+
+  // #region LLM 2 Editor
+
   context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.applyClipboardToFiles, async () => {
       await deps.llmToEditorModule.applyClipboardToFiles();
@@ -100,4 +99,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
       await vscode.window.showInformationMessage('Guided retry prompt copied to clipboard');
     })
   );
+
+  // #endregion
 }
