@@ -51,19 +51,19 @@
       },
       {
         "command": "llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt",
-        "title": "Copy This File (Without Tech Prompt)"
+        "title": "Copy This File"
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt",
-        "title": "Copy Tab Group (Without Tech Prompt)"
+        "title": "Copy Tab Group"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
-        "title": "Copy All Open Files (Without Tech Prompt)"
+        "title": "Copy All Open Files"
       },
       {
         "command": "llm-copypaster.copyPinnedFilesAsLlmContextWithoutTechPrompt",
-        "title": "Copy Pinned Files (Without Tech Prompt)"
+        "title": "Copy Pinned Files"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
