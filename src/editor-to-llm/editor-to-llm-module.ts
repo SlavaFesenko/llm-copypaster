@@ -39,8 +39,8 @@ export class EditorToLlmModule {
     await vscode.window.showInformationMessage('Copied this file as LLM context');
   }
 
-  public async copyThisTabGroupAsContext(): Promise<void> {
-    const fileItems = await this._collectActiveTabGroupFileItems();
+  public async copyThisTabGroupAsContext(resourceUri?: vscode.Uri): Promise<void> {
+    const fileItems = await this._collectTabGroupFileItemsByResourceUri(resourceUri);
     if (!fileItems.length) {
       await vscode.window.showWarningMessage('No tab group files to copy');
       return;
@@ -108,20 +108,35 @@ export class EditorToLlmModule {
     await vscode.window.showInformationMessage('Copied explorer selection as LLM context');
   }
 
-  private async _collectActiveTabGroupFileItems(): Promise<EditorToLlmCollectedFileItem[]> {
+  private async _collectTabGroupFileItemsByResourceUri(resourceUri?: vscode.Uri): Promise<EditorToLlmCollectedFileItem[]> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       return [];
     }
 
-    const activeGroup = vscode.window.tabGroups.activeTabGroup;
+    const targetGroup = this._tryResolveTabGroupByResourceUri(resourceUri) ?? vscode.window.tabGroups.activeTabGroup;
 
-    const tabUris = activeGroup.tabs
+    const tabUris = targetGroup.tabs
       .map(tab => this._tryGetUriFromTab(tab))
       .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri))
       .filter(tabUri => tabUri.scheme === 'file');
 
     return await this._readUrisAsFileItems(tabUris);
+  }
+
+  private _tryResolveTabGroupByResourceUri(resourceUri?: vscode.Uri): vscode.TabGroup | null {
+    if (!resourceUri) return null;
+
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      for (const tab of tabGroup.tabs) {
+        const tabUri = this._tryGetUriFromTab(tab);
+        if (!tabUri) continue;
+
+        if (tabUri.toString() === resourceUri.toString()) return tabGroup;
+      }
+    }
+
+    return null;
   }
 
   private async _collectAllOpenTabsFileItems(): Promise<EditorToLlmCollectedFileItem[]> {
