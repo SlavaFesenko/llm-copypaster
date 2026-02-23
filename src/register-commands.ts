@@ -45,109 +45,79 @@ export interface RegisterCommandsDeps {
 }
 
 export function registerCommands(context: vscode.ExtensionContext, deps: RegisterCommandsDeps) {
-  // #region Editor 2 LLM
+  const commandDisposables: vscode.Disposable[] = [
+    // #region Editor 2 LLM
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContext, async () => {
       await deps.editorToLlmModule.copyThisFileAsContext(true);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContext, async () => {
       await deps.editorToLlmModule.copyThisTabGroupAsContext(true);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyAllOpenFilesAsLlmContext, async () => {
       await deps.editorToLlmModule.copyAllOpenFilesAsContext(true);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContext, async () => {
       await deps.editorToLlmModule.copyAllPinnedFilesAsContext(true);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContext, async () => {
       await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext(true);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContextWithoutTechPrompt, async () => {
       await deps.editorToLlmModule.copyThisFileAsContext(false);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContextWithoutTechPrompt, async () => {
       await deps.editorToLlmModule.copyThisTabGroupAsContext(false);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyAllOpenFilesAsLlmContextWithoutTechPrompt, async () => {
       await deps.editorToLlmModule.copyAllOpenFilesAsContext(false);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContextWithoutTechPrompt, async () => {
       await deps.editorToLlmModule.copyAllPinnedFilesAsContext(false);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt, async () => {
       await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext(false);
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContext,
       async (resourceUris?: vscode.Uri[] | vscode.Uri) => {
         await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris, true);
       }
-    )
-  );
+    ),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt,
       async (resourceUris?: vscode.Uri[] | vscode.Uri) => {
         await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris, false);
       }
-    )
-  );
+    ),
 
-  // #endregion
+    // #endregion
 
-  // #region LLM 2 Editor
+    // #region LLM 2 Editor
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.applyClipboardToFiles, async () => {
       await deps.llmToEditorModule.applyClipboardToFiles();
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.validateClipboardPayload, async () => {
       await deps.llmToEditorModule.validateClipboardPayload();
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.sanitizeClipboardPayload, async () => {
       await deps.llmToEditorModule.sanitizeClipboardPayload();
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyGuidedRetryPromptLastError, async () => {
       const retryPrompt = deps.guidedRetryStore.buildRetryPromptForLastError();
       if (!retryPrompt) {
@@ -157,30 +127,26 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
       await vscode.env.clipboard.writeText(retryPrompt);
       await vscode.window.showInformationMessage('Guided retry prompt copied to clipboard');
-    })
-  );
+    }),
 
-  // #endregion
+    // #endregion
 
-  // #region Advanced Close
+    // #region Advanced Close
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.closeAllIncludingPinned, async () => {
       await deps.advancedCloseModule.closeAllIncludingPinned();
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.closeAllButPinnedInActiveTabGroup, async () => {
       await deps.advancedCloseModule.closeAllButPinnedInActiveTabGroup();
-    })
-  );
+    }),
 
-  context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.closeAllIncludingPinnedInActiveTabGroup, async () => {
       await deps.advancedCloseModule.closeAllIncludingPinnedInActiveTabGroup();
-    })
-  );
+    }),
 
-  // #endregion
+    // #endregion
+  ];
+
+  context.subscriptions.push(...commandDisposables);
 }
