@@ -61,6 +61,7 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy File',
+      includeTechPrompt,
       copiedFilesCount,
       totalFilesCount,
       deletedFileUris: [],
@@ -97,6 +98,7 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy Tab Group',
+      includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
       deletedFileUris: selection.deletedFileUris,
@@ -133,6 +135,7 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy All',
+      includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
       deletedFileUris: selection.deletedFileUris,
@@ -169,6 +172,7 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy Pinned',
+      includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
       deletedFileUris: selection.deletedFileUris,
@@ -211,6 +215,7 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy Explorer Items',
+      includeTechPrompt: true,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
       deletedFileUris: selection.deletedFileUris,
@@ -220,17 +225,20 @@ export class EditorToLlmModule {
 
   private async _showCopyResultNotification(args: {
     commandName: 'Copy All' | 'Copy Tab Group' | 'Copy File' | 'Copy Explorer Items' | 'Copy Pinned';
+    includeTechPrompt: boolean;
     copiedFilesCount: number;
     totalFilesCount: number;
     deletedFileUris: vscode.Uri[];
     unresolvedTabs: vscode.Tab[];
   }): Promise<void> {
     const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
+    const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
+    const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
 
     const message =
       unavailableFilesCount === 0
-        ? `Copied ${args.copiedFilesCount} file(s) by '${args.commandName}' command`
-        : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${args.commandName}' command`;
+        ? `Copied ${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
+        : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
 
     const closeUnavailableActionLabel =
       unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
