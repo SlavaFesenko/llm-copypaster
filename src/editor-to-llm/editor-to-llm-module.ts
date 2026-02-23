@@ -9,6 +9,7 @@ import { buildLlmContextText } from './llm-context-formatter';
 interface EditorToLlmCollectedFileItem {
   path: string;
   content: string | null;
+  languageId?: string;
   readError?: string;
 }
 
@@ -50,8 +51,15 @@ export class EditorToLlmModule {
     const config = await this._configService.getConfig();
     const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
+    const fileItems = config.EnableCodefenceWrappingOnCopying
+      ? nonDeletedFileItems.map(fileItem => ({
+          ...fileItem,
+          content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+        }))
+      : nonDeletedFileItems;
+
     const contextText = buildLlmContextText({
-      fileItems: nonDeletedFileItems,
+      fileItems,
       includeTechPrompt,
       config,
       techPromptText,
@@ -83,8 +91,15 @@ export class EditorToLlmModule {
       const config = await this._configService.getConfig();
       const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
+      const fileItems = config.EnableCodefenceWrappingOnCopying
+        ? selection.fileItems.map(fileItem => ({
+            ...fileItem,
+            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          }))
+        : selection.fileItems;
+
       const contextText = buildLlmContextText({
-        fileItems: selection.fileItems,
+        fileItems,
         includeTechPrompt,
         config,
         techPromptText,
@@ -120,8 +135,15 @@ export class EditorToLlmModule {
       const config = await this._configService.getConfig();
       const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
+      const fileItems = config.EnableCodefenceWrappingOnCopying
+        ? selection.fileItems.map(fileItem => ({
+            ...fileItem,
+            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          }))
+        : selection.fileItems;
+
       const contextText = buildLlmContextText({
-        fileItems: selection.fileItems,
+        fileItems,
         includeTechPrompt,
         config,
         techPromptText,
@@ -157,8 +179,15 @@ export class EditorToLlmModule {
       const config = await this._configService.getConfig();
       const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
+      const fileItems = config.EnableCodefenceWrappingOnCopying
+        ? selection.fileItems.map(fileItem => ({
+            ...fileItem,
+            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          }))
+        : selection.fileItems;
+
       const contextText = buildLlmContextText({
-        fileItems: selection.fileItems,
+        fileItems,
         includeTechPrompt,
         config,
         techPromptText,
@@ -194,8 +223,15 @@ export class EditorToLlmModule {
       const config = await this._configService.getConfig();
       const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
+      const fileItems = config.EnableCodefenceWrappingOnCopying
+        ? selection.fileItems.map(fileItem => ({
+            ...fileItem,
+            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          }))
+        : selection.fileItems;
+
       const contextText = buildLlmContextText({
-        fileItems: selection.fileItems,
+        fileItems,
         includeTechPrompt,
         config,
         techPromptText,
@@ -240,8 +276,15 @@ export class EditorToLlmModule {
       const config = await this._configService.getConfig();
       const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
+      const fileItems = config.EnableCodefenceWrappingOnCopying
+        ? selection.fileItems.map(fileItem => ({
+            ...fileItem,
+            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          }))
+        : selection.fileItems;
+
       const contextText = buildLlmContextText({
-        fileItems: selection.fileItems,
+        fileItems,
         includeTechPrompt,
         config,
         techPromptText,
@@ -261,6 +304,12 @@ export class EditorToLlmModule {
       deletedFileUris: selection.deletedFileUris,
       unresolvedTabs: [],
     });
+  }
+
+  private _wrapContentWithCodeFence(content: string, languageId: string): string {
+    const normalizedLanguageId = languageId.trim();
+
+    return normalizedLanguageId ? `\`\`\`${normalizedLanguageId}\n${content}\n\`\`\`` : `\`\`\`\n${content}\n\`\`\``;
   }
 
   private async _showCopyResultNotification(args: {
@@ -535,6 +584,7 @@ export class EditorToLlmModule {
       fileItems.push({
         path: relativePath,
         content: readResult.text,
+        languageId: readResult.languageId,
         readError: readResult.readError,
       });
     }
@@ -544,12 +594,11 @@ export class EditorToLlmModule {
 
   private async _tryReadFileAsText(
     uri: vscode.Uri
-  ): Promise<{ text: string | null; readError?: string; isFileNotFound: boolean }> {
+  ): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
     try {
-      const bytes = await vscode.workspace.fs.readFile(uri);
-      const text = Buffer.from(bytes).toString('utf8');
+      const document = await vscode.workspace.openTextDocument(uri);
 
-      return { text, isFileNotFound: false };
+      return { text: document.getText(), languageId: document.languageId, isFileNotFound: false };
     } catch (error) {
       const message = String(error);
 

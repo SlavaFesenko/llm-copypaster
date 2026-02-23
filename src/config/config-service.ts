@@ -24,7 +24,11 @@ export class ConfigService {
 
     const currentLlm = configuration.get<string>('currentLLM', defaultConfig.currentLLM);
     const autoFormatAfterApply = configuration.get<boolean>('autoFormatAfterApply', defaultConfig.autoFormatAfterApply);
+    const EnableCodefenceWrappingOnCopying = configuration.get<boolean>(
+      'EnableCodefenceWrappingOnCopying',
+      defaultConfig.EnableCodefenceWrappingOnCopying
+    );
 
-    return { currentLLM: currentLlm, autoFormatAfterApply };
+    return { currentLLM: currentLlm, autoFormatAfterApply, EnableCodefenceWrappingOnCopying };
   }
 }

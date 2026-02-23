@@ -98,10 +98,9 @@ async function readUriAsFileItem(uri: vscode.Uri, logger: OutputChannelLogger): 
   const relativePath = toWorkspaceRelativePath(uri) ?? uri.fsPath;
 
   try {
-    const bytes = await vscode.workspace.fs.readFile(uri);
-    const content = Buffer.from(bytes).toString('utf8');
+    const document = await vscode.workspace.openTextDocument(uri);
 
-    return { path: relativePath, content };
+    return { path: relativePath, content: document.getText(), languageId: document.languageId };
   } catch (error) {
     const readError = String(error);
 
