@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   const editorToLlmModule = new EditorToLlmModule(configService, logger);
   const llmToEditorModule = new LlmToEditorModule(configService, guidedRetryStore, logger);
-  const advancedCloseModule = new AdvancedCloseModule(configService, logger);
+  const advancedCloseModule = new AdvancedCloseModule(logger);
 
   registerCommands(context, {
     editorToLlmModule,
@@ -28,14 +28,6 @@ export function activate(context: vscode.ExtensionContext) {
     advancedCloseModule,
     logger,
   });
-
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(async () => {
-      await advancedCloseModule.refreshAdvancedCloseFeatureContextKey();
-    })
-  );
-
-  void advancedCloseModule.refreshAdvancedCloseFeatureContextKey();
 
   logger.info('Extension activated');
 }
