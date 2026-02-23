@@ -17,6 +17,7 @@
     "onCommand:llm-copypaster.copyThisFileAsLlmContext",
     "onCommand:llm-copypaster.copyThisTabGroupAsLlmContext",
     "onCommand:llm-copypaster.copyAllOpenFilesAsLlmContext",
+    "onCommand:llm-copypaster.copyPinnedFilesAsLlmContext",
     "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContext",
     "onCommand:llm-copypaster.applyClipboardToFiles",
     "onCommand:llm-copypaster.validateClipboardPayload",
@@ -27,19 +28,23 @@
     "commands": [
       {
         "command": "llm-copypaster.copyThisFileAsLlmContext",
-        "title": "Copy This File as LLM Context"
+        "title": "Copy This File"
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-        "title": "Copy Tab Group as LLM Context"
+        "title": "Copy Tab Group"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
-        "title": "Copy All Open Files as LLM Context"
+        "title": "Copy All Open Files"
+      },
+      {
+        "command": "llm-copypaster.copyPinnedFilesAsLlmContext",
+        "title": "Copy Pinned Files"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-        "title": "Copy Selected Explorer Items as LLM Context"
+        "title": "Copy Selected Explorer Items"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
@@ -94,6 +99,11 @@
           "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@12"
+        },
+        {
+          "command": "llm-copypaster.copyPinnedFilesAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@13"
         }
       ],
       "llm-copypaster.explorer": [

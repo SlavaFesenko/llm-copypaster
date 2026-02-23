@@ -11,6 +11,7 @@ export const commandIds = {
   copyThisFileAsLlmContext: 'llm-copypaster.copyThisFileAsLlmContext',
   copyThisTabGroupAsLlmContext: 'llm-copypaster.copyThisTabGroupAsLlmContext',
   copyAllOpenFilesAsLlmContext: 'llm-copypaster.copyAllOpenFilesAsLlmContext',
+  copyPinnedFilesAsLlmContext: 'llm-copypaster.copyPinnedFilesAsLlmContext',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
@@ -46,6 +47,12 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
   context.subscriptions.push(
     vscode.commands.registerCommand(commandIds.copyAllOpenFilesAsLlmContext, async () => {
       await deps.editorToLlmModule.copyAllOpenFilesAsContext();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.copyPinnedFilesAsLlmContext, async () => {
+      await deps.editorToLlmModule.copyPinnedFilesAsContext();
     })
   );
 
