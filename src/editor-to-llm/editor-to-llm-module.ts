@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../config/config-service';
 import { OutputChannelLogger } from '../utils/output-channel-logger';
-import { collectActiveFileSelection, collectAllOpenFilesSelection } from './file-selection';
+import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
 import { buildTechPromptText } from './response-format-prompt';
 
@@ -61,8 +61,8 @@ export class EditorToLlmModule {
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
-    const selection = await collectAllOpenFilesSelection(this._logger);
-    if (!selection) {
+    const fileItems = await this._collectAllOpenTabsFileItems();
+    if (!fileItems.length) {
       await vscode.window.showWarningMessage('No open files to copy');
       return;
     }
@@ -71,7 +71,7 @@ export class EditorToLlmModule {
     const techPromptText = config.includeTechPrompt ? buildTechPromptText(config) : '';
 
     const contextText = buildLlmContextText({
-      fileItems: selection.fileItems,
+      fileItems,
       includeTechPrompt: config.includeTechPrompt,
       config,
       techPromptText,
@@ -118,7 +118,23 @@ export class EditorToLlmModule {
 
     const tabUris = activeGroup.tabs
       .map(tab => this._tryGetUriFromTab(tab))
-      .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri));
+      .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri))
+      .filter(tabUri => tabUri.scheme === 'file');
+
+    return await this._readUrisAsFileItems(tabUris);
+  }
+
+  private async _collectAllOpenTabsFileItems(): Promise<EditorToLlmCollectedFileItem[]> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return [];
+    }
+
+    const tabUris = vscode.window.tabGroups.all
+      .flatMap(tabGroup => tabGroup.tabs)
+      .map(tab => this._tryGetUriFromTab(tab))
+      .filter((tabUri): tabUri is vscode.Uri => Boolean(tabUri))
+      .filter(tabUri => tabUri.scheme === 'file');
 
     return await this._readUrisAsFileItems(tabUris);
   }
