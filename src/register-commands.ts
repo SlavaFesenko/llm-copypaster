@@ -21,6 +21,8 @@ export const commandIds = {
   copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt:
     'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
+  copySelectedExplorerItemsAsLlmContextWithoutTechPrompt:
+    'llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
   validateClipboardPayload: 'llm-copypaster.validateClipboardPayload',
@@ -109,7 +111,16 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContext,
       async (resourceUris?: vscode.Uri[] | vscode.Uri) => {
-        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris);
+        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris, true);
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      commandIds.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt,
+      async (resourceUris?: vscode.Uri[] | vscode.Uri) => {
+        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris, false);
       }
     )
   );

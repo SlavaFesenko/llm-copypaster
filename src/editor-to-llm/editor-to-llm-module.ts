@@ -217,7 +217,10 @@ export class EditorToLlmModule {
     });
   }
 
-  public async copySelectedExplorerItemsAsContext(resourceUris?: vscode.Uri[] | vscode.Uri): Promise<void> {
+  public async copySelectedExplorerItemsAsContext(
+    resourceUris?: vscode.Uri[] | vscode.Uri,
+    includeTechPrompt: boolean = true
+  ): Promise<void> {
     const selectedUris = this._normalizeExplorerSelectionUris(resourceUris);
     if (!selectedUris.length) {
       await vscode.window.showWarningMessage('No explorer selection to copy');
@@ -235,11 +238,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
+      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: true,
+        includeTechPrompt,
         config,
         techPromptText,
       });
@@ -252,7 +255,7 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy Explorer Items',
-      includeTechPrompt: true,
+      includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
       deletedFileUris: selection.deletedFileUris,

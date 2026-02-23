@@ -25,6 +25,7 @@
     "onCommand:llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
     "onCommand:llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
     "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContext",
+    "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
     "onCommand:llm-copypaster.applyClipboardToFiles",
     "onCommand:llm-copypaster.validateClipboardPayload",
     "onCommand:llm-copypaster.sanitizeClipboardPayload",
@@ -77,7 +78,11 @@
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-        "title": "Copy Selected Explorer Items"
+        "title": "Copy Nested Files: With Tech Prompt"
+      },
+      {
+        "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
+        "title": "Copy Nested Files: Without Tech Prompt"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
@@ -217,6 +222,11 @@
           "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
           "group": "navigation@10"
+        },
+        {
+          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "navigation@11"
         }
       ],
       "llm-copypaster.closeAdvanced": [
