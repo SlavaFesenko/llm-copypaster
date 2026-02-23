@@ -1,8 +1,8 @@
 {
   "name": "llm-copypaster",
   "displayName": "llm-copypaster",
-  "description": "",
-  "version": "0.0.1",
+  "description": "Added Paste from Editor Feature",
+  "version": "0.1.0",
   "repository": {
     "type": "git",
     "url": "[https://github.com/SlavaFesenko/llm-copypaster.git](https://github.com/SlavaFesenko/llm-copypaster.git)"
