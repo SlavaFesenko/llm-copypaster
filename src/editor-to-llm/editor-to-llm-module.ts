@@ -30,7 +30,7 @@ export class EditorToLlmModule {
     private readonly _logger: OutputChannelLogger
   ) {}
 
-  public async copyThisFileAsContext(): Promise<void> {
+  public async copyThisFileAsContext(includeTechPrompt: boolean = true): Promise<void> {
     const selection = await collectActiveFileSelection(this._logger);
     if (!selection) {
       await vscode.window.showWarningMessage('No active file to copy');
@@ -48,11 +48,11 @@ export class EditorToLlmModule {
     }
 
     const config = await this._configService.getConfig();
-    const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
+    const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
     const contextText = buildLlmContextText({
       fileItems: nonDeletedFileItems,
-      includeTechPrompt: true,
+      includeTechPrompt,
       config,
       techPromptText,
     });
@@ -68,7 +68,7 @@ export class EditorToLlmModule {
     });
   }
 
-  public async copyThisTabGroupAsContext(): Promise<void> {
+  public async copyThisTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
     const selection = await this._collectActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -80,11 +80,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
+      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: true,
+        includeTechPrompt,
         config,
         techPromptText,
       });
@@ -104,7 +104,7 @@ export class EditorToLlmModule {
     });
   }
 
-  public async copyAllOpenFilesAsContext(): Promise<void> {
+  public async copyAllOpenFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
     const selection = await this._collectAllOpenTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -116,11 +116,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
+      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: true,
+        includeTechPrompt,
         config,
         techPromptText,
       });
@@ -140,7 +140,7 @@ export class EditorToLlmModule {
     });
   }
 
-  public async copyPinnedFilesAsContext(): Promise<void> {
+  public async copyPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
     const selection = await this._collectPinnedTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -152,11 +152,11 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = await loadDefaultCopyAsContextPrompt(this._extensionContext);
+      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt: true,
+        includeTechPrompt,
         config,
         techPromptText,
       });
