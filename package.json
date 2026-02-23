@@ -54,6 +54,32 @@
         "title": "LLM Copypaster: Sanitize Clipboard Payload"
       }
     ],
+    "menus": {
+      "editor/title/context": [
+        {
+          "command": "llm-copypaster.copyThisFileAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@10"
+        },
+        {
+          "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@11"
+        },
+        {
+          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "navigation@12"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "navigation@10"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "llm-copypaster.applyClipboardToFiles",
