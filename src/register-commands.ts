@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { AdvancedCloseModule } from './advanced-close/advanced-close-module';
 import { EditorToLlmModule } from './editor-to-llm/editor-to-llm-module';
 import { GuidedRetryStore } from './llm-to-editor/guided-retry/guided-retry-store';
 import { LlmToEditorModule } from './llm-to-editor/llm-to-editor-module';
@@ -18,6 +19,10 @@ export const commandIds = {
   validateClipboardPayload: 'llm-copypaster.validateClipboardPayload',
   sanitizeClipboardPayload: 'llm-copypaster.sanitizeClipboardPayload',
   copyGuidedRetryPromptLastError: 'llm-copypaster.copyGuidedRetryPromptLastError',
+
+  closeAllIncludingPinned: 'llm-copypaster.closeAllIncludingPinned',
+  closeAllButPinnedInActiveTabGroup: 'llm-copypaster.closeAllButPinnedInActiveTabGroup',
+  closeAllIncludingPinnedInActiveTabGroup: 'llm-copypaster.closeAllIncludingPinnedInActiveTabGroup',
 } as const;
 
 export type CommandId = (typeof commandIds)[keyof typeof commandIds];
@@ -26,6 +31,7 @@ export interface RegisterCommandsDeps {
   editorToLlmModule: EditorToLlmModule;
   llmToEditorModule: LlmToEditorModule;
   guidedRetryStore: GuidedRetryStore;
+  advancedCloseModule: AdvancedCloseModule;
   logger: OutputChannelLogger;
 }
 
@@ -97,6 +103,28 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
       await vscode.env.clipboard.writeText(retryPrompt);
       await vscode.window.showInformationMessage('Guided retry prompt copied to clipboard');
+    })
+  );
+
+  // #endregion
+
+  // #region Advanced Close
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.closeAllIncludingPinned, async () => {
+      await deps.advancedCloseModule.closeAllIncludingPinned();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.closeAllButPinnedInActiveTabGroup, async () => {
+      await deps.advancedCloseModule.closeAllButPinnedInActiveTabGroup();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandIds.closeAllIncludingPinnedInActiveTabGroup, async () => {
+      await deps.advancedCloseModule.closeAllIncludingPinnedInActiveTabGroup();
     })
   );
 

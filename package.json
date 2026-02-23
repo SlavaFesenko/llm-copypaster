@@ -21,7 +21,10 @@
     "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContext",
     "onCommand:llm-copypaster.applyClipboardToFiles",
     "onCommand:llm-copypaster.validateClipboardPayload",
-    "onCommand:llm-copypaster.sanitizeClipboardPayload"
+    "onCommand:llm-copypaster.sanitizeClipboardPayload",
+    "onCommand:llm-copypaster.closeAllIncludingPinned",
+    "onCommand:llm-copypaster.closeAllButPinnedInActiveTabGroup",
+    "onCommand:llm-copypaster.closeAllIncludingPinnedInActiveTabGroup"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -57,6 +60,18 @@
       {
         "command": "llm-copypaster.sanitizeClipboardPayload",
         "title": "LLM Copypaster: Sanitize Clipboard Payload"
+      },
+      {
+        "command": "llm-copypaster.closeAllIncludingPinned",
+        "title": "Close All Including Pinned"
+      },
+      {
+        "command": "llm-copypaster.closeAllButPinnedInActiveTabGroup",
+        "title": "Close All but Pinned in ACTIVE tab group"
+      },
+      {
+        "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
+        "title": "Close All Including Pinned in ACTIVE tab group"
       }
     ],
     "submenus": [
@@ -67,6 +82,10 @@
       {
         "id": "llm-copypaster.explorer",
         "label": "LLM Copypaster"
+      },
+      {
+        "id": "llm-copypaster.closeAdvanced",
+        "label": "Close Advanced"
       }
     ],
     "menus": {
@@ -82,6 +101,13 @@
           "submenu": "llm-copypaster.explorer",
           "when": "explorerResourceIsFolder || resourceScheme == file",
           "group": "navigation@10"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "submenu": "llm-copypaster.closeAdvanced",
+          "when": "llmCopypaster.enableAdvancedCloseFeature",
+          "group": "1_close@999"
         }
       ],
       "llm-copypaster.editor": [
@@ -111,6 +137,23 @@
           "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
           "group": "navigation@10"
+        }
+      ],
+      "llm-copypaster.closeAdvanced": [
+        {
+          "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
+          "when": "llmCopypaster.enableAdvancedCloseFeature",
+          "group": "navigation@10"
+        },
+        {
+          "command": "llm-copypaster.closeAllButPinnedInActiveTabGroup",
+          "when": "llmCopypaster.enableAdvancedCloseFeature",
+          "group": "navigation@11"
+        },
+        {
+          "command": "llm-copypaster.closeAllIncludingPinned",
+          "when": "llmCopypaster.enableAdvancedCloseFeature",
+          "group": "navigation@12"
         }
       ]
     },

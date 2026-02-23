@@ -17,6 +17,7 @@ export interface LlmCopypasterConfig {
   sanitizationRules: LlmCopypasterSanitizationRule[];
   autoFormatAfterApply: boolean;
   includeTechPrompt: boolean;
+  EnableAdvancedCloseFeature: boolean;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -37,6 +38,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     ],
     autoFormatAfterApply: false,
     includeTechPrompt: true,
+    EnableAdvancedCloseFeature: false,
   };
 }
 
@@ -58,6 +60,10 @@ export function mergeConfigs(
       fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply,
     includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
     currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
+    EnableAdvancedCloseFeature:
+      fileConfig?.EnableAdvancedCloseFeature ??
+      settingsConfig.EnableAdvancedCloseFeature ??
+      defaultConfig.EnableAdvancedCloseFeature,
   };
 
   return mergedConfig;
