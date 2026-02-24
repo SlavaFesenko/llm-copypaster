@@ -1,14 +1,11 @@
-import * as vscode from 'vscode';
-
 import { LlmContextLimits, LlmCopypasterConfig } from '../../../config';
 
-export interface BuildPromptWithSizeStatsAndNotifyArgs {
-  commandDisplayName: string;
+export interface BuildPromptWithSizeStatsArgs {
   promptText: string;
   config: LlmCopypasterConfig;
 }
 
-export interface BuildPromptWithSizeStatsAndNotifyResult {
+export interface BuildPromptWithSizeStatsResult {
   promptTextWithStats: string;
   linesCount: number;
   approxTokensCount: number;
@@ -18,13 +15,11 @@ export interface BuildPromptWithSizeStatsAndNotifyResult {
   exceededBy: ('LINES' | 'TOKENS')[];
 }
 
-export async function buildPromptWithSizeStatsAndNotify(
-  args: BuildPromptWithSizeStatsAndNotifyArgs
-): Promise<BuildPromptWithSizeStatsAndNotifyResult> {
+export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): BuildPromptWithSizeStatsResult {
   const normalizedPromptText = args.promptText ?? '';
 
   const linesCount = countLines(normalizedPromptText);
-  const approxTokensCount = estimateTokensCount(normalizedPromptText);
+  const approxTokensCount = estimateTokensCount(normalizedPromptText, args.config);
 
   const limits = resolveLimitsForCurrentLlm(args.config);
 
@@ -34,22 +29,6 @@ export async function buildPromptWithSizeStatsAndNotify(
   if (limits.maxTokensCountInContext !== 0 && approxTokensCount > limits.maxTokensCountInContext) exceededBy.push('TOKENS');
 
   const isExceeded = exceededBy.length > 0;
-
-  const notificationText = buildNotificationText({
-    commandDisplayName: args.commandDisplayName,
-    linesCount,
-    approxTokensCount,
-    maxLinesCountInContext: limits.maxLinesCountInContext,
-    maxTokensCountInContext: limits.maxTokensCountInContext,
-    isExceeded,
-    exceededBy,
-  });
-
-  if (isExceeded) {
-    await vscode.window.showWarningMessage(notificationText);
-  } else {
-    await vscode.window.showInformationMessage(notificationText);
-  }
 
   const statsFooterText = buildPromptFooterText({
     linesCount,
@@ -104,35 +83,14 @@ function countLines(text: string): number {
   return parts.length;
 }
 
-function estimateTokensCount(text: string): number {
+function estimateTokensCount(text: string, config: LlmCopypasterConfig): number {
   if (!text) return 0;
 
-  return Math.ceil(text.length / 4);
-}
+  const configuredApproxCharsPerToken = Number(config.promptSizeApproxCharsPerToken);
+  const approxCharsPerToken = Number.isFinite(configuredApproxCharsPerToken) ? configuredApproxCharsPerToken : 4;
+  const safeApproxCharsPerToken = Math.max(1, approxCharsPerToken);
 
-function buildNotificationText(args: {
-  commandDisplayName: string;
-  linesCount: number;
-  approxTokensCount: number;
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
-  isExceeded: boolean;
-  exceededBy: ('LINES' | 'TOKENS')[];
-}): string {
-  const baseStats = `[${args.commandDisplayName}] Context size: ${args.linesCount} line(s), ~${args.approxTokensCount} token(s)`;
-
-  const maxLinesPart = args.maxLinesCountInContext === 0 ? 'maxLines=unlimited' : `maxLines=${args.maxLinesCountInContext}`;
-  const maxTokensPart =
-    args.maxTokensCountInContext === 0 ? 'maxTokens=unlimited' : `maxTokens=${args.maxTokensCountInContext}`;
-  const limitsPart = `(${maxLinesPart}, ${maxTokensPart})`;
-
-  if (!args.isExceeded) return `${baseStats} ${limitsPart}`;
-
-  const exceededParts: string[] = [];
-  if (args.exceededBy.includes('LINES')) exceededParts.push('lines');
-  if (args.exceededBy.includes('TOKENS')) exceededParts.push('tokens');
-
-  return `${baseStats} ${limitsPart} Exceeded by: ${exceededParts.join(', ')}`;
+  return Math.ceil(text.length / safeApproxCharsPerToken);
 }
 
 function buildPromptFooterText(args: {

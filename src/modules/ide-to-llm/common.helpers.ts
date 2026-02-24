@@ -123,6 +123,14 @@ export async function showCopyResultNotification(
     totalFilesCount: number;
     deletedFileUris: vscode.Uri[];
     unresolvedTabs: vscode.Tab[];
+    promptSizeStats?: {
+      linesCount: number;
+      approxTokensCount: number;
+      maxLinesCountInContext: number;
+      maxTokensCountInContext: number;
+      isExceeded: boolean;
+      exceededBy: ('LINES' | 'TOKENS')[];
+    };
   }
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
@@ -131,17 +139,28 @@ export async function showCopyResultNotification(
 
   const messagePrefix = 'Copied ';
 
-  const message =
+  const baseMessage =
     unavailableFilesCount === 0
       ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
       : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
 
+  const shouldShowPromptSizeStats = await tryGetShouldShowPromptSizeStats(deps, args.promptSizeStats);
+  const promptSizeStatsSuffix = shouldShowPromptSizeStats ? buildPromptSizeStatsSuffix(args.promptSizeStats ?? null) : '';
+
+  const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
+
   const closeUnavailableActionLabel =
     unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
+  const shouldWarn = shouldShowPromptSizeStats ? Boolean(args.promptSizeStats?.isExceeded) : false;
+
   const selectedAction = closeUnavailableActionLabel
-    ? await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
-    : await vscode.window.showInformationMessage(message);
+    ? shouldWarn
+      ? await vscode.window.showWarningMessage(message, closeUnavailableActionLabel)
+      : await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
+    : shouldWarn
+      ? await vscode.window.showWarningMessage(message)
+      : await vscode.window.showInformationMessage(message);
 
   if (selectedAction !== closeUnavailableActionLabel) return;
 
@@ -149,6 +168,62 @@ export async function showCopyResultNotification(
     deletedFileUris: args.deletedFileUris,
     unresolvedTabs: args.unresolvedTabs,
   });
+}
+
+async function tryGetShouldShowPromptSizeStats(
+  deps: EditorToLlmModulePrivateHelpersDependencies,
+  promptSizeStats:
+    | {
+        linesCount: number;
+        approxTokensCount: number;
+        maxLinesCountInContext: number;
+        maxTokensCountInContext: number;
+        isExceeded: boolean;
+        exceededBy: ('LINES' | 'TOKENS')[];
+      }
+    | undefined
+): Promise<boolean> {
+  if (!promptSizeStats) return false;
+
+  try {
+    const config = await deps.configService.getConfig();
+    return config.showPromptSizeStatsInCopyNotification !== false;
+  } catch (error) {
+    deps.logger.debug(`Failed reading config for prompt size stats notification: ${String(error)}`);
+    return true;
+  }
+}
+
+function buildPromptSizeStatsSuffix(
+  promptSizeStats: {
+    linesCount: number;
+    approxTokensCount: number;
+    maxLinesCountInContext: number;
+    maxTokensCountInContext: number;
+    isExceeded: boolean;
+    exceededBy: ('LINES' | 'TOKENS')[];
+  } | null
+): string {
+  if (!promptSizeStats) return '';
+
+  const maxLinesPart =
+    promptSizeStats.maxLinesCountInContext === 0
+      ? 'maxLines=unlimited'
+      : `maxLines=${promptSizeStats.maxLinesCountInContext}`;
+  const maxTokensPart =
+    promptSizeStats.maxTokensCountInContext === 0
+      ? 'maxTokens=unlimited'
+      : `maxTokens=${promptSizeStats.maxTokensCountInContext}`;
+  const limitsPart = `${maxLinesPart}, ${maxTokensPart}`;
+
+  if (!promptSizeStats.isExceeded)
+    return `Context: ${promptSizeStats.linesCount} line(s), ~${promptSizeStats.approxTokensCount} token(s) (${limitsPart})`;
+
+  const exceededParts: string[] = [];
+  if (promptSizeStats.exceededBy.includes('LINES')) exceededParts.push('lines');
+  if (promptSizeStats.exceededBy.includes('TOKENS')) exceededParts.push('tokens');
+
+  return `Context: ${promptSizeStats.linesCount} line(s), ~${promptSizeStats.approxTokensCount} token(s) (${limitsPart}) Exceeded by: ${exceededParts.join(', ')}`;
 }
 
 async function closeUnavailableTabs(

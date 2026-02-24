@@ -29,6 +29,8 @@ export interface LlmCopypasterConfig {
   autoFormatAfterApply: boolean;
   includeTechPrompt: boolean;
   llmContextLimitsByLlm: LlmContextLimitsByLlm;
+  showPromptSizeStatsInCopyNotification: boolean;
+  promptSizeApproxCharsPerToken: number;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -55,6 +57,8 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
         maxTokensCountInContext: 15000,
       },
     },
+    showPromptSizeStatsInCopyNotification: true,
+    promptSizeApproxCharsPerToken: 4,
   };
 }
 
@@ -83,6 +87,14 @@ export function mergeConfigs(
     includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
     currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
     llmContextLimitsByLlm: mergedLlmContextLimitsByLlm,
+    showPromptSizeStatsInCopyNotification:
+      fileConfig?.showPromptSizeStatsInCopyNotification ??
+      settingsConfig.showPromptSizeStatsInCopyNotification ??
+      defaultConfig.showPromptSizeStatsInCopyNotification,
+    promptSizeApproxCharsPerToken:
+      fileConfig?.promptSizeApproxCharsPerToken ??
+      settingsConfig.promptSizeApproxCharsPerToken ??
+      defaultConfig.promptSizeApproxCharsPerToken,
   };
 
   return mergedConfig;
