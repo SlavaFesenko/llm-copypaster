@@ -3,54 +3,52 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { EditorToLlmModulePrivateHelpersDependencies } from './common.helpers';
-import {
-  copyAllOpenTabsAsContext,
-  copyAllPinnedTabsAsContext,
-  copyPinnedTabsInActiveTabGroupAsContext,
-  copyThisActiveFileAsContext,
-  copyThisTabGroupAsContext,
-} from './editor.helpers';
-import { CopySelectedExplorerItemsArgs, copySelectedExplorerItemsAsContext } from './explorer.helpers';
+import { EditorHelper } from './editor-helper';
+import { CopySelectedExplorerItemsArgs, ExplorerHelper } from './explorer-helper';
 
 export class IdeToLlmModule {
+  private readonly _editorHelper: EditorHelper;
+  private readonly _explorerHelper: ExplorerHelper;
+
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
     private readonly _logger: OutputChannelLogger
   ) {
-    this._privateHelpersDeps = {
+    const privateHelpersDeps: EditorToLlmModulePrivateHelpersDependencies = {
       extensionContext: this._extensionContext,
       configService: this._configService,
       logger: this._logger,
     };
+
+    this._editorHelper = new EditorHelper(privateHelpersDeps);
+    this._explorerHelper = new ExplorerHelper(privateHelpersDeps);
   }
 
   public async copyThisFileAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await copyThisActiveFileAsContext(this._privateHelpersDeps, includeTechPrompt);
+    await this._editorHelper.copyThisFileAsContext(includeTechPrompt);
   }
 
   public async copyThisTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await copyThisTabGroupAsContext(this._privateHelpersDeps, includeTechPrompt);
+    await this._editorHelper.copyThisTabGroupAsContext(includeTechPrompt);
   }
 
   public async copyAllOpenFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await copyAllOpenTabsAsContext(this._privateHelpersDeps, includeTechPrompt);
+    await this._editorHelper.copyAllOpenFilesAsContext(includeTechPrompt);
   }
 
   public async copyAllPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await copyAllPinnedTabsAsContext(this._privateHelpersDeps, includeTechPrompt);
+    await this._editorHelper.copyAllPinnedFilesAsContext(includeTechPrompt);
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await copyPinnedTabsInActiveTabGroupAsContext(this._privateHelpersDeps, includeTechPrompt);
+    await this._editorHelper.copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt);
   }
 
   public async copySelectedExplorerItemsAsContext(
     args?: CopySelectedExplorerItemsArgs,
     includeTechPrompt: boolean = true
   ): Promise<void> {
-    await copySelectedExplorerItemsAsContext(this._privateHelpersDeps, args, includeTechPrompt);
+    await this._explorerHelper.copySelectedExplorerItemsAsContext(args, includeTechPrompt);
   }
-
-  private readonly _privateHelpersDeps: EditorToLlmModulePrivateHelpersDependencies;
 }

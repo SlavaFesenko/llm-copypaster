@@ -17,43 +17,31 @@ export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];
 }
 
-export async function copySelectedExplorerItemsAsContext(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args?: CopySelectedExplorerItemsArgs,
-  includeTechPrompt: boolean = true
-): Promise<void> {
-  const clickedUri = args?.clickedUri;
-  const selectedUrisCopy = [...(args?.selectedUris ?? [])];
+export class ExplorerHelper {
+  public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
 
-  const normalizedSelectedUris = uniqueByUriKeyKeepOrder(selectedUrisCopy);
-  const clickedUriKey = clickedUri ? buildUriKey(clickedUri) : null;
+  public async copySelectedExplorerItemsAsContext(
+    args?: CopySelectedExplorerItemsArgs,
+    includeTechPrompt: boolean = true
+  ): Promise<void> {
+    const clickedUri = args?.clickedUri;
+    const selectedUrisCopy = [...(args?.selectedUris ?? [])];
 
-  if (normalizedSelectedUris.length === 0 && clickedUri) {
-    await copyExplorerUrisAsContext(deps, {
-      inputUris: [clickedUri],
-      selectionSource: 'CLICKED',
-      includeTechPrompt,
-    });
+    const normalizedSelectedUris = uniqueByUriKeyKeepOrder(selectedUrisCopy);
+    const clickedUriKey = clickedUri ? buildUriKey(clickedUri) : null;
 
-    return;
-  }
+    if (normalizedSelectedUris.length === 0 && clickedUri) {
+      await this._copyExplorerUrisAsContext({
+        inputUris: [clickedUri],
+        selectionSource: 'CLICKED',
+        includeTechPrompt,
+      });
 
-  if (normalizedSelectedUris.length > 0 && !clickedUri) {
-    await copyExplorerUrisAsContext(deps, {
-      inputUris: normalizedSelectedUris,
-      selectionSource: 'SELECTED',
-      includeTechPrompt,
-    });
+      return;
+    }
 
-    return;
-  }
-
-  if (normalizedSelectedUris.length > 0 && clickedUri) {
-    const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => buildUriKey(uri)));
-    const isClickedInSelected = clickedUriKey ? selectedUriKeys.has(clickedUriKey) : false;
-
-    if (isClickedInSelected) {
-      await copyExplorerUrisAsContext(deps, {
+    if (normalizedSelectedUris.length > 0 && !clickedUri) {
+      await this._copyExplorerUrisAsContext({
         inputUris: normalizedSelectedUris,
         selectionSource: 'SELECTED',
         includeTechPrompt,
@@ -62,80 +50,92 @@ export async function copySelectedExplorerItemsAsContext(
       return;
     }
 
-    const quickPickItems = buildExplorerSelectionSourceQuickPickItems({
-      selectedUris: normalizedSelectedUris,
-      clickedUri,
-    });
+    if (normalizedSelectedUris.length > 0 && clickedUri) {
+      const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => buildUriKey(uri)));
+      const isClickedInSelected = clickedUriKey ? selectedUriKeys.has(clickedUriKey) : false;
 
-    const pickedItem = await vscode.window.showQuickPick(quickPickItems, {
-      placeHolder: 'Choose what to copy from Explorer',
-      canPickMany: false,
-    });
+      if (isClickedInSelected) {
+        await this._copyExplorerUrisAsContext({
+          inputUris: normalizedSelectedUris,
+          selectionSource: 'SELECTED',
+          includeTechPrompt,
+        });
 
-    if (!pickedItem) return;
+        return;
+      }
 
-    await copyExplorerUrisAsContext(deps, {
-      inputUris: pickedItem.uris,
-      selectionSource: pickedItem.selectionSource,
-      includeTechPrompt,
-    });
+      const quickPickItems = buildExplorerSelectionSourceQuickPickItems({
+        selectedUris: normalizedSelectedUris,
+        clickedUri,
+      });
 
-    return;
+      const pickedItem = await vscode.window.showQuickPick(quickPickItems, {
+        placeHolder: 'Choose what to copy from Explorer',
+        canPickMany: false,
+      });
+
+      if (!pickedItem) return;
+
+      await this._copyExplorerUrisAsContext({
+        inputUris: pickedItem.uris,
+        selectionSource: pickedItem.selectionSource,
+        includeTechPrompt,
+      });
+
+      return;
+    }
+
+    await vscode.window.showWarningMessage('No explorer selection to copy');
   }
 
-  await vscode.window.showWarningMessage('No explorer selection to copy');
-}
-
-export async function copyExplorerUrisAsContext(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: {
+  private async _copyExplorerUrisAsContext(args: {
     inputUris: vscode.Uri[];
     selectionSource: ExplorerCopySelectionSource;
     includeTechPrompt: boolean;
-  }
-): Promise<void> {
-  const selection = await collectExplorerItemsFileItems(deps, args.inputUris);
+  }): Promise<void> {
+    const selection = await collectExplorerItemsFileItems(this._deps, args.inputUris);
 
-  const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
 
-  if (totalFilesCount === 0) {
-    await vscode.window.showWarningMessage('No files found in explorer selection');
-    return;
-  }
+    if (totalFilesCount === 0) {
+      await vscode.window.showWarningMessage('No files found in explorer selection');
+      return;
+    }
 
-  if (selection.fileItems.length > 0) {
-    const config = await deps.configService.getConfig();
-    const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(deps.extensionContext) : '';
+    if (selection.fileItems.length > 0) {
+      const config = await this._deps.configService.getConfig();
+      const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._deps.extensionContext) : '';
 
-    const fileItems = config.EnableCodefenceWrappingOnCopying
-      ? selection.fileItems.map(fileItem => ({
-          ...fileItem,
-          content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
-        }))
-      : selection.fileItems;
+      const fileItems = config.EnableCodefenceWrappingOnCopying
+        ? selection.fileItems.map(fileItem => ({
+            ...fileItem,
+            content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          }))
+        : selection.fileItems;
 
-    const contextText = buildLlmContextText({
-      fileItems,
+      const contextText = buildLlmContextText({
+        fileItems,
+        includeTechPrompt: args.includeTechPrompt,
+        config,
+        techPromptText,
+      });
+
+      await vscode.env.clipboard.writeText(contextText);
+    } else {
+      await vscode.window.showWarningMessage('No files found in explorer selection');
+      return;
+    }
+
+    await showCopyResultNotification(this._deps, {
+      commandName: 'Copy Explorer Items',
       includeTechPrompt: args.includeTechPrompt,
-      config,
-      techPromptText,
+      copiedFilesCount: selection.fileItems.length,
+      totalFilesCount,
+      deletedFileUris: selection.deletedFileUris,
+      unresolvedTabs: [],
+      selectionSourceLabel: args.selectionSource,
     });
-
-    await vscode.env.clipboard.writeText(contextText);
-  } else {
-    await vscode.window.showWarningMessage('No files found in explorer selection');
-    return;
   }
-
-  await showCopyResultNotification(deps, {
-    commandName: 'Copy Explorer Items',
-    includeTechPrompt: args.includeTechPrompt,
-    copiedFilesCount: selection.fileItems.length,
-    totalFilesCount,
-    deletedFileUris: selection.deletedFileUris,
-    unresolvedTabs: [],
-    selectionSourceLabel: args.selectionSource,
-  });
 }
 
 function buildExplorerSelectionSourceQuickPickItems(args: {
