@@ -7,7 +7,7 @@ import { GuidedRetryStore } from './guided-retry/guided-retry-store';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';
 import { validateClipboardTextToFilesPayload } from './validation/validator';
 
-export class LlmToEditorModule {
+export class LlmToIdeModule {
   public constructor(
     private readonly _configService: ConfigService,
     private readonly _guidedRetryStore: GuidedRetryStore,

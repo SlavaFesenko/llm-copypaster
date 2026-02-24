@@ -4,7 +4,7 @@ import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-mod
 import { CopySelectedExplorerItemsArgs } from './modules/editor-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/editor-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-editor/guided-retry/guided-retry-store';
-import { LlmToEditorModule } from './modules/llm-to-editor/llm-to-editor-module';
+import { LlmToIdeModule } from './modules/llm-to-editor/llm-to-ide-module';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {
@@ -39,7 +39,7 @@ export type CommandId = (typeof commandIds)[keyof typeof commandIds];
 
 export interface RegisterCommandsDeps {
   editorToLlmModule: IdeToLlmModule;
-  llmToEditorModule: LlmToEditorModule;
+  llmToEditorModule: LlmToIdeModule;
   guidedRetryStore: GuidedRetryStore;
   advancedCloseModule: AdvancedCloseModule;
   logger: OutputChannelLogger;

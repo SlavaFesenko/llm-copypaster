@@ -6,7 +6,7 @@ import { ConfigService } from './config';
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
 import { IdeToLlmModule } from './modules/editor-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-editor/guided-retry/guided-retry-store';
-import { LlmToEditorModule } from './modules/llm-to-editor/llm-to-editor-module';
+import { LlmToIdeModule } from './modules/llm-to-editor/llm-to-ide-module';
 import { registerCommands } from './register-commands';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
   const guidedRetryStore = new GuidedRetryStore(context, logger);
 
   const editorToLlmModule = new IdeToLlmModule(context, configService, logger);
-  const llmToEditorModule = new LlmToEditorModule(configService, guidedRetryStore, logger);
+  const llmToEditorModule = new LlmToIdeModule(configService, guidedRetryStore, logger);
   const advancedCloseModule = new AdvancedCloseModule(logger);
 
   registerCommands(context, {
