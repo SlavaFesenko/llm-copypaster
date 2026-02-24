@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
+import { EditorToLlmModulePrivateHelpers } from './editor-to-llm-module-private-helpers';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
-import { buildTabGroupQuickPickItems, findTabGroupsContainingUri, tryGetUriFromTab } from './tab-group-picker-helpers';
 
 interface EditorToLlmCollectedFileItem {
   path: string;
@@ -37,7 +37,13 @@ export class EditorToLlmModule {
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
     private readonly _logger: OutputChannelLogger
-  ) {}
+  ) {
+    this._privateHelpers = new EditorToLlmModulePrivateHelpers({
+      extensionContext: this._extensionContext,
+      configService: this._configService,
+      logger: this._logger,
+    });
+  }
 
   public async copyThisFileAsContext(includeTechPrompt: boolean = true): Promise<void> {
     const selection = await collectActiveFileSelection(this._logger);
@@ -62,7 +68,7 @@ export class EditorToLlmModule {
     const fileItems = config.EnableCodefenceWrappingOnCopying
       ? nonDeletedFileItems.map(fileItem => ({
           ...fileItem,
-          content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
         }))
       : nonDeletedFileItems;
 
@@ -75,7 +81,7 @@ export class EditorToLlmModule {
 
     await vscode.env.clipboard.writeText(contextText);
 
-    await this._showCopyResultNotification({
+    await this._privateHelpers.showCopyResultNotification({
       commandName: 'Copy File',
       includeTechPrompt,
       copiedFilesCount,
@@ -86,7 +92,7 @@ export class EditorToLlmModule {
   }
 
   public async copyThisTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._collectActiveTabGroupFileItems();
+    const selection = await this._privateHelpers.collectActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -102,7 +108,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -119,7 +125,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._showCopyResultNotification({
+    await this._privateHelpers.showCopyResultNotification({
       commandName: 'Copy Tab Group',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -130,7 +136,7 @@ export class EditorToLlmModule {
   }
 
   public async copyAllOpenFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._collectAllOpenTabsFileItems();
+    const selection = await this._privateHelpers.collectAllOpenTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -146,7 +152,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -163,7 +169,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._showCopyResultNotification({
+    await this._privateHelpers.showCopyResultNotification({
       commandName: 'Copy All',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -174,7 +180,7 @@ export class EditorToLlmModule {
   }
 
   public async copyAllPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._collectAllPinnedTabsFileItems();
+    const selection = await this._privateHelpers.collectAllPinnedTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -190,7 +196,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -207,7 +213,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._showCopyResultNotification({
+    await this._privateHelpers.showCopyResultNotification({
       commandName: 'Copy All Pinned',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -218,7 +224,7 @@ export class EditorToLlmModule {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._collectPinnedTabsInActiveTabGroupFileItems();
+    const selection = await this._privateHelpers.collectPinnedTabsInActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -234,7 +240,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -251,7 +257,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._showCopyResultNotification({
+    await this._privateHelpers.showCopyResultNotification({
       commandName: 'Copy Pinned Tab Group',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -268,11 +274,11 @@ export class EditorToLlmModule {
     const clickedUri = args?.clickedUri;
     const selectedUrisCopy = [...(args?.selectedUris ?? [])];
 
-    const normalizedSelectedUris = this._uniqueByUriKeyKeepOrder(selectedUrisCopy);
-    const clickedUriKey = clickedUri ? this._buildUriKey(clickedUri) : null;
+    const normalizedSelectedUris = this._privateHelpers.uniqueByUriKeyKeepOrder(selectedUrisCopy);
+    const clickedUriKey = clickedUri ? this._privateHelpers.buildUriKey(clickedUri) : null;
 
     if (normalizedSelectedUris.length === 0 && clickedUri) {
-      await this._copyExplorerUrisAsContext({
+      await this._privateHelpers.copyExplorerUrisAsContext({
         inputUris: [clickedUri],
         selectionSource: 'CLICKED',
         includeTechPrompt,
@@ -282,7 +288,7 @@ export class EditorToLlmModule {
     }
 
     if (normalizedSelectedUris.length > 0 && !clickedUri) {
-      await this._copyExplorerUrisAsContext({
+      await this._privateHelpers.copyExplorerUrisAsContext({
         inputUris: normalizedSelectedUris,
         selectionSource: 'SELECTED',
         includeTechPrompt,
@@ -292,11 +298,11 @@ export class EditorToLlmModule {
     }
 
     if (normalizedSelectedUris.length > 0 && clickedUri) {
-      const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => this._buildUriKey(uri)));
+      const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => this._privateHelpers.buildUriKey(uri)));
       const isClickedInSelected = clickedUriKey ? selectedUriKeys.has(clickedUriKey) : false;
 
       if (isClickedInSelected) {
-        await this._copyExplorerUrisAsContext({
+        await this._privateHelpers.copyExplorerUrisAsContext({
           inputUris: normalizedSelectedUris,
           selectionSource: 'SELECTED',
           includeTechPrompt,
@@ -305,7 +311,7 @@ export class EditorToLlmModule {
         return;
       }
 
-      const quickPickItems = this._buildExplorerSelectionSourceQuickPickItems({
+      const quickPickItems = this._privateHelpers.buildExplorerSelectionSourceQuickPickItems({
         selectedUris: normalizedSelectedUris,
         clickedUri,
       });
@@ -317,7 +323,7 @@ export class EditorToLlmModule {
 
       if (!pickedItem) return;
 
-      await this._copyExplorerUrisAsContext({
+      await this._privateHelpers.copyExplorerUrisAsContext({
         inputUris: pickedItem.uris,
         selectionSource: pickedItem.selectionSource,
         includeTechPrompt,
@@ -329,491 +335,5 @@ export class EditorToLlmModule {
     await vscode.window.showWarningMessage('No explorer selection to copy');
   }
 
-  private async _copyExplorerUrisAsContext(args: {
-    inputUris: vscode.Uri[];
-    selectionSource: ExplorerCopySelectionSource;
-    includeTechPrompt: boolean;
-  }): Promise<void> {
-    const selection = await this._collectExplorerItemsFileItems(args.inputUris);
-
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
-
-    if (totalFilesCount === 0) {
-      await vscode.window.showWarningMessage('No files found in explorer selection');
-      return;
-    }
-
-    if (selection.fileItems.length > 0) {
-      const config = await this._configService.getConfig();
-      const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
-
-      const fileItems = config.EnableCodefenceWrappingOnCopying
-        ? selection.fileItems.map(fileItem => ({
-            ...fileItem,
-            content: this._wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
-          }))
-        : selection.fileItems;
-
-      const contextText = buildLlmContextText({
-        fileItems,
-        includeTechPrompt: args.includeTechPrompt,
-        config,
-        techPromptText,
-      });
-
-      await vscode.env.clipboard.writeText(contextText);
-    } else {
-      await vscode.window.showWarningMessage('No files found in explorer selection');
-      return;
-    }
-
-    await this._showCopyResultNotification({
-      commandName: 'Copy Explorer Items',
-      includeTechPrompt: args.includeTechPrompt,
-      copiedFilesCount: selection.fileItems.length,
-      totalFilesCount,
-      deletedFileUris: selection.deletedFileUris,
-      unresolvedTabs: [],
-      selectionSourceLabel: args.selectionSource,
-    });
-  }
-
-  private _wrapContentWithCodeFence(content: string, languageId: string): string {
-    const normalizedLanguageId = languageId.trim();
-
-    return normalizedLanguageId ? `\`\`\`${normalizedLanguageId}\n${content}\n\`\`\`` : `\`\`\`\n${content}\n\`\`\``;
-  }
-
-  private async _showCopyResultNotification(args: {
-    commandName: string;
-    includeTechPrompt: boolean;
-    copiedFilesCount: number;
-    totalFilesCount: number;
-    deletedFileUris: vscode.Uri[];
-    unresolvedTabs: vscode.Tab[];
-    selectionSourceLabel?: ExplorerCopySelectionSource;
-  }): Promise<void> {
-    const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
-    const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
-    const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
-
-    const messagePrefix = args.selectionSourceLabel ? `Copied ${args.selectionSourceLabel} ` : 'Copied ';
-
-    const message =
-      unavailableFilesCount === 0
-        ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
-        : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
-
-    const closeUnavailableActionLabel =
-      unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
-
-    const selectedAction = closeUnavailableActionLabel
-      ? await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
-      : await vscode.window.showInformationMessage(message);
-
-    if (selectedAction !== closeUnavailableActionLabel) return;
-
-    await this._closeUnavailableTabs({
-      deletedFileUris: args.deletedFileUris,
-      unresolvedTabs: args.unresolvedTabs,
-    });
-  }
-
-  private async _closeUnavailableTabs(args: { deletedFileUris: vscode.Uri[]; unresolvedTabs: vscode.Tab[] }): Promise<void> {
-    const tabsToClose: vscode.Tab[] = [];
-
-    for (const unresolvedTab of args.unresolvedTabs) tabsToClose.push(unresolvedTab);
-
-    if (args.deletedFileUris.length > 0) {
-      const deletedUriStrings = new Set<string>(args.deletedFileUris.map(uri => uri.toString()));
-
-      for (const tabGroup of vscode.window.tabGroups.all) {
-        for (const tab of tabGroup.tabs) {
-          const tabUri = tryGetUriFromTab(tab);
-          if (!tabUri) continue;
-
-          if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
-        }
-      }
-    }
-
-    if (tabsToClose.length === 0) return;
-
-    try {
-      await vscode.window.tabGroups.close(tabsToClose);
-    } catch (error) {
-      this._logger.warn(`Failed closing unavailable tabs: ${String(error)}`);
-    }
-  }
-
-  private async _collectActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-    }
-
-    const tabGroup = await this._pickTabGroupForTabGroupCopyCommand();
-    if (!tabGroup) {
-      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-    }
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tab of tabGroup.tabs) {
-      const tabUri = tryGetUriFromTab(tab);
-      if (!tabUri) {
-        unresolvedTabs.push(tab);
-        continue;
-      }
-
-      if (tabUri.scheme !== 'file') continue;
-
-      tabUris.push(tabUri);
-    }
-
-    const readResult = await this._readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectAllOpenTabsFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-    }
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        const tabUri = tryGetUriFromTab(tab);
-        if (!tabUri) {
-          unresolvedTabs.push(tab);
-          continue;
-        }
-
-        if (tabUri.scheme !== 'file') continue;
-
-        tabUris.push(tabUri);
-      }
-    }
-
-    const readResult = await this._readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectAllPinnedTabsFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-    }
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        if (!tab.isPinned) continue;
-
-        const tabUri = tryGetUriFromTab(tab);
-        if (!tabUri) {
-          unresolvedTabs.push(tab);
-          continue;
-        }
-
-        if (tabUri.scheme !== 'file') continue;
-
-        tabUris.push(tabUri);
-      }
-    }
-
-    const readResult = await this._readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectPinnedTabsInActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-    }
-
-    const tabGroup = await this._pickTabGroupForTabGroupCopyCommand();
-    if (!tabGroup) {
-      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-    }
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tab of tabGroup.tabs) {
-      if (!tab.isPinned) continue;
-
-      const tabUri = tryGetUriFromTab(tab);
-      if (!tabUri) {
-        unresolvedTabs.push(tab);
-        continue;
-      }
-
-      if (tabUri.scheme !== 'file') continue;
-
-      tabUris.push(tabUri);
-    }
-
-    const readResult = await this._readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _pickTabGroupForTabGroupCopyCommand(): Promise<vscode.TabGroup | null> {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor) return vscode.window.tabGroups.activeTabGroup;
-
-    const activeDocumentUri = activeEditor.document.uri;
-    if (activeDocumentUri.scheme !== 'file') return vscode.window.tabGroups.activeTabGroup;
-
-    const allTabGroups = vscode.window.tabGroups.all;
-
-    const matchingTabGroups = findTabGroupsContainingUri({ uri: activeDocumentUri, tabGroups: allTabGroups });
-
-    if (matchingTabGroups.length === 0) return vscode.window.tabGroups.activeTabGroup;
-
-    if (matchingTabGroups.length === 1) return matchingTabGroups[0];
-
-    const quickPickItems = buildTabGroupQuickPickItems({ tabGroups: matchingTabGroups, allTabGroups });
-
-    const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
-      placeHolder:
-        "Select tab group to copy, since this file is open in multiple tab groups and VS Code API can't tell which group was clicked",
-      canPickMany: false,
-    });
-
-    return selectedItem?.tabGroup ?? null;
-  }
-
-  private _buildExplorerSelectionSourceQuickPickItems(args: {
-    selectedUris: vscode.Uri[];
-    clickedUri: vscode.Uri;
-  }): Array<vscode.QuickPickItem & { selectionSource: ExplorerCopySelectionSource; uris: vscode.Uri[] }> {
-    const selectedUrisCopy = [...args.selectedUris];
-    const clickedUriCopy = args.clickedUri;
-
-    const selectedUrisPreview = this._buildUrisPreviewText(selectedUrisCopy);
-    const clickedUriPreview = this._buildUrisPreviewText([clickedUriCopy]);
-
-    const bothUris = this._buildSelectedThenClickedUniqueUnion(selectedUrisCopy, clickedUriCopy);
-    const bothUrisPreview = this._buildUrisPreviewText(bothUris);
-
-    return [
-      {
-        label: `Copy SELECTED (${selectedUrisCopy.length})`,
-        description: selectedUrisPreview,
-        selectionSource: 'SELECTED',
-        uris: selectedUrisCopy,
-      },
-      {
-        label: 'Copy CLICKED (1)',
-        description: clickedUriPreview,
-        selectionSource: 'CLICKED',
-        uris: [clickedUriCopy],
-      },
-      {
-        label: `Copy BOTH (${bothUris.length})`,
-        description: bothUrisPreview,
-        selectionSource: 'BOTH',
-        uris: bothUris,
-      },
-    ];
-  }
-
-  private _buildUrisPreviewText(uris: vscode.Uri[]): string {
-    const previewLimit = 2;
-
-    const pathPreviews: string[] = [];
-
-    for (const uri of uris.slice(0, previewLimit)) {
-      pathPreviews.push(vscode.workspace.asRelativePath(uri, false) || uri.fsPath || uri.toString());
-    }
-
-    const remainingCount = uris.length - pathPreviews.length;
-
-    const previewText = pathPreviews.join(', ');
-
-    if (!previewText && uris.length > 0) return `${uris.length} item(s)`;
-    if (!previewText) return '';
-
-    if (remainingCount <= 0) return previewText;
-
-    return `${previewText} and ${remainingCount} more`;
-  }
-
-  private _buildSelectedThenClickedUniqueUnion(selectedUris: vscode.Uri[], clickedUri: vscode.Uri): vscode.Uri[] {
-    const unionUris: vscode.Uri[] = [];
-
-    const uniqueKeys = new Set<string>();
-
-    for (const selectedUri of selectedUris) {
-      const key = this._buildUriKey(selectedUri);
-      if (uniqueKeys.has(key)) continue;
-
-      uniqueKeys.add(key);
-      unionUris.push(selectedUri);
-    }
-
-    const clickedKey = this._buildUriKey(clickedUri);
-    if (!uniqueKeys.has(clickedKey)) unionUris.push(clickedUri);
-
-    return unionUris;
-  }
-
-  private _uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
-    const uniqueUris: vscode.Uri[] = [];
-    const uniqueKeys = new Set<string>();
-
-    for (const uri of uris) {
-      const key = this._buildUriKey(uri);
-      if (uniqueKeys.has(key)) continue;
-
-      uniqueKeys.add(key);
-      uniqueUris.push(uri);
-    }
-
-    return uniqueUris;
-  }
-
-  private _buildUriKey(uri: vscode.Uri): string {
-    if (uri.scheme === 'file' && uri.fsPath) return uri.fsPath;
-
-    return uri.toString();
-  }
-
-  private async _collectExplorerItemsFileItems(selectedUris: vscode.Uri[]): Promise<ReadUrisAsFileItemsResult> {
-    const allFileUris: vscode.Uri[] = [];
-
-    for (const selectedUri of selectedUris) {
-      const stat = await this._tryStat(selectedUri);
-      if (!stat) continue;
-
-      if (stat.type & vscode.FileType.Directory) {
-        const folderFileUris = await this._collectAllFilesInFolderRecursively(selectedUri);
-        for (const fileUri of folderFileUris) allFileUris.push(fileUri);
-        continue;
-      }
-
-      if (stat.type & vscode.FileType.File) {
-        allFileUris.push(selectedUri);
-        continue;
-      }
-    }
-
-    return await this._readUrisAsFileItems(allFileUris);
-  }
-
-  private async _collectAllFilesInFolderRecursively(folderUri: vscode.Uri): Promise<vscode.Uri[]> {
-    const collectedFileUris: vscode.Uri[] = [];
-
-    const entries = await this._tryReadDirectory(folderUri);
-    if (!entries) return collectedFileUris;
-
-    for (const [entryName, entryType] of entries) {
-      const entryUri = vscode.Uri.joinPath(folderUri, entryName);
-
-      if (entryType & vscode.FileType.Directory) {
-        const nestedFileUris = await this._collectAllFilesInFolderRecursively(entryUri);
-        for (const nestedFileUri of nestedFileUris) collectedFileUris.push(nestedFileUri);
-        continue;
-      }
-
-      if (entryType & vscode.FileType.File) {
-        collectedFileUris.push(entryUri);
-        continue;
-      }
-    }
-
-    return collectedFileUris;
-  }
-
-  private async _readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisAsFileItemsResult> {
-    const dedupedByPathMap = new Map<string, vscode.Uri>();
-
-    for (const uri of uris) {
-      const relativePath = vscode.workspace.asRelativePath(uri, false);
-      if (!relativePath) continue;
-
-      if (!dedupedByPathMap.has(relativePath)) dedupedByPathMap.set(relativePath, uri);
-    }
-
-    const fileItems: EditorToLlmCollectedFileItem[] = [];
-    const deletedFileUris: vscode.Uri[] = [];
-
-    for (const [relativePath, uri] of dedupedByPathMap.entries()) {
-      const readResult = await this._tryReadFileAsText(uri);
-
-      if (readResult.isFileNotFound) {
-        deletedFileUris.push(uri);
-        continue;
-      }
-
-      fileItems.push({
-        path: relativePath,
-        content: readResult.text,
-        languageId: readResult.languageId,
-        readError: readResult.readError,
-      });
-    }
-
-    return { fileItems, deletedFileUris };
-  }
-
-  private async _tryReadFileAsText(
-    uri: vscode.Uri
-  ): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
-    try {
-      const document = await vscode.workspace.openTextDocument(uri);
-
-      return { text: document.getText(), languageId: document.languageId, isFileNotFound: false };
-    } catch (error) {
-      const message = String(error);
-
-      return { text: null, readError: message, isFileNotFound: this._isFileNotFoundError(error) };
-    }
-  }
-
-  private _isFileNotFoundError(error: unknown): boolean {
-    const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
-    const code = String(anyError?.code ?? '');
-    if (code === 'FileNotFound') return true;
-
-    const message = String(anyError?.message ?? error ?? '');
-
-    if (message.includes('FileNotFound')) return true;
-    if (message.includes('ENOENT')) return true;
-    if (message.includes('no such file or directory')) return true;
-
-    const name = String(anyError?.name ?? '');
-    if (name.includes('FileNotFound')) return true;
-
-    return false;
-  }
-
-  private async _tryStat(uri: vscode.Uri): Promise<vscode.FileStat | null> {
-    try {
-      return await vscode.workspace.fs.stat(uri);
-    } catch (error) {
-      this._logger.debug(`Explorer stat failed for ${uri.toString()}: ${String(error)}`);
-      return null;
-    }
-  }
-
-  private async _tryReadDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][] | null> {
-    try {
-      return await vscode.workspace.fs.readDirectory(uri);
-    } catch (error) {
-      this._logger.debug(`Explorer readDirectory failed for ${uri.toString()}: ${String(error)}`);
-      return null;
-    }
-  }
+  private readonly _privateHelpers: EditorToLlmModulePrivateHelpers;
 }
