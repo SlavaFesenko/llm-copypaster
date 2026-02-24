@@ -123,14 +123,13 @@ export async function showCopyResultNotification(
     totalFilesCount: number;
     deletedFileUris: vscode.Uri[];
     unresolvedTabs: vscode.Tab[];
-    selectionSourceLabel?: string;
   }
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
   const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
   const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
 
-  const messagePrefix = args.selectionSourceLabel ? `Copied ${args.selectionSourceLabel} ` : 'Copied ';
+  const messagePrefix = 'Copied ';
 
   const message =
     unavailableFilesCount === 0

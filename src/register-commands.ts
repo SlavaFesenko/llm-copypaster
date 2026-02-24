@@ -91,9 +91,9 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContext,
-      async (clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
         await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(
-          { clickedUri, selectedUris } as CopySelectedExplorerItemsArgs,
+          { selectedUris } as CopySelectedExplorerItemsArgs,
           true
         );
       }
@@ -101,9 +101,9 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt,
-      async (clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
         await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(
-          { clickedUri, selectedUris } as CopySelectedExplorerItemsArgs,
+          { selectedUris } as CopySelectedExplorerItemsArgs,
           false
         );
       }
