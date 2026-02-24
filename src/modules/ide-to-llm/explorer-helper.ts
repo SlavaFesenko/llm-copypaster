@@ -9,6 +9,7 @@ import {
 } from './common.helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { buildLlmContextText } from './utils/llm-context-formatter';
+import { buildPromptWithSizeStatsAndNotify } from './utils/prompt-size-helper';
 
 export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];
@@ -54,7 +55,17 @@ export class ExplorerHelper {
         techPromptText,
       });
 
-      await vscode.env.clipboard.writeText(contextText);
+      const commandDisplayName = includeTechPrompt
+        ? 'Copy Explorer Items With Prompt'
+        : 'Copy Explorer Items (Without Prompt)';
+
+      const promptWithStatsResult = await buildPromptWithSizeStatsAndNotify({
+        commandDisplayName,
+        promptText: contextText,
+        config,
+      });
+
+      await vscode.env.clipboard.writeText(promptWithStatsResult.promptTextWithStats);
     } else {
       await vscode.window.showWarningMessage('No files found in explorer selection');
       return;

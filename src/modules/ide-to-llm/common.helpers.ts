@@ -126,7 +126,7 @@ export async function showCopyResultNotification(
   }
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
-  const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
+  const techPromptMarker = args.includeTechPrompt ? '' : '(Without Prompt)';
   const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
 
   const messagePrefix = 'Copied ';

@@ -1,4 +1,3 @@
-
 import * as vscode from 'vscode';
 
 import { OutputChannelLogger } from './utils/output-channel-logger';
@@ -16,12 +15,20 @@ export interface LlmCopypasterSanitizationRule {
   disabledForPaths?: string[];
 }
 
+export interface LlmContextLimits {
+  maxLinesCountInContext: number;
+  maxTokensCountInContext: number;
+}
+
+export type LlmContextLimitsByLlm = Record<string, LlmContextLimits>;
+
 export interface LlmCopypasterConfig {
   currentLLM: string;
   prompts: LlmCopypasterPromptsConfig;
   sanitizationRules: LlmCopypasterSanitizationRule[];
   autoFormatAfterApply: boolean;
   includeTechPrompt: boolean;
+  llmContextLimitsByLlm: LlmContextLimitsByLlm;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -42,6 +49,12 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     ],
     autoFormatAfterApply: false,
     includeTechPrompt: true,
+    llmContextLimitsByLlm: {
+      default: {
+        maxLinesCountInContext: 1000,
+        maxTokensCountInContext: 15000,
+      },
+    },
   };
 }
 
@@ -50,6 +63,12 @@ export function mergeConfigs(
   settingsConfig: Partial<LlmCopypasterConfig>,
   fileConfig: Partial<LlmCopypasterConfig> | null
 ): LlmCopypasterConfig {
+  const mergedLlmContextLimitsByLlm: LlmContextLimitsByLlm = {
+    ...(defaultConfig.llmContextLimitsByLlm ?? {}),
+    ...((settingsConfig.llmContextLimitsByLlm ?? {}) as LlmContextLimitsByLlm),
+    ...(((fileConfig?.llmContextLimitsByLlm ?? {}) as LlmContextLimitsByLlm) ?? {}),
+  };
+
   const mergedConfig: LlmCopypasterConfig = {
     ...defaultConfig,
     ...settingsConfig,
@@ -63,6 +82,7 @@ export function mergeConfigs(
       fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply,
     includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
     currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
+    llmContextLimitsByLlm: mergedLlmContextLimitsByLlm,
   };
 
   return mergedConfig;
@@ -116,4 +136,4 @@ export async function readWorkspaceJsonConfigFile(
     logger.debug(`Workspace config not loaded: ${String(error)}`);
     return null;
   }
-}
+}
