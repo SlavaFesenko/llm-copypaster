@@ -58,11 +58,11 @@
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-        "title": "Copy File(s): With Prompt"
+        "title": "LLM Copypaster: Copy File(s)"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
-        "title": "Copy File(s): (Without Prompt)"
+        "title": "LLM Copypaster: Copy File(s) (Without Prompt)"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
@@ -95,10 +95,6 @@
         "label": "LLM Copypaster: Advanced"
       },
       {
-        "id": "llm-copypaster.explorer",
-        "label": "LLM Copypaster"
-      },
-      {
         "id": "llm-copypaster.closeAdvanced",
         "label": "Close Advanced"
       }
@@ -107,36 +103,46 @@
       "editor/context": [],
       "explorer/context": [
         {
-          "submenu": "llm-copypaster.explorer",
+          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "navigation@10"
+          "group": "navigation@1"
+        },
+        {
+          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "navigation@2"
+        },
+        {
+          "command": "llm-copypaster.applyClipboardToFiles",
+          "when": "resourceScheme == file",
+          "group": "navigation@3"
         }
       ],
       "editor/title/context": [
         {
           "command": "llm-copypaster.copyThisFileAsLlmContext",
           "when": "resourceScheme == file",
-          "group": "navigation@10"
+          "group": "navigation@1"
         },
         {
           "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
           "when": "resourceScheme == file",
-          "group": "navigation@11"
+          "group": "navigation@2"
         },
         {
           "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
           "when": "resourceScheme == file",
-          "group": "navigation@12"
+          "group": "navigation@3"
         },
         {
           "command": "llm-copypaster.applyClipboardToFiles",
           "when": "resourceScheme == file",
-          "group": "navigation@13"
+          "group": "navigation@4"
         },
         {
           "submenu": "llm-copypaster.editor",
           "when": "resourceScheme == file",
-          "group": "navigation@20"
+          "group": "navigation@5"
         }
       ],
       "llm-copypaster.editor": [
@@ -178,18 +184,6 @@
         {
           "submenu": "llm-copypaster.closeAdvanced",
           "group": "navigation@30"
-        }
-      ],
-      "llm-copypaster.explorer": [
-        {
-          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "navigation@10"
-        },
-        {
-          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "navigation@11"
         }
       ],
       "llm-copypaster.closeAdvanced": [
