@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
 import { buildLlmContextText } from './llm-context-formatter';
 import { buildTabGroupQuickPickItems, findTabGroupsContainingUri, tryGetUriFromTab } from './tab-group-picker-helpers';
+import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;

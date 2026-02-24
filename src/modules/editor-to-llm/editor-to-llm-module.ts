@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
 import {
   EditorToLlmModulePrivateHelpersDependencies,
   buildExplorerSelectionSourceQuickPickItems,
@@ -18,6 +17,7 @@ import {
 } from './editor-to-llm-module-private-helpers';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
+import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 
 export interface CopySelectedExplorerItemsArgs {
   clickedUri?: vscode.Uri;
