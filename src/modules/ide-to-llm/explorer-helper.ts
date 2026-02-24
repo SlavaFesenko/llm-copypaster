@@ -7,7 +7,6 @@ import {
   buildUriKey,
   readUrisAsFileItems,
   showCopyResultNotification,
-  wrapContentWithCodeFence,
 } from './common.helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { buildLlmContextText } from './utils/llm-context-formatter';
@@ -106,15 +105,8 @@ export class ExplorerHelper {
       const config = await this._deps.configService.getConfig();
       const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._deps.extensionContext) : '';
 
-      const fileItems = config.EnableCodefenceWrappingOnCopying
-        ? selection.fileItems.map(fileItem => ({
-            ...fileItem,
-            content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
-          }))
-        : selection.fileItems;
-
       const contextText = buildLlmContextText({
-        fileItems,
+        fileItems: selection.fileItems,
         includeTechPrompt: args.includeTechPrompt,
         config,
         techPromptText,

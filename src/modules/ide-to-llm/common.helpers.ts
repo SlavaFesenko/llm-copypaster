@@ -48,12 +48,6 @@ export function buildUriKey(uri: vscode.Uri): string {
   return uri.toString();
 }
 
-export function wrapContentWithCodeFence(content: string, languageId: string): string {
-  const normalizedLanguageId = languageId.trim();
-
-  return normalizedLanguageId ? `\`\`\`${normalizedLanguageId}\n${content}\n\`\`\`` : `\`\`\`\n${content}\n\`\`\``;
-}
-
 export async function readUrisAsFileItems(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   uris: vscode.Uri[]

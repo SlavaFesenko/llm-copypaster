@@ -6,7 +6,6 @@ import {
   showCopyResultNotification,
   TabBasedFileItemsResult,
   tryGetUriFromTab,
-  wrapContentWithCodeFence,
 } from './common.helpers';
 import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-group-picker-helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
@@ -300,12 +299,7 @@ export class EditorHelper {
     const config = await this._deps.configService.getConfig();
     const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._deps.extensionContext) : '';
 
-    const fileItems = config.EnableCodefenceWrappingOnCopying
-      ? args.selectionFileItems.map(fileItem => ({
-          ...fileItem,
-          content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
-        }))
-      : args.selectionFileItems;
+    const fileItems = args.selectionFileItems;
 
     const contextText = buildLlmContextText({
       fileItems,

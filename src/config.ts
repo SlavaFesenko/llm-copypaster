@@ -1,3 +1,4 @@
+
 import * as vscode from 'vscode';
 
 import { OutputChannelLogger } from './utils/output-channel-logger';
@@ -21,7 +22,6 @@ export interface LlmCopypasterConfig {
   sanitizationRules: LlmCopypasterSanitizationRule[];
   autoFormatAfterApply: boolean;
   includeTechPrompt: boolean;
-  EnableCodefenceWrappingOnCopying: boolean;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -42,7 +42,6 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     ],
     autoFormatAfterApply: false,
     includeTechPrompt: true,
-    EnableCodefenceWrappingOnCopying: true,
   };
 }
 
@@ -63,10 +62,6 @@ export function mergeConfigs(
     autoFormatAfterApply:
       fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply,
     includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
-    EnableCodefenceWrappingOnCopying:
-      fileConfig?.EnableCodefenceWrappingOnCopying ??
-      settingsConfig.EnableCodefenceWrappingOnCopying ??
-      defaultConfig.EnableCodefenceWrappingOnCopying,
     currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
   };
 
@@ -93,12 +88,8 @@ export class ConfigService {
 
     const currentLlm = configuration.get<string>('currentLLM', defaultConfig.currentLLM);
     const autoFormatAfterApply = configuration.get<boolean>('autoFormatAfterApply', defaultConfig.autoFormatAfterApply);
-    const EnableCodefenceWrappingOnCopying = configuration.get<boolean>(
-      'EnableCodefenceWrappingOnCopying',
-      defaultConfig.EnableCodefenceWrappingOnCopying
-    );
 
-    return { currentLLM: currentLlm, autoFormatAfterApply, EnableCodefenceWrappingOnCopying };
+    return { currentLLM: currentLlm, autoFormatAfterApply };
   }
 }
 
@@ -125,4 +116,4 @@ export async function readWorkspaceJsonConfigFile(
     logger.debug(`Workspace config not loaded: ${String(error)}`);
     return null;
   }
-}
+}
