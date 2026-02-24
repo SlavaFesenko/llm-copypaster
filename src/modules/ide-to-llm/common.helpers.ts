@@ -201,11 +201,14 @@ function buildPromptSizeStatsSuffix(
 ): string {
   if (!promptSizeStats) return '';
 
-  if (!promptSizeStats.isExceeded) return `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T`;
+  const exceededParts = promptSizeStats.exceededBy.reduce<string[]>(
+    (acc, exceededBy) => (exceededBy === 'LINES' ? [...acc, 'lines'] : exceededBy === 'TOKENS' ? [...acc, 'tokens'] : acc),
+    []
+  );
 
-  const exceededParts: string[] = [];
-  if (promptSizeStats.exceededBy.includes('LINES')) exceededParts.push('lines');
-  if (promptSizeStats.exceededBy.includes('TOKENS')) exceededParts.push('tokens');
+  const baseString = `Lines: ~${promptSizeStats.linesCount}; Tokens ~${promptSizeStats.approxTokensCount};`;
 
-  return `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T exceeded: ${exceededParts.join(', ')}`;
+  return promptSizeStats.isExceeded
+    ? `Lines: ~${promptSizeStats.linesCount}; Tokens ~${promptSizeStats.approxTokensCount}; exceeded: ${exceededParts.join(', ')}`
+    : `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T`;
 }
