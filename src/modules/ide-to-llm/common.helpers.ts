@@ -134,15 +134,11 @@ export async function showCopyResultNotification(
   }
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
-  const techPromptMarker = args.includeTechPrompt ? '' : '(Without Prompt)';
-  const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
-
-  const messagePrefix = 'Copied ';
 
   const baseMessage =
     unavailableFilesCount === 0
-      ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
-      : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
+      ? `Copied ${args.copiedFilesCount} file(s)`
+      : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s)`;
 
   const shouldShowPromptSizeStats = await tryGetShouldShowPromptSizeStats(deps, args.promptSizeStats);
   const promptSizeStatsSuffix = shouldShowPromptSizeStats ? buildPromptSizeStatsSuffix(args.promptSizeStats ?? null) : '';
@@ -206,24 +202,13 @@ function buildPromptSizeStatsSuffix(
 ): string {
   if (!promptSizeStats) return '';
 
-  const maxLinesPart =
-    promptSizeStats.maxLinesCountInContext === 0
-      ? 'maxLines=unlimited'
-      : `maxLines=${promptSizeStats.maxLinesCountInContext}`;
-  const maxTokensPart =
-    promptSizeStats.maxTokensCountInContext === 0
-      ? 'maxTokens=unlimited'
-      : `maxTokens=${promptSizeStats.maxTokensCountInContext}`;
-  const limitsPart = `${maxLinesPart}, ${maxTokensPart}`;
-
-  if (!promptSizeStats.isExceeded)
-    return `Context: ${promptSizeStats.linesCount} line(s), ~${promptSizeStats.approxTokensCount} token(s) (${limitsPart})`;
+  if (!promptSizeStats.isExceeded) return `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T`;
 
   const exceededParts: string[] = [];
   if (promptSizeStats.exceededBy.includes('LINES')) exceededParts.push('lines');
   if (promptSizeStats.exceededBy.includes('TOKENS')) exceededParts.push('tokens');
 
-  return `Context: ${promptSizeStats.linesCount} line(s), ~${promptSizeStats.approxTokensCount} token(s) (${limitsPart}) Exceeded by: ${exceededParts.join(', ')}`;
+  return `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T exceeded: ${exceededParts.join(', ')}`;
 }
 
 async function closeUnavailableTabs(

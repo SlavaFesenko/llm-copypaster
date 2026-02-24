@@ -11,6 +11,7 @@ import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-g
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
+import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
 
 export class EditorHelper {
   public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
@@ -308,7 +309,12 @@ export class EditorHelper {
       techPromptText,
     });
 
-    await vscode.env.clipboard.writeText(contextText);
+    const promptWithStatsResult = buildPromptWithSizeStats({
+      promptText: contextText,
+      config,
+    });
+
+    await vscode.env.clipboard.writeText(promptWithStatsResult.promptTextWithStats);
 
     await showCopyResultNotification(this._deps, {
       commandName: args.commandName,
@@ -317,6 +323,14 @@ export class EditorHelper {
       totalFilesCount: args.totalFilesCount,
       deletedFileUris: args.deletedFileUris,
       unresolvedTabs: args.unresolvedTabs,
+      promptSizeStats: {
+        linesCount: promptWithStatsResult.linesCount,
+        approxTokensCount: promptWithStatsResult.approxTokensCount,
+        maxLinesCountInContext: promptWithStatsResult.maxLinesCountInContext,
+        maxTokensCountInContext: promptWithStatsResult.maxTokensCountInContext,
+        isExceeded: promptWithStatsResult.isExceeded,
+        exceededBy: promptWithStatsResult.exceededBy,
+      },
     });
   }
 }
