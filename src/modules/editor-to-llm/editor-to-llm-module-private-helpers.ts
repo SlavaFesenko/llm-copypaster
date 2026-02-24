@@ -6,26 +6,6 @@ import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt
 import { buildLlmContextText } from './llm-context-formatter';
 import { buildTabGroupQuickPickItems, findTabGroupsContainingUri, tryGetUriFromTab } from './tab-group-picker-helpers';
 
-interface EditorToLlmCollectedFileItem {
-  path: string;
-  content: string | null;
-  languageId?: string;
-  readError?: string;
-}
-
-interface ReadUrisAsFileItemsResult {
-  fileItems: EditorToLlmCollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-}
-
-interface TabBasedFileItemsResult {
-  fileItems: EditorToLlmCollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-  unresolvedTabs: vscode.Tab[];
-}
-
-type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
-
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
   configService: ConfigService;
@@ -553,3 +533,23 @@ export async function tryReadDirectory(
     return null;
   }
 }
+
+interface EditorToLlmCollectedFileItem {
+  path: string;
+  content: string | null;
+  languageId?: string;
+  readError?: string;
+}
+
+interface ReadUrisAsFileItemsResult {
+  fileItems: EditorToLlmCollectedFileItem[];
+  deletedFileUris: vscode.Uri[];
+}
+
+interface TabBasedFileItemsResult {
+  fileItems: EditorToLlmCollectedFileItem[];
+  deletedFileUris: vscode.Uri[];
+  unresolvedTabs: vscode.Tab[];
+}
+
+type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
