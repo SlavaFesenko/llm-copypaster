@@ -24,6 +24,10 @@ interface TabBasedFileItemsResult {
   unresolvedTabs: vscode.Tab[];
 }
 
+interface TabGroupPickItem extends vscode.QuickPickItem {
+  tabGroup: vscode.TabGroup;
+}
+
 export class EditorToLlmModule {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
@@ -83,7 +87,7 @@ export class EditorToLlmModule {
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
     if (totalFilesCount === 0) {
-      await vscode.window.showWarningMessage('No tab group files to copy');
+      await vscode.window.showWarningMessage('No tab group files to copy!');
       return;
     }
 
@@ -107,7 +111,7 @@ export class EditorToLlmModule {
 
       await vscode.env.clipboard.writeText(contextText);
     } else {
-      await vscode.window.showWarningMessage('No tab group files to copy');
+      await vscode.window.showWarningMessage('No tab group files to copy!');
       return;
     }
 
@@ -383,12 +387,15 @@ export class EditorToLlmModule {
       return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
     }
 
-    const activeGroup = vscode.window.tabGroups.activeTabGroup;
+    const tabGroup = await this._pickTabGroupForTabGroupCopyCommand();
+    if (!tabGroup) {
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    }
 
     const tabUris: vscode.Uri[] = [];
     const unresolvedTabs: vscode.Tab[] = [];
 
-    for (const tab of activeGroup.tabs) {
+    for (const tab of tabGroup.tabs) {
       const tabUri = this._tryGetUriFromTab(tab);
       if (!tabUri) {
         unresolvedTabs.push(tab);
@@ -469,12 +476,15 @@ export class EditorToLlmModule {
       return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
     }
 
-    const activeGroup = vscode.window.tabGroups.activeTabGroup;
+    const tabGroup = await this._pickTabGroupForTabGroupCopyCommand();
+    if (!tabGroup) {
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    }
 
     const tabUris: vscode.Uri[] = [];
     const unresolvedTabs: vscode.Tab[] = [];
 
-    for (const tab of activeGroup.tabs) {
+    for (const tab of tabGroup.tabs) {
       if (!tab.isPinned) continue;
 
       const tabUri = this._tryGetUriFromTab(tab);
@@ -491,6 +501,69 @@ export class EditorToLlmModule {
     const readResult = await this._readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
+  }
+
+  private async _pickTabGroupForTabGroupCopyCommand(): Promise<vscode.TabGroup | null> {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (!activeEditor) return vscode.window.tabGroups.activeTabGroup;
+
+    const activeDocumentUri = activeEditor.document.uri;
+    if (activeDocumentUri.scheme !== 'file') return vscode.window.tabGroups.activeTabGroup;
+
+    const matchingTabGroups = this._findTabGroupsContainingUri(activeDocumentUri);
+
+    if (matchingTabGroups.length === 0) return vscode.window.tabGroups.activeTabGroup;
+
+    if (matchingTabGroups.length === 1) return matchingTabGroups[0];
+
+    const quickPickItems = this._buildTabGroupQuickPickItems(matchingTabGroups);
+
+    const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
+      placeHolder: 'Select tab group to copy, since this file is open in multiple tab groups.',
+      canPickMany: false,
+    });
+
+    return selectedItem?.tabGroup ?? null;
+  }
+
+  private _findTabGroupsContainingUri(uri: vscode.Uri): vscode.TabGroup[] {
+    const uriString = uri.toString();
+
+    const matchingTabGroups: vscode.TabGroup[] = [];
+
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      for (const tab of tabGroup.tabs) {
+        const tabUri = this._tryGetUriFromTab(tab);
+        if (!tabUri) continue;
+
+        if (tabUri.toString() !== uriString) continue;
+
+        matchingTabGroups.push(tabGroup);
+        break;
+      }
+    }
+
+    return matchingTabGroups;
+  }
+
+  private _buildTabGroupQuickPickItems(tabGroups: vscode.TabGroup[]): TabGroupPickItem[] {
+    const quickPickItems: TabGroupPickItem[] = [];
+
+    for (let index = 0; index < tabGroups.length; index++) {
+      const tabGroup = tabGroups[index];
+
+      const viewColumnText =
+        typeof tabGroup.viewColumn === 'number' ? `ViewColumn ${tabGroup.viewColumn}` : 'Unknown ViewColumn';
+      const tabsCountText = `${tabGroup.tabs.length} tab(s)`;
+
+      quickPickItems.push({
+        label: `Tab Group ${index + 1}`,
+        description: `${viewColumnText}, ${tabsCountText}`,
+        tabGroup,
+      });
+    }
+
+    return quickPickItems;
   }
 
   private _tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
