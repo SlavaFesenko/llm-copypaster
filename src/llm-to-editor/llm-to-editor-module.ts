@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../config/config-service';
+import { ConfigService } from '../llm-copypaster-config';
 import { OutputChannelLogger } from '../utils/output-channel-logger';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
 import { GuidedRetryStore } from './guided-retry/guided-retry-store';

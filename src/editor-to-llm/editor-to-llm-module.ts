@@ -1,7 +1,6 @@
-
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../config/config-service';
+import { ConfigService } from '../llm-copypaster-config';
 import { OutputChannelLogger } from '../utils/output-channel-logger';
 import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './file-selection';
@@ -817,4 +816,4 @@ export class EditorToLlmModule {
       return null;
     }
   }
-}
+}

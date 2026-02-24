@@ -1,3 +1,7 @@
+import * as vscode from 'vscode';
+
+import { OutputChannelLogger } from './utils/output-channel-logger';
+
 export interface LlmCopypasterPromptsConfig {
   default: string;
   overrides: Record<string, string>;
@@ -67,4 +71,58 @@ export function mergeConfigs(
   };
 
   return mergedConfig;
+}
+
+export class ConfigService {
+  public constructor(
+    private readonly _extensionContext: vscode.ExtensionContext,
+    private readonly _logger: OutputChannelLogger
+  ) {}
+
+  public async getConfig(): Promise<LlmCopypasterConfig> {
+    const defaultConfig = buildDefaultConfig();
+
+    const settingsConfig = this._readSettingsConfig(defaultConfig);
+    const fileConfig = await readWorkspaceJsonConfigFile(this._logger);
+
+    return mergeConfigs(defaultConfig, settingsConfig, fileConfig);
+  }
+
+  private _readSettingsConfig(defaultConfig: LlmCopypasterConfig): Partial<LlmCopypasterConfig> {
+    const configuration = vscode.workspace.getConfiguration('llmCopypaster');
+
+    const currentLlm = configuration.get<string>('currentLLM', defaultConfig.currentLLM);
+    const autoFormatAfterApply = configuration.get<boolean>('autoFormatAfterApply', defaultConfig.autoFormatAfterApply);
+    const EnableCodefenceWrappingOnCopying = configuration.get<boolean>(
+      'EnableCodefenceWrappingOnCopying',
+      defaultConfig.EnableCodefenceWrappingOnCopying
+    );
+
+    return { currentLLM: currentLlm, autoFormatAfterApply, EnableCodefenceWrappingOnCopying };
+  }
+}
+
+const workspaceConfigFileName = '.llm-copypaster.json';
+
+export async function readWorkspaceJsonConfigFile(
+  logger: OutputChannelLogger
+): Promise<Partial<LlmCopypasterConfig> | null> {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+
+  if (!workspaceFolder) {
+    return null;
+  }
+
+  const configUri = vscode.Uri.joinPath(workspaceFolder.uri, workspaceConfigFileName);
+
+  try {
+    const bytes = await vscode.workspace.fs.readFile(configUri);
+    const jsonText = Buffer.from(bytes).toString('utf8');
+    const parsed = JSON.parse(jsonText) as Partial<LlmCopypasterConfig>;
+
+    return parsed;
+  } catch (error) {
+    logger.debug(`Workspace config not loaded: ${String(error)}`);
+    return null;
+  }
 }
