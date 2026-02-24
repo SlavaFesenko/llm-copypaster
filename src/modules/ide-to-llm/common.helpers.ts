@@ -201,14 +201,16 @@ function buildPromptSizeStatsSuffix(
 ): string {
   if (!promptSizeStats) return '';
 
-  const exceededParts = promptSizeStats.exceededBy.reduce<string[]>(
-    (acc, exceededBy) => (exceededBy === 'LINES' ? [...acc, 'lines'] : exceededBy === 'TOKENS' ? [...acc, 'tokens'] : acc),
-    []
-  );
+  const isLinesExceeded = promptSizeStats.exceededBy.includes('LINES');
+  const isTokensExceeded = promptSizeStats.exceededBy.includes('TOKENS');
 
-  const baseString = `Lines: ~${promptSizeStats.linesCount}; Tokens ~${promptSizeStats.approxTokensCount};`;
+  const linesPart = isLinesExceeded
+    ? `Lines!: ~${promptSizeStats.linesCount}/${promptSizeStats.maxLinesCountInContext}`
+    : `Lines: ~${promptSizeStats.linesCount}`;
 
-  return promptSizeStats.isExceeded
-    ? `Lines: ~${promptSizeStats.linesCount}; Tokens ~${promptSizeStats.approxTokensCount}; exceeded: ${exceededParts.join(', ')}`
-    : `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T`;
+  const tokensPart = isTokensExceeded
+    ? `Tokens!: ~${promptSizeStats.approxTokensCount}/${promptSizeStats.maxTokensCountInContext}`
+    : `Tokens: ~${promptSizeStats.approxTokensCount}`;
+
+  return `${linesPart}; ${tokensPart};`;
 }
