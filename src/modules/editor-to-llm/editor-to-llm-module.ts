@@ -1,9 +1,22 @@
+
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
-import { EditorToLlmModulePrivateHelpers } from './editor-to-llm-module-private-helpers';
+import {
+  EditorToLlmModulePrivateHelpersDependencies,
+  buildExplorerSelectionSourceQuickPickItems,
+  buildUriKey,
+  collectActiveTabGroupFileItems,
+  collectAllOpenTabsFileItems,
+  collectAllPinnedTabsFileItems,
+  collectPinnedTabsInActiveTabGroupFileItems,
+  copyExplorerUrisAsContext,
+  showCopyResultNotification,
+  uniqueByUriKeyKeepOrder,
+  wrapContentWithCodeFence,
+} from './editor-to-llm-module-private-helpers';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
 
@@ -38,11 +51,11 @@ export class EditorToLlmModule {
     private readonly _configService: ConfigService,
     private readonly _logger: OutputChannelLogger
   ) {
-    this._privateHelpers = new EditorToLlmModulePrivateHelpers({
+    this._privateHelpersDeps = {
       extensionContext: this._extensionContext,
       configService: this._configService,
       logger: this._logger,
-    });
+    };
   }
 
   public async copyThisFileAsContext(includeTechPrompt: boolean = true): Promise<void> {
@@ -68,7 +81,7 @@ export class EditorToLlmModule {
     const fileItems = config.EnableCodefenceWrappingOnCopying
       ? nonDeletedFileItems.map(fileItem => ({
           ...fileItem,
-          content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+          content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
         }))
       : nonDeletedFileItems;
 
@@ -81,7 +94,7 @@ export class EditorToLlmModule {
 
     await vscode.env.clipboard.writeText(contextText);
 
-    await this._privateHelpers.showCopyResultNotification({
+    await showCopyResultNotification(this._privateHelpersDeps, {
       commandName: 'Copy File',
       includeTechPrompt,
       copiedFilesCount,
@@ -92,7 +105,7 @@ export class EditorToLlmModule {
   }
 
   public async copyThisTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._privateHelpers.collectActiveTabGroupFileItems();
+    const selection = await collectActiveTabGroupFileItems(this._privateHelpersDeps);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -108,7 +121,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -125,7 +138,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._privateHelpers.showCopyResultNotification({
+    await showCopyResultNotification(this._privateHelpersDeps, {
       commandName: 'Copy Tab Group',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -136,7 +149,7 @@ export class EditorToLlmModule {
   }
 
   public async copyAllOpenFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._privateHelpers.collectAllOpenTabsFileItems();
+    const selection = await collectAllOpenTabsFileItems(this._privateHelpersDeps);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -152,7 +165,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -169,7 +182,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._privateHelpers.showCopyResultNotification({
+    await showCopyResultNotification(this._privateHelpersDeps, {
       commandName: 'Copy All',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -180,7 +193,7 @@ export class EditorToLlmModule {
   }
 
   public async copyAllPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._privateHelpers.collectAllPinnedTabsFileItems();
+    const selection = await collectAllPinnedTabsFileItems(this._privateHelpersDeps);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -196,7 +209,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -213,7 +226,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._privateHelpers.showCopyResultNotification({
+    await showCopyResultNotification(this._privateHelpersDeps, {
       commandName: 'Copy All Pinned',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -224,7 +237,7 @@ export class EditorToLlmModule {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    const selection = await this._privateHelpers.collectPinnedTabsInActiveTabGroupFileItems();
+    const selection = await collectPinnedTabsInActiveTabGroupFileItems(this._privateHelpersDeps);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -240,7 +253,7 @@ export class EditorToLlmModule {
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
             ...fileItem,
-            content: this._privateHelpers.wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
+            content: wrapContentWithCodeFence(fileItem.content ?? '', fileItem.languageId ?? ''),
           }))
         : selection.fileItems;
 
@@ -257,7 +270,7 @@ export class EditorToLlmModule {
       return;
     }
 
-    await this._privateHelpers.showCopyResultNotification({
+    await showCopyResultNotification(this._privateHelpersDeps, {
       commandName: 'Copy Pinned Tab Group',
       includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
@@ -274,11 +287,11 @@ export class EditorToLlmModule {
     const clickedUri = args?.clickedUri;
     const selectedUrisCopy = [...(args?.selectedUris ?? [])];
 
-    const normalizedSelectedUris = this._privateHelpers.uniqueByUriKeyKeepOrder(selectedUrisCopy);
-    const clickedUriKey = clickedUri ? this._privateHelpers.buildUriKey(clickedUri) : null;
+    const normalizedSelectedUris = uniqueByUriKeyKeepOrder(selectedUrisCopy);
+    const clickedUriKey = clickedUri ? buildUriKey(clickedUri) : null;
 
     if (normalizedSelectedUris.length === 0 && clickedUri) {
-      await this._privateHelpers.copyExplorerUrisAsContext({
+      await copyExplorerUrisAsContext(this._privateHelpersDeps, {
         inputUris: [clickedUri],
         selectionSource: 'CLICKED',
         includeTechPrompt,
@@ -288,7 +301,7 @@ export class EditorToLlmModule {
     }
 
     if (normalizedSelectedUris.length > 0 && !clickedUri) {
-      await this._privateHelpers.copyExplorerUrisAsContext({
+      await copyExplorerUrisAsContext(this._privateHelpersDeps, {
         inputUris: normalizedSelectedUris,
         selectionSource: 'SELECTED',
         includeTechPrompt,
@@ -298,11 +311,11 @@ export class EditorToLlmModule {
     }
 
     if (normalizedSelectedUris.length > 0 && clickedUri) {
-      const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => this._privateHelpers.buildUriKey(uri)));
+      const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => buildUriKey(uri)));
       const isClickedInSelected = clickedUriKey ? selectedUriKeys.has(clickedUriKey) : false;
 
       if (isClickedInSelected) {
-        await this._privateHelpers.copyExplorerUrisAsContext({
+        await copyExplorerUrisAsContext(this._privateHelpersDeps, {
           inputUris: normalizedSelectedUris,
           selectionSource: 'SELECTED',
           includeTechPrompt,
@@ -311,7 +324,7 @@ export class EditorToLlmModule {
         return;
       }
 
-      const quickPickItems = this._privateHelpers.buildExplorerSelectionSourceQuickPickItems({
+      const quickPickItems = buildExplorerSelectionSourceQuickPickItems({
         selectedUris: normalizedSelectedUris,
         clickedUri,
       });
@@ -323,7 +336,7 @@ export class EditorToLlmModule {
 
       if (!pickedItem) return;
 
-      await this._privateHelpers.copyExplorerUrisAsContext({
+      await copyExplorerUrisAsContext(this._privateHelpersDeps, {
         inputUris: pickedItem.uris,
         selectionSource: pickedItem.selectionSource,
         includeTechPrompt,
@@ -335,5 +348,5 @@ export class EditorToLlmModule {
     await vscode.window.showWarningMessage('No explorer selection to copy');
   }
 
-  private readonly _privateHelpers: EditorToLlmModulePrivateHelpers;
-}
+  private readonly _privateHelpersDeps: EditorToLlmModulePrivateHelpersDependencies;
+}
