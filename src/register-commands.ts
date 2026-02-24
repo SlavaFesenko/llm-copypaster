@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
-import { CopySelectedExplorerItemsArgs } from './modules/editor-to-llm/explorer-helper';
-import { IdeToLlmModule } from './modules/editor-to-llm/ide-to-llm-module';
-import { GuidedRetryStore } from './modules/llm-to-editor/guided-retry/guided-retry-store';
-import { LlmToIdeModule } from './modules/llm-to-editor/llm-to-ide-module';
+import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
+import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
+import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
+import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {

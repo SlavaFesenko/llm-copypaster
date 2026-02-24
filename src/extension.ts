@@ -4,9 +4,9 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from './config';
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
-import { IdeToLlmModule } from './modules/editor-to-llm/ide-to-llm-module';
-import { GuidedRetryStore } from './modules/llm-to-editor/guided-retry/guided-retry-store';
-import { LlmToIdeModule } from './modules/llm-to-editor/llm-to-ide-module';
+import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
+import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
+import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
 import { registerCommands } from './register-commands';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
