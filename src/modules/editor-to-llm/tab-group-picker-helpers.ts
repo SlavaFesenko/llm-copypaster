@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { tryGetUriFromTab } from './common.helpers';
 
 export interface TabGroupPickItem extends vscode.QuickPickItem {
   tabGroup: vscode.TabGroup;
@@ -51,7 +52,7 @@ export function buildTabGroupQuickPickItems(args: {
   return quickPickItems;
 }
 
-export function buildTabGroupFilesSummary(tabGroup: vscode.TabGroup): string {
+function buildTabGroupFilesSummary(tabGroup: vscode.TabGroup): string {
   const fileNames: string[] = [];
 
   for (const tab of tabGroup.tabs) {
@@ -84,7 +85,7 @@ export function buildTabGroupFilesSummary(tabGroup: vscode.TabGroup): string {
   return `${previewText} and ${remainingFilesCount} more`;
 }
 
-export function tryGetTabLabel(tab: vscode.Tab): string | null {
+function tryGetTabLabel(tab: vscode.Tab): string | null {
   const tabUri = tryGetUriFromTab(tab);
   if (tabUri && tabUri.scheme === 'file') return getFileNameFromUri(tabUri);
 
@@ -94,7 +95,7 @@ export function tryGetTabLabel(tab: vscode.Tab): string | null {
   return label ? label : null;
 }
 
-export function getFileNameFromUri(uri: vscode.Uri): string {
+function getFileNameFromUri(uri: vscode.Uri): string {
   const uriPath = uri.path ?? '';
   const parts = uriPath.split('/').filter(part => part.trim());
 
@@ -106,17 +107,4 @@ export function getFileNameFromUri(uri: vscode.Uri): string {
       .filter(part => part.trim())
       .pop() ?? uri.toString()
   );
-}
-
-export function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
-  if (tab.input instanceof vscode.TabInputText) {
-    return tab.input.uri;
-  }
-
-  const anyInput = tab.input as unknown as { uri?: vscode.Uri };
-  if (anyInput?.uri instanceof vscode.Uri) {
-    return anyInput.uri;
-  }
-
-  return null;
 }

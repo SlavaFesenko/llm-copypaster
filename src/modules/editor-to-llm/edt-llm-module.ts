@@ -14,7 +14,7 @@ import {
   showCopyResultNotification,
   uniqueByUriKeyKeepOrder,
   wrapContentWithCodeFence,
-} from './editor-to-llm-module-private-helpers';
+} from './main.helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
