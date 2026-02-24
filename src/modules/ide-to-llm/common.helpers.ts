@@ -204,15 +204,13 @@ function buildPromptSizeStatsSuffix(
   const isLinesExceeded = promptSizeStats.exceededBy.includes('LINES');
   const isTokensExceeded = promptSizeStats.exceededBy.includes('TOKENS');
 
-  const linesPart = isLinesExceeded
-    ? `Lines!: ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(promptSizeStats.maxLinesCountInContext)}`
-    : `Lines: ~${formatCountInThousands(promptSizeStats.linesCount)}`;
+  const linesPart = `${isLinesExceeded ? 'Lines!:' : 'Lines:'} ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(
+    promptSizeStats.maxLinesCountInContext
+  )}`;
 
-  const tokensPart = isTokensExceeded
-    ? `Tokens!: ~${formatCountInThousands(promptSizeStats.approxTokensCount)}/${formatCountInThousands(
-        promptSizeStats.maxTokensCountInContext
-      )}`
-    : `Tokens: ~${formatCountInThousands(promptSizeStats.approxTokensCount)}`;
+  const tokensPart = `${isTokensExceeded ? 'Tokens!:' : 'Tokens:'} ~${formatCountInThousands(
+    promptSizeStats.approxTokensCount
+  )}/${formatCountInThousands(promptSizeStats.maxTokensCountInContext)}`;
 
   return `${linesPart}; ${tokensPart};`;
 }
