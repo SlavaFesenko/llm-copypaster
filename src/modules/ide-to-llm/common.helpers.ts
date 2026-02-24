@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { closeUnavailableTabs } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
@@ -209,34 +210,4 @@ function buildPromptSizeStatsSuffix(
   if (promptSizeStats.exceededBy.includes('TOKENS')) exceededParts.push('tokens');
 
   return `Context: ${promptSizeStats.linesCount}L ~${promptSizeStats.approxTokensCount}T exceeded: ${exceededParts.join(', ')}`;
-}
-
-async function closeUnavailableTabs(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: { deletedFileUris: vscode.Uri[]; unresolvedTabs: vscode.Tab[] }
-): Promise<void> {
-  const tabsToClose: vscode.Tab[] = [];
-
-  for (const unresolvedTab of args.unresolvedTabs) tabsToClose.push(unresolvedTab);
-
-  if (args.deletedFileUris.length > 0) {
-    const deletedUriStrings = new Set<string>(args.deletedFileUris.map(uri => uri.toString()));
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        const tabUri = tryGetUriFromTab(tab);
-        if (!tabUri) continue;
-
-        if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
-      }
-    }
-  }
-
-  if (tabsToClose.length === 0) return;
-
-  try {
-    await vscode.window.tabGroups.close(tabsToClose);
-  } catch (error) {
-    deps.logger.warn(`Failed closing unavailable tabs: ${String(error)}`);
-  }
 }
