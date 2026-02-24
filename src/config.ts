@@ -53,12 +53,12 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     includeTechPrompt: true,
     llmContextLimitsByLlm: {
       default: {
-        maxLinesCountInContext: 1000,
-        maxTokensCountInContext: 15000,
+        maxLinesCountInContext: 1000, // personal observation, after this limit LLM degrades
+        maxTokensCountInContext: 12000, // personal observation, after this limit LLM degrades
       },
     },
     showPromptSizeStatsInCopyNotification: true,
-    promptSizeApproxCharsPerToken: 4,
+    promptSizeApproxCharsPerToken: 3.5, // for code with long var names 3 is more accurate, but not to spam with warning picked 3.5
   };
 }
 
