@@ -1,5 +1,5 @@
-import { LlmCopypasterConfig } from '../../../config';
-import { OutputChannelLogger } from '../../../utils/output-channel-logger';
+import { LlmCopypasterConfig } from '../../../../config';
+import { OutputChannelLogger } from '../../../../utils/output-channel-logger';
 
 export interface ApplySanitizationRulesFileMeta {
   path: string;

@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../config';
+import { LlmCopypasterConfig } from '../../config';
 
 export function buildTechPromptText(config: LlmCopypasterConfig): string {
   const activePrompt = pickPromptByCurrentLlm(config);

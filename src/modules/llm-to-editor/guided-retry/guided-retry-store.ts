@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { FilesPayload } from '../../types/files-payload';
-import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { FilesPayload } from '../../../types/files-payload';
+import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { buildGuidedRetryPrompt } from './guided-retry-prompt-builder';
 
 export type GuidedRetryStage = 'validation' | 'sanitization' | 'apply';

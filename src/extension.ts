@@ -2,11 +2,11 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-import { AdvancedCloseModule } from './advanced-close/advanced-close-module';
 import { ConfigService } from './config';
-import { EditorToLlmModule } from './editor-to-llm/editor-to-llm-module';
-import { GuidedRetryStore } from './llm-to-editor/guided-retry/guided-retry-store';
-import { LlmToEditorModule } from './llm-to-editor/llm-to-editor-module';
+import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
+import { EditorToLlmModule } from './modules/editor-to-llm/editor-to-llm-module';
+import { GuidedRetryStore } from './modules/llm-to-editor/guided-retry/guided-retry-store';
+import { LlmToEditorModule } from './modules/llm-to-editor/llm-to-editor-module';
 import { registerCommands } from './register-commands';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 

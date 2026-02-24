@@ -1,4 +1,4 @@
-import { FilesPayload } from '../../types/files-payload';
+import { FilesPayload } from '../../../types/files-payload';
 import { parseConcatenatedFileListings } from './validators/parse-concatenated-file-listings';
 
 export interface ValidationOk<T> {

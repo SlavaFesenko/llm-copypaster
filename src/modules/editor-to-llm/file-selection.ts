@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-
-import { OutputChannelLogger } from '../utils/output-channel-logger';
-import { toWorkspaceRelativePath } from '../utils/path-utils';
+import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { toWorkspaceRelativePath } from '../../utils/path-utils';
 
 export interface EditorToLlmFileItem {
   path: string;

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-
-import { OutputChannelLogger } from '../utils/output-channel-logger';
+import { OutputChannelLogger } from '../../utils/output-channel-logger';
 
 export class AdvancedCloseModule {
   public constructor(private readonly _logger: OutputChannelLogger) {}

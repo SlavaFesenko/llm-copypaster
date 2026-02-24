@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../config';
-import { OutputChannelLogger } from '../utils/output-channel-logger';
+import { ConfigService } from '../../config';
+import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';

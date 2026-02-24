@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../config';
-import { OutputChannelLogger } from '../utils/output-channel-logger';
+import { ConfigService } from '../../config';
+import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
 import { GuidedRetryStore } from './guided-retry/guided-retry-store';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';

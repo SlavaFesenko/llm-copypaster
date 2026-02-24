@@ -1,4 +1,4 @@
-import { FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
+import { FilesPayload, FilesPayloadFile } from '../../../../types/files-payload';
 
 export interface ParseOk<T> {
   ok: true;
