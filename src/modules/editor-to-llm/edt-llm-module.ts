@@ -2,19 +2,19 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { buildUriKey, EditorToLlmModulePrivateHelpersDependencies, wrapContentWithCodeFence } from './common.helpers';
 import {
-  EditorToLlmModulePrivateHelpersDependencies,
-  buildExplorerSelectionSourceQuickPickItems,
-  buildUriKey,
   collectActiveTabGroupFileItems,
   collectAllOpenTabsFileItems,
   collectAllPinnedTabsFileItems,
   collectPinnedTabsInActiveTabGroupFileItems,
-  copyExplorerUrisAsContext,
   showCopyResultNotification,
+} from './editor.helpers';
+import {
+  buildExplorerSelectionSourceQuickPickItems,
+  copyExplorerUrisAsContext,
   uniqueByUriKeyKeepOrder,
-  wrapContentWithCodeFence,
-} from './main.helpers';
+} from './explorer.helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
