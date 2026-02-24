@@ -152,9 +152,7 @@ export async function showCopyResultNotification(
   const shouldWarn = shouldShowPromptSizeStats ? Boolean(args.promptSizeStats?.isExceeded) : false;
 
   const selectedAction = closeUnavailableActionLabel
-    ? shouldWarn
-      ? await vscode.window.showWarningMessage(message, closeUnavailableActionLabel)
-      : await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
+    ? await vscode.window.showWarningMessage(message, closeUnavailableActionLabel)
     : shouldWarn
       ? await vscode.window.showWarningMessage(message)
       : await vscode.window.showInformationMessage(message);
