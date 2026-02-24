@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { closeUnavailableTabs } from './utils/uncategorized-helpers';
+import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
@@ -205,12 +205,14 @@ function buildPromptSizeStatsSuffix(
   const isTokensExceeded = promptSizeStats.exceededBy.includes('TOKENS');
 
   const linesPart = isLinesExceeded
-    ? `Lines!: ~${promptSizeStats.linesCount}/${promptSizeStats.maxLinesCountInContext}`
-    : `Lines: ~${promptSizeStats.linesCount}`;
+    ? `Lines!: ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(promptSizeStats.maxLinesCountInContext)}`
+    : `Lines: ~${formatCountInThousands(promptSizeStats.linesCount)}`;
 
   const tokensPart = isTokensExceeded
-    ? `Tokens!: ~${promptSizeStats.approxTokensCount}/${promptSizeStats.maxTokensCountInContext}`
-    : `Tokens: ~${promptSizeStats.approxTokensCount}`;
+    ? `Tokens!: ~${formatCountInThousands(promptSizeStats.approxTokensCount)}/${formatCountInThousands(
+        promptSizeStats.maxTokensCountInContext
+      )}`
+    : `Tokens: ~${formatCountInThousands(promptSizeStats.approxTokensCount)}`;
 
   return `${linesPart}; ${tokensPart};`;
 }

@@ -32,6 +32,17 @@ export async function closeUnavailableTabs(
   }
 }
 
+export function formatCountInThousands(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  if (Math.abs(safeValue) < 1000) return String(Math.trunc(safeValue));
+
+  const roundedK = Math.round((safeValue / 1000) * 10) / 10;
+  const text = roundedK % 1 === 0 ? roundedK.toFixed(0) : roundedK.toFixed(1);
+
+  return `${text}K`;
+}
+
 function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
   if (tab.input instanceof vscode.TabInputText) return tab.input.uri;
 
