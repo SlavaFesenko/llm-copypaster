@@ -1,15 +1,14 @@
-
 import * as vscode from 'vscode';
 
 import {
-  EditorToLlmCollectedFileItem,
   EditorToLlmModulePrivateHelpersDependencies,
   ExplorerCopySelectionSource,
   ReadUrisAsFileItemsResult,
   buildUriKey,
+  readUrisAsFileItems,
+  showCopyResultNotification,
   wrapContentWithCodeFence,
 } from './common.helpers';
-import { showCopyResultNotification } from './editor.helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 
@@ -139,7 +138,7 @@ export async function copyExplorerUrisAsContext(
   });
 }
 
-export function buildExplorerSelectionSourceQuickPickItems(args: {
+function buildExplorerSelectionSourceQuickPickItems(args: {
   selectedUris: vscode.Uri[];
   clickedUri: vscode.Uri;
 }): Array<vscode.QuickPickItem & { selectionSource: ExplorerCopySelectionSource; uris: vscode.Uri[] }> {
@@ -174,7 +173,7 @@ export function buildExplorerSelectionSourceQuickPickItems(args: {
   ];
 }
 
-export function buildUrisPreviewText(uris: vscode.Uri[]): string {
+function buildUrisPreviewText(uris: vscode.Uri[]): string {
   const previewLimit = 2;
 
   const pathPreviews: string[] = [];
@@ -195,7 +194,7 @@ export function buildUrisPreviewText(uris: vscode.Uri[]): string {
   return `${previewText} and ${remainingCount} more`;
 }
 
-export function buildSelectedThenClickedUniqueUnion(selectedUris: vscode.Uri[], clickedUri: vscode.Uri): vscode.Uri[] {
+function buildSelectedThenClickedUniqueUnion(selectedUris: vscode.Uri[], clickedUri: vscode.Uri): vscode.Uri[] {
   const unionUris: vscode.Uri[] = [];
 
   const uniqueKeys = new Set<string>();
@@ -214,7 +213,7 @@ export function buildSelectedThenClickedUniqueUnion(selectedUris: vscode.Uri[], 
   return unionUris;
 }
 
-export function uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
+function uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
   const uniqueUris: vscode.Uri[] = [];
   const uniqueKeys = new Set<string>();
 
@@ -229,7 +228,7 @@ export function uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
   return uniqueUris;
 }
 
-export async function collectExplorerItemsFileItems(
+async function collectExplorerItemsFileItems(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   selectedUris: vscode.Uri[]
 ): Promise<ReadUrisAsFileItemsResult> {
@@ -254,7 +253,7 @@ export async function collectExplorerItemsFileItems(
   return await readUrisAsFileItems(deps, allFileUris);
 }
 
-export async function collectAllFilesInFolderRecursively(
+async function collectAllFilesInFolderRecursively(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   folderUri: vscode.Uri
 ): Promise<vscode.Uri[]> {
@@ -281,76 +280,7 @@ export async function collectAllFilesInFolderRecursively(
   return collectedFileUris;
 }
 
-export async function readUrisAsFileItems(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  uris: vscode.Uri[]
-): Promise<ReadUrisAsFileItemsResult> {
-  const dedupedByPathMap = new Map<string, vscode.Uri>();
-
-  for (const uri of uris) {
-    const relativePath = vscode.workspace.asRelativePath(uri, false);
-    if (!relativePath) continue;
-
-    if (!dedupedByPathMap.has(relativePath)) dedupedByPathMap.set(relativePath, uri);
-  }
-
-  const fileItems: EditorToLlmCollectedFileItem[] = [];
-  const deletedFileUris: vscode.Uri[] = [];
-
-  for (const [relativePath, uri] of dedupedByPathMap.entries()) {
-    const readResult = await tryReadFileAsText(uri);
-
-    if (readResult.isFileNotFound) {
-      deletedFileUris.push(uri);
-      continue;
-    }
-
-    fileItems.push({
-      path: relativePath,
-      content: readResult.text,
-      languageId: readResult.languageId,
-      readError: readResult.readError,
-    });
-  }
-
-  return { fileItems, deletedFileUris };
-}
-
-export async function tryReadFileAsText(
-  uri: vscode.Uri
-): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
-  try {
-    const document = await vscode.workspace.openTextDocument(uri);
-
-    return { text: document.getText(), languageId: document.languageId, isFileNotFound: false };
-  } catch (error) {
-    const message = String(error);
-
-    return { text: null, readError: message, isFileNotFound: isFileNotFoundError(error) };
-  }
-}
-
-export function isFileNotFoundError(error: unknown): boolean {
-  const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
-  const code = String(anyError?.code ?? '');
-  if (code === 'FileNotFound') return true;
-
-  const message = String(anyError?.message ?? error ?? '');
-
-  if (message.includes('FileNotFound')) return true;
-  if (message.includes('ENOENT')) return true;
-  if (message.includes('no such file or directory')) return true;
-
-  const name = String(anyError?.name ?? '');
-  if (name.includes('FileNotFound')) return true;
-
-  return false;
-}
-
-export async function tryStat(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  uri: vscode.Uri
-): Promise<vscode.FileStat | null> {
+async function tryStat(deps: EditorToLlmModulePrivateHelpersDependencies, uri: vscode.Uri): Promise<vscode.FileStat | null> {
   try {
     return await vscode.workspace.fs.stat(uri);
   } catch (error) {
@@ -359,7 +289,7 @@ export async function tryStat(
   }
 }
 
-export async function tryReadDirectory(
+async function tryReadDirectory(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   uri: vscode.Uri
 ): Promise<[string, vscode.FileType][] | null> {
@@ -369,4 +299,4 @@ export async function tryReadDirectory(
     deps.logger.debug(`Explorer readDirectory failed for ${uri.toString()}: ${String(error)}`);
     return null;
   }
-}
+}

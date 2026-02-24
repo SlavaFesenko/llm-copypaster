@@ -1,8 +1,13 @@
-
 import * as vscode from 'vscode';
 
-import { EditorToLlmModulePrivateHelpersDependencies, TabBasedFileItemsResult, tryGetUriFromTab, wrapContentWithCodeFence } from './common.helpers';
-import { readUrisAsFileItems } from './explorer.helpers';
+import {
+  EditorToLlmModulePrivateHelpersDependencies,
+  readUrisAsFileItems,
+  showCopyResultNotification,
+  TabBasedFileItemsResult,
+  tryGetUriFromTab,
+  wrapContentWithCodeFence,
+} from './common.helpers';
 import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-group-picker-helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './utils/file-selection';
@@ -128,75 +133,7 @@ export async function copyPinnedTabsInActiveTabGroupAsContext(
   });
 }
 
-export async function showCopyResultNotification(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: {
-    commandName: string;
-    includeTechPrompt: boolean;
-    copiedFilesCount: number;
-    totalFilesCount: number;
-    deletedFileUris: vscode.Uri[];
-    unresolvedTabs: vscode.Tab[];
-    selectionSourceLabel?: string;
-  }
-): Promise<void> {
-  const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
-  const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
-  const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
-
-  const messagePrefix = args.selectionSourceLabel ? `Copied ${args.selectionSourceLabel} ` : 'Copied ';
-
-  const message =
-    unavailableFilesCount === 0
-      ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
-      : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
-
-  const closeUnavailableActionLabel =
-    unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
-
-  const selectedAction = closeUnavailableActionLabel
-    ? await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
-    : await vscode.window.showInformationMessage(message);
-
-  if (selectedAction !== closeUnavailableActionLabel) return;
-
-  await closeUnavailableTabs(deps, {
-    deletedFileUris: args.deletedFileUris,
-    unresolvedTabs: args.unresolvedTabs,
-  });
-}
-
-export async function closeUnavailableTabs(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: { deletedFileUris: vscode.Uri[]; unresolvedTabs: vscode.Tab[] }
-): Promise<void> {
-  const tabsToClose: vscode.Tab[] = [];
-
-  for (const unresolvedTab of args.unresolvedTabs) tabsToClose.push(unresolvedTab);
-
-  if (args.deletedFileUris.length > 0) {
-    const deletedUriStrings = new Set<string>(args.deletedFileUris.map(uri => uri.toString()));
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        const tabUri = tryGetUriFromTab(tab);
-        if (!tabUri) continue;
-
-        if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
-      }
-    }
-  }
-
-  if (tabsToClose.length === 0) return;
-
-  try {
-    await vscode.window.tabGroups.close(tabsToClose);
-  } catch (error) {
-    deps.logger.warn(`Failed closing unavailable tabs: ${String(error)}`);
-  }
-}
-
-export async function collectActiveTabGroupFileItems(
+async function collectActiveTabGroupFileItems(
   deps: EditorToLlmModulePrivateHelpersDependencies
 ): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -229,7 +166,7 @@ export async function collectActiveTabGroupFileItems(
   return { ...readResult, unresolvedTabs };
 }
 
-export async function collectAllOpenTabsFileItems(
+async function collectAllOpenTabsFileItems(
   deps: EditorToLlmModulePrivateHelpersDependencies
 ): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -259,7 +196,7 @@ export async function collectAllOpenTabsFileItems(
   return { ...readResult, unresolvedTabs };
 }
 
-export async function collectAllPinnedTabsFileItems(
+async function collectAllPinnedTabsFileItems(
   deps: EditorToLlmModulePrivateHelpersDependencies
 ): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -291,7 +228,7 @@ export async function collectAllPinnedTabsFileItems(
   return { ...readResult, unresolvedTabs };
 }
 
-export async function collectPinnedTabsInActiveTabGroupFileItems(
+async function collectPinnedTabsInActiveTabGroupFileItems(
   deps: EditorToLlmModulePrivateHelpersDependencies
 ): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -326,7 +263,7 @@ export async function collectPinnedTabsInActiveTabGroupFileItems(
   return { ...readResult, unresolvedTabs };
 }
 
-export async function pickTabGroupForTabGroupCopyCommand(
+async function pickTabGroupForTabGroupCopyCommand(
   deps: EditorToLlmModulePrivateHelpersDependencies
 ): Promise<vscode.TabGroup | null> {
   const activeEditor = vscode.window.activeTextEditor;
@@ -427,4 +364,4 @@ async function copyFileItemsSelectionAsContext(
     deletedFileUris: args.deletedFileUris,
     unresolvedTabs: args.unresolvedTabs,
   });
-}
+}

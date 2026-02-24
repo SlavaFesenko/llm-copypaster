@@ -1,4 +1,3 @@
-
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
@@ -53,4 +52,138 @@ export function wrapContentWithCodeFence(content: string, languageId: string): s
   const normalizedLanguageId = languageId.trim();
 
   return normalizedLanguageId ? `\`\`\`${normalizedLanguageId}\n${content}\n\`\`\`` : `\`\`\`\n${content}\n\`\`\``;
-}
+}
+
+export async function readUrisAsFileItems(
+  deps: EditorToLlmModulePrivateHelpersDependencies,
+  uris: vscode.Uri[]
+): Promise<ReadUrisAsFileItemsResult> {
+  const dedupedByPathMap = new Map<string, vscode.Uri>();
+
+  for (const uri of uris) {
+    const relativePath = vscode.workspace.asRelativePath(uri, false);
+    if (!relativePath) continue;
+
+    if (!dedupedByPathMap.has(relativePath)) dedupedByPathMap.set(relativePath, uri);
+  }
+
+  const fileItems: EditorToLlmCollectedFileItem[] = [];
+  const deletedFileUris: vscode.Uri[] = [];
+
+  for (const [relativePath, uri] of dedupedByPathMap.entries()) {
+    const readResult = await tryReadFileAsText(uri);
+
+    if (readResult.isFileNotFound) {
+      deletedFileUris.push(uri);
+      continue;
+    }
+
+    fileItems.push({
+      path: relativePath,
+      content: readResult.text,
+      languageId: readResult.languageId,
+      readError: readResult.readError,
+    });
+  }
+
+  return { fileItems, deletedFileUris };
+}
+
+export async function tryReadFileAsText(
+  uri: vscode.Uri
+): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
+  try {
+    const document = await vscode.workspace.openTextDocument(uri);
+
+    return { text: document.getText(), languageId: document.languageId, isFileNotFound: false };
+  } catch (error) {
+    const message = String(error);
+
+    return { text: null, readError: message, isFileNotFound: isFileNotFoundError(error) };
+  }
+}
+
+export function isFileNotFoundError(error: unknown): boolean {
+  const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
+  const code = String(anyError?.code ?? '');
+  if (code === 'FileNotFound') return true;
+
+  const message = String(anyError?.message ?? error ?? '');
+
+  if (message.includes('FileNotFound')) return true;
+  if (message.includes('ENOENT')) return true;
+  if (message.includes('no such file or directory')) return true;
+
+  const name = String(anyError?.name ?? '');
+  if (name.includes('FileNotFound')) return true;
+
+  return false;
+}
+
+export async function showCopyResultNotification(
+  deps: EditorToLlmModulePrivateHelpersDependencies,
+  args: {
+    commandName: string;
+    includeTechPrompt: boolean;
+    copiedFilesCount: number;
+    totalFilesCount: number;
+    deletedFileUris: vscode.Uri[];
+    unresolvedTabs: vscode.Tab[];
+    selectionSourceLabel?: string;
+  }
+): Promise<void> {
+  const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
+  const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
+  const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
+
+  const messagePrefix = args.selectionSourceLabel ? `Copied ${args.selectionSourceLabel} ` : 'Copied ';
+
+  const message =
+    unavailableFilesCount === 0
+      ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
+      : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
+
+  const closeUnavailableActionLabel =
+    unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
+
+  const selectedAction = closeUnavailableActionLabel
+    ? await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
+    : await vscode.window.showInformationMessage(message);
+
+  if (selectedAction !== closeUnavailableActionLabel) return;
+
+  await closeUnavailableTabs(deps, {
+    deletedFileUris: args.deletedFileUris,
+    unresolvedTabs: args.unresolvedTabs,
+  });
+}
+
+async function closeUnavailableTabs(
+  deps: EditorToLlmModulePrivateHelpersDependencies,
+  args: { deletedFileUris: vscode.Uri[]; unresolvedTabs: vscode.Tab[] }
+): Promise<void> {
+  const tabsToClose: vscode.Tab[] = [];
+
+  for (const unresolvedTab of args.unresolvedTabs) tabsToClose.push(unresolvedTab);
+
+  if (args.deletedFileUris.length > 0) {
+    const deletedUriStrings = new Set<string>(args.deletedFileUris.map(uri => uri.toString()));
+
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      for (const tab of tabGroup.tabs) {
+        const tabUri = tryGetUriFromTab(tab);
+        if (!tabUri) continue;
+
+        if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
+      }
+    }
+  }
+
+  if (tabsToClose.length === 0) return;
+
+  try {
+    await vscode.window.tabGroups.close(tabsToClose);
+  } catch (error) {
+    deps.logger.warn(`Failed closing unavailable tabs: ${String(error)}`);
+  }
+}
