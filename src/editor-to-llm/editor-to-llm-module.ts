@@ -1,3 +1,4 @@
+
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../config/config-service';
@@ -23,6 +24,13 @@ interface TabBasedFileItemsResult {
   fileItems: EditorToLlmCollectedFileItem[];
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
+}
+
+type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
+
+export interface CopySelectedExplorerItemsArgs {
+  clickedUri?: vscode.Uri;
+  selectedUris?: vscode.Uri[];
 }
 
 export class EditorToLlmModule {
@@ -255,16 +263,79 @@ export class EditorToLlmModule {
   }
 
   public async copySelectedExplorerItemsAsContext(
-    resourceUris?: vscode.Uri[] | vscode.Uri,
+    args?: CopySelectedExplorerItemsArgs,
     includeTechPrompt: boolean = true
   ): Promise<void> {
-    const selectedUris = this._normalizeExplorerSelectionUris(resourceUris);
-    if (!selectedUris.length) {
-      await vscode.window.showWarningMessage('No explorer selection to copy');
+    const clickedUri = args?.clickedUri;
+    const selectedUrisCopy = [...(args?.selectedUris ?? [])];
+
+    const normalizedSelectedUris = this._uniqueByUriKeyKeepOrder(selectedUrisCopy);
+    const clickedUriKey = clickedUri ? this._buildUriKey(clickedUri) : null;
+
+    if (normalizedSelectedUris.length === 0 && clickedUri) {
+      await this._copyExplorerUrisAsContext({
+        inputUris: [clickedUri],
+        selectionSource: 'CLICKED',
+        includeTechPrompt,
+      });
+
       return;
     }
 
-    const selection = await this._collectExplorerItemsFileItems(selectedUris);
+    if (normalizedSelectedUris.length > 0 && !clickedUri) {
+      await this._copyExplorerUrisAsContext({
+        inputUris: normalizedSelectedUris,
+        selectionSource: 'SELECTED',
+        includeTechPrompt,
+      });
+
+      return;
+    }
+
+    if (normalizedSelectedUris.length > 0 && clickedUri) {
+      const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => this._buildUriKey(uri)));
+      const isClickedInSelected = clickedUriKey ? selectedUriKeys.has(clickedUriKey) : false;
+
+      if (isClickedInSelected) {
+        await this._copyExplorerUrisAsContext({
+          inputUris: normalizedSelectedUris,
+          selectionSource: 'SELECTED',
+          includeTechPrompt,
+        });
+
+        return;
+      }
+
+      const quickPickItems = this._buildExplorerSelectionSourceQuickPickItems({
+        selectedUris: normalizedSelectedUris,
+        clickedUri,
+      });
+
+      const pickedItem = await vscode.window.showQuickPick(quickPickItems, {
+        placeHolder: 'Choose what to copy from Explorer',
+        canPickMany: false,
+      });
+
+      if (!pickedItem) return;
+
+      await this._copyExplorerUrisAsContext({
+        inputUris: pickedItem.uris,
+        selectionSource: pickedItem.selectionSource,
+        includeTechPrompt,
+      });
+
+      return;
+    }
+
+    await vscode.window.showWarningMessage('No explorer selection to copy');
+  }
+
+  private async _copyExplorerUrisAsContext(args: {
+    inputUris: vscode.Uri[];
+    selectionSource: ExplorerCopySelectionSource;
+    includeTechPrompt: boolean;
+  }): Promise<void> {
+    const selection = await this._collectExplorerItemsFileItems(args.inputUris);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
 
@@ -275,7 +346,7 @@ export class EditorToLlmModule {
 
     if (selection.fileItems.length > 0) {
       const config = await this._configService.getConfig();
-      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
+      const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._extensionContext) : '';
 
       const fileItems = config.EnableCodefenceWrappingOnCopying
         ? selection.fileItems.map(fileItem => ({
@@ -286,7 +357,7 @@ export class EditorToLlmModule {
 
       const contextText = buildLlmContextText({
         fileItems,
-        includeTechPrompt,
+        includeTechPrompt: args.includeTechPrompt,
         config,
         techPromptText,
       });
@@ -299,11 +370,12 @@ export class EditorToLlmModule {
 
     await this._showCopyResultNotification({
       commandName: 'Copy Explorer Items',
-      includeTechPrompt,
+      includeTechPrompt: args.includeTechPrompt,
       copiedFilesCount: selection.fileItems.length,
       totalFilesCount,
       deletedFileUris: selection.deletedFileUris,
       unresolvedTabs: [],
+      selectionSourceLabel: args.selectionSource,
     });
   }
 
@@ -314,27 +386,24 @@ export class EditorToLlmModule {
   }
 
   private async _showCopyResultNotification(args: {
-    commandName:
-      | 'Copy All'
-      | 'Copy Tab Group'
-      | 'Copy File'
-      | 'Copy Explorer Items'
-      | 'Copy All Pinned'
-      | 'Copy Pinned Tab Group';
+    commandName: string;
     includeTechPrompt: boolean;
     copiedFilesCount: number;
     totalFilesCount: number;
     deletedFileUris: vscode.Uri[];
     unresolvedTabs: vscode.Tab[];
+    selectionSourceLabel?: ExplorerCopySelectionSource;
   }): Promise<void> {
     const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
     const techPromptMarker = args.includeTechPrompt ? 'With Tech Prompt' : 'Without Tech Prompt';
     const commandDisplayName = `${args.commandName} ${techPromptMarker}`;
 
+    const messagePrefix = args.selectionSourceLabel ? `Copied ${args.selectionSourceLabel} ` : 'Copied ';
+
     const message =
       unavailableFilesCount === 0
-        ? `Copied ${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
-        : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
+        ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
+        : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
 
     const closeUnavailableActionLabel =
       unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
@@ -526,12 +595,100 @@ export class EditorToLlmModule {
     return selectedItem?.tabGroup ?? null;
   }
 
-  private _normalizeExplorerSelectionUris(resourceUris?: vscode.Uri[] | vscode.Uri): vscode.Uri[] {
-    if (!resourceUris) return [];
+  private _buildExplorerSelectionSourceQuickPickItems(args: {
+    selectedUris: vscode.Uri[];
+    clickedUri: vscode.Uri;
+  }): Array<vscode.QuickPickItem & { selectionSource: ExplorerCopySelectionSource; uris: vscode.Uri[] }> {
+    const selectedUrisCopy = [...args.selectedUris];
+    const clickedUriCopy = args.clickedUri;
 
-    if (Array.isArray(resourceUris)) return resourceUris;
+    const selectedUrisPreview = this._buildUrisPreviewText(selectedUrisCopy);
+    const clickedUriPreview = this._buildUrisPreviewText([clickedUriCopy]);
 
-    return [resourceUris];
+    const bothUris = this._buildSelectedThenClickedUniqueUnion(selectedUrisCopy, clickedUriCopy);
+    const bothUrisPreview = this._buildUrisPreviewText(bothUris);
+
+    return [
+      {
+        label: `Copy SELECTED (${selectedUrisCopy.length})`,
+        description: selectedUrisPreview,
+        selectionSource: 'SELECTED',
+        uris: selectedUrisCopy,
+      },
+      {
+        label: 'Copy CLICKED (1)',
+        description: clickedUriPreview,
+        selectionSource: 'CLICKED',
+        uris: [clickedUriCopy],
+      },
+      {
+        label: `Copy BOTH (${bothUris.length})`,
+        description: bothUrisPreview,
+        selectionSource: 'BOTH',
+        uris: bothUris,
+      },
+    ];
+  }
+
+  private _buildUrisPreviewText(uris: vscode.Uri[]): string {
+    const previewLimit = 2;
+
+    const pathPreviews: string[] = [];
+
+    for (const uri of uris.slice(0, previewLimit)) {
+      pathPreviews.push(vscode.workspace.asRelativePath(uri, false) || uri.fsPath || uri.toString());
+    }
+
+    const remainingCount = uris.length - pathPreviews.length;
+
+    const previewText = pathPreviews.join(', ');
+
+    if (!previewText && uris.length > 0) return `${uris.length} item(s)`;
+    if (!previewText) return '';
+
+    if (remainingCount <= 0) return previewText;
+
+    return `${previewText} and ${remainingCount} more`;
+  }
+
+  private _buildSelectedThenClickedUniqueUnion(selectedUris: vscode.Uri[], clickedUri: vscode.Uri): vscode.Uri[] {
+    const unionUris: vscode.Uri[] = [];
+
+    const uniqueKeys = new Set<string>();
+
+    for (const selectedUri of selectedUris) {
+      const key = this._buildUriKey(selectedUri);
+      if (uniqueKeys.has(key)) continue;
+
+      uniqueKeys.add(key);
+      unionUris.push(selectedUri);
+    }
+
+    const clickedKey = this._buildUriKey(clickedUri);
+    if (!uniqueKeys.has(clickedKey)) unionUris.push(clickedUri);
+
+    return unionUris;
+  }
+
+  private _uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
+    const uniqueUris: vscode.Uri[] = [];
+    const uniqueKeys = new Set<string>();
+
+    for (const uri of uris) {
+      const key = this._buildUriKey(uri);
+      if (uniqueKeys.has(key)) continue;
+
+      uniqueKeys.add(key);
+      uniqueUris.push(uri);
+    }
+
+    return uniqueUris;
+  }
+
+  private _buildUriKey(uri: vscode.Uri): string {
+    if (uri.scheme === 'file' && uri.fsPath) return uri.fsPath;
+
+    return uri.toString();
   }
 
   private async _collectExplorerItemsFileItems(selectedUris: vscode.Uri[]): Promise<ReadUrisAsFileItemsResult> {
@@ -660,4 +817,4 @@ export class EditorToLlmModule {
       return null;
     }
   }
-}
+}

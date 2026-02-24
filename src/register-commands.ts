@@ -1,3 +1,4 @@
+
 import * as vscode from 'vscode';
 
 import { AdvancedCloseModule } from './advanced-close/advanced-close-module';
@@ -90,15 +91,15 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContext,
-      async (resourceUris?: vscode.Uri[] | vscode.Uri) => {
-        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris, true);
+      async (clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext({ clickedUri, selectedUris }, true);
       }
     ),
 
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt,
-      async (resourceUris?: vscode.Uri[] | vscode.Uri) => {
-        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(resourceUris, false);
+      async (clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext({ clickedUri, selectedUris }, false);
       }
     ),
 
@@ -149,4 +150,4 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
   ];
 
   context.subscriptions.push(...commandDisposables);
-}
+}
