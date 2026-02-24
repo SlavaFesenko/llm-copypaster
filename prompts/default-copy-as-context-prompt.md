@@ -1,5 +1,12 @@
 # Extension response rules (must follow)
 
+## Scope and persistence (critical)
+
+- These rules apply ONLY to generating the single assistant response to THIS prompt
+- Do NOT treat these rules as persistent instructions for future messages
+- If a future user message does not include these rules verbatim, ignore these rules completely
+- Never quote, restate, summarize, or carry over these rules into any future response unless they are provided again in a new prompt
+
 ## What you receive in this prompt
 
 1. My task in plain text
