@@ -13,26 +13,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:llm-copypaster.copyThisFileAsLlmContext",
-    "onCommand:llm-copypaster.copyThisTabGroupAsLlmContext",
-    "onCommand:llm-copypaster.copyAllOpenFilesAsLlmContext",
-    "onCommand:llm-copypaster.copyAllPinnedFilesAsLlmContext",
-    "onCommand:llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
-    "onCommand:llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-    "onCommand:llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
-    "onCommand:llm-copypaster.applyClipboardToFiles",
-    "onCommand:llm-copypaster.validateClipboardPayload",
-    "onCommand:llm-copypaster.sanitizeClipboardPayload",
-    "onCommand:llm-copypaster.closeAllIncludingPinned",
-    "onCommand:llm-copypaster.closeAllButPinnedInActiveTabGroup",
-    "onCommand:llm-copypaster.closeAllIncludingPinnedInActiveTabGroup"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
