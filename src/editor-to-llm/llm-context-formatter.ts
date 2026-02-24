@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../llm-copypaster-config';
+import { LlmCopypasterConfig } from '../config';
 import { EditorToLlmFileItem } from './file-selection';
 
 export interface BuildLlmContextTextArgs {

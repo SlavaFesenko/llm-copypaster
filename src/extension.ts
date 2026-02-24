@@ -3,8 +3,8 @@
 import * as vscode from 'vscode';
 
 import { AdvancedCloseModule } from './advanced-close/advanced-close-module';
+import { ConfigService } from './config';
 import { EditorToLlmModule } from './editor-to-llm/editor-to-llm-module';
-import { ConfigService } from './llm-copypaster-config';
 import { GuidedRetryStore } from './llm-to-editor/guided-retry/guided-retry-store';
 import { LlmToEditorModule } from './llm-to-editor/llm-to-editor-module';
 import { registerCommands } from './register-commands';

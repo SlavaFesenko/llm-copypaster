@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { buildDefaultConfig, LlmCopypasterConfig, LlmCopypasterSanitizationRule } from '../../llm-copypaster-config';
+import { buildDefaultConfig, LlmCopypasterConfig, LlmCopypasterSanitizationRule } from '../../config';
 import { applySanitizationRules } from '../../llm-to-editor/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
