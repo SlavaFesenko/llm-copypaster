@@ -12,7 +12,7 @@ import {
 } from './editor.helpers';
 import { CopySelectedExplorerItemsArgs, copySelectedExplorerItemsAsContext } from './explorer.helpers';
 
-export class EditorToLlmModule {
+export class IdeToLlmModule {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
