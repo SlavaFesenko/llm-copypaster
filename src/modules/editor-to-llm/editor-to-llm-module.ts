@@ -15,9 +15,9 @@ import {
   uniqueByUriKeyKeepOrder,
   wrapContentWithCodeFence,
 } from './editor-to-llm-module-private-helpers';
-import { collectActiveFileSelection } from './file-selection';
-import { buildLlmContextText } from './llm-context-formatter';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
+import { collectActiveFileSelection } from './utils/file-selection';
+import { buildLlmContextText } from './utils/llm-context-formatter';
 
 export interface CopySelectedExplorerItemsArgs {
   clickedUri?: vscode.Uri;
