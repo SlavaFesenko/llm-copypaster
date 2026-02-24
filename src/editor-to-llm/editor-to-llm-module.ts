@@ -5,6 +5,7 @@ import { OutputChannelLogger } from '../utils/output-channel-logger';
 import { loadDefaultCopyAsContextPrompt } from './default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
+import { buildTabGroupQuickPickItems, findTabGroupsContainingUri, tryGetUriFromTab } from './tab-group-picker-helpers';
 
 interface EditorToLlmCollectedFileItem {
   path: string;
@@ -22,10 +23,6 @@ interface TabBasedFileItemsResult {
   fileItems: EditorToLlmCollectedFileItem[];
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
-}
-
-interface TabGroupPickItem extends vscode.QuickPickItem {
-  tabGroup: vscode.TabGroup;
 }
 
 export class EditorToLlmModule {
@@ -364,7 +361,7 @@ export class EditorToLlmModule {
 
       for (const tabGroup of vscode.window.tabGroups.all) {
         for (const tab of tabGroup.tabs) {
-          const tabUri = this._tryGetUriFromTab(tab);
+          const tabUri = tryGetUriFromTab(tab);
           if (!tabUri) continue;
 
           if (deletedUriStrings.has(tabUri.toString())) tabsToClose.push(tab);
@@ -396,7 +393,7 @@ export class EditorToLlmModule {
     const unresolvedTabs: vscode.Tab[] = [];
 
     for (const tab of tabGroup.tabs) {
-      const tabUri = this._tryGetUriFromTab(tab);
+      const tabUri = tryGetUriFromTab(tab);
       if (!tabUri) {
         unresolvedTabs.push(tab);
         continue;
@@ -423,7 +420,7 @@ export class EditorToLlmModule {
 
     for (const tabGroup of vscode.window.tabGroups.all) {
       for (const tab of tabGroup.tabs) {
-        const tabUri = this._tryGetUriFromTab(tab);
+        const tabUri = tryGetUriFromTab(tab);
         if (!tabUri) {
           unresolvedTabs.push(tab);
           continue;
@@ -453,7 +450,7 @@ export class EditorToLlmModule {
       for (const tab of tabGroup.tabs) {
         if (!tab.isPinned) continue;
 
-        const tabUri = this._tryGetUriFromTab(tab);
+        const tabUri = tryGetUriFromTab(tab);
         if (!tabUri) {
           unresolvedTabs.push(tab);
           continue;
@@ -487,7 +484,7 @@ export class EditorToLlmModule {
     for (const tab of tabGroup.tabs) {
       if (!tab.isPinned) continue;
 
-      const tabUri = this._tryGetUriFromTab(tab);
+      const tabUri = tryGetUriFromTab(tab);
       if (!tabUri) {
         unresolvedTabs.push(tab);
         continue;
@@ -510,14 +507,15 @@ export class EditorToLlmModule {
     const activeDocumentUri = activeEditor.document.uri;
     if (activeDocumentUri.scheme !== 'file') return vscode.window.tabGroups.activeTabGroup;
 
-    const matchingTabGroups = this._findTabGroupsContainingUri(activeDocumentUri);
+    const allTabGroups = vscode.window.tabGroups.all;
+
+    const matchingTabGroups = findTabGroupsContainingUri({ uri: activeDocumentUri, tabGroups: allTabGroups });
 
     if (matchingTabGroups.length === 0) return vscode.window.tabGroups.activeTabGroup;
 
     if (matchingTabGroups.length === 1) return matchingTabGroups[0];
 
-    const allTabGroups = vscode.window.tabGroups.all;
-    const quickPickItems = this._buildTabGroupQuickPickItems(matchingTabGroups, allTabGroups);
+    const quickPickItems = buildTabGroupQuickPickItems({ tabGroups: matchingTabGroups, allTabGroups });
 
     const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
       placeHolder:
@@ -526,120 +524,6 @@ export class EditorToLlmModule {
     });
 
     return selectedItem?.tabGroup ?? null;
-  }
-
-  private _findTabGroupsContainingUri(uri: vscode.Uri): vscode.TabGroup[] {
-    const uriString = uri.toString();
-
-    const matchingTabGroups: vscode.TabGroup[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        const tabUri = this._tryGetUriFromTab(tab);
-        if (!tabUri) continue;
-
-        if (tabUri.toString() !== uriString) continue;
-
-        matchingTabGroups.push(tabGroup);
-        break;
-      }
-    }
-
-    return matchingTabGroups;
-  }
-
-  private _buildTabGroupQuickPickItems(
-    tabGroups: vscode.TabGroup[],
-    allTabGroups: readonly vscode.TabGroup[]
-  ): TabGroupPickItem[] {
-    const quickPickItems: TabGroupPickItem[] = [];
-
-    for (let index = 0; index < tabGroups.length; index++) {
-      const tabGroup = tabGroups[index];
-
-      const tabGroupIndexInAllGroups = allTabGroups.indexOf(tabGroup);
-      const tabGroupLabel = tabGroupIndexInAllGroups >= 0 ? `Tab Group ${tabGroupIndexInAllGroups + 1}` : 'Tab Group';
-
-      const tabGroupFilesSummary = this._buildTabGroupFilesSummary(tabGroup);
-
-      quickPickItems.push({
-        label: tabGroupLabel,
-        description: tabGroupFilesSummary,
-        tabGroup,
-      });
-    }
-
-    return quickPickItems;
-  }
-
-  private _buildTabGroupFilesSummary(tabGroup: vscode.TabGroup): string {
-    const fileNames: string[] = [];
-
-    for (const tab of tabGroup.tabs) {
-      const tabLabel = this._tryGetTabLabel(tab);
-      if (!tabLabel) continue;
-
-      fileNames.push(tabLabel);
-    }
-
-    const uniqueFileNames: string[] = [];
-
-    for (const fileName of fileNames) {
-      if (uniqueFileNames.includes(fileName)) continue;
-
-      uniqueFileNames.push(fileName);
-    }
-
-    const previewFileNamesCount = 2;
-
-    const previewFileNames = uniqueFileNames.slice(0, previewFileNamesCount);
-    const remainingFilesCount = uniqueFileNames.length - previewFileNames.length;
-
-    const previewText = previewFileNames.join(', ');
-
-    if (!previewText && uniqueFileNames.length > 0) return `${uniqueFileNames.length} file(s)`;
-    if (!previewText) return 'No file tabs';
-
-    if (remainingFilesCount <= 0) return previewText;
-
-    return `${previewText} and ${remainingFilesCount} more`;
-  }
-
-  private _tryGetTabLabel(tab: vscode.Tab): string | null {
-    const tabUri = this._tryGetUriFromTab(tab);
-    if (tabUri && tabUri.scheme === 'file') return this._getFileNameFromUri(tabUri);
-
-    const anyTab = tab as unknown as { label?: unknown } | null;
-    const label = String(anyTab?.label ?? '').trim();
-
-    return label ? label : null;
-  }
-
-  private _getFileNameFromUri(uri: vscode.Uri): string {
-    const uriPath = uri.path ?? '';
-    const parts = uriPath.split('/').filter(part => part.trim());
-
-    if (parts.length > 0) return parts[parts.length - 1];
-
-    return (
-      uri.fsPath
-        .split(/[/\\]/)
-        .filter(part => part.trim())
-        .pop() ?? uri.toString()
-    );
-  }
-
-  private _tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
-    if (tab.input instanceof vscode.TabInputText) {
-      return tab.input.uri;
-    }
-
-    const anyInput = tab.input as unknown as { uri?: vscode.Uri };
-    if (anyInput?.uri instanceof vscode.Uri) {
-      return anyInput.uri;
-    }
-
-    return null;
   }
 
   private _normalizeExplorerSelectionUris(resourceUris?: vscode.Uri[] | vscode.Uri): vscode.Uri[] {
