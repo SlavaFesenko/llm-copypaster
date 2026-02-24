@@ -1,3 +1,4 @@
+
 import * as vscode from 'vscode';
 
 import {
@@ -11,6 +12,80 @@ import {
 import { showCopyResultNotification } from './editor.helpers';
 import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { buildLlmContextText } from './utils/llm-context-formatter';
+
+export interface CopySelectedExplorerItemsArgs {
+  clickedUri?: vscode.Uri;
+  selectedUris?: vscode.Uri[];
+}
+
+export async function copySelectedExplorerItemsAsContext(
+  deps: EditorToLlmModulePrivateHelpersDependencies,
+  args?: CopySelectedExplorerItemsArgs,
+  includeTechPrompt: boolean = true
+): Promise<void> {
+  const clickedUri = args?.clickedUri;
+  const selectedUrisCopy = [...(args?.selectedUris ?? [])];
+
+  const normalizedSelectedUris = uniqueByUriKeyKeepOrder(selectedUrisCopy);
+  const clickedUriKey = clickedUri ? buildUriKey(clickedUri) : null;
+
+  if (normalizedSelectedUris.length === 0 && clickedUri) {
+    await copyExplorerUrisAsContext(deps, {
+      inputUris: [clickedUri],
+      selectionSource: 'CLICKED',
+      includeTechPrompt,
+    });
+
+    return;
+  }
+
+  if (normalizedSelectedUris.length > 0 && !clickedUri) {
+    await copyExplorerUrisAsContext(deps, {
+      inputUris: normalizedSelectedUris,
+      selectionSource: 'SELECTED',
+      includeTechPrompt,
+    });
+
+    return;
+  }
+
+  if (normalizedSelectedUris.length > 0 && clickedUri) {
+    const selectedUriKeys = new Set<string>(normalizedSelectedUris.map(uri => buildUriKey(uri)));
+    const isClickedInSelected = clickedUriKey ? selectedUriKeys.has(clickedUriKey) : false;
+
+    if (isClickedInSelected) {
+      await copyExplorerUrisAsContext(deps, {
+        inputUris: normalizedSelectedUris,
+        selectionSource: 'SELECTED',
+        includeTechPrompt,
+      });
+
+      return;
+    }
+
+    const quickPickItems = buildExplorerSelectionSourceQuickPickItems({
+      selectedUris: normalizedSelectedUris,
+      clickedUri,
+    });
+
+    const pickedItem = await vscode.window.showQuickPick(quickPickItems, {
+      placeHolder: 'Choose what to copy from Explorer',
+      canPickMany: false,
+    });
+
+    if (!pickedItem) return;
+
+    await copyExplorerUrisAsContext(deps, {
+      inputUris: pickedItem.uris,
+      selectionSource: pickedItem.selectionSource,
+      includeTechPrompt,
+    });
+
+    return;
+  }
+
+  await vscode.window.showWarningMessage('No explorer selection to copy');
+}
 
 export async function copyExplorerUrisAsContext(
   deps: EditorToLlmModulePrivateHelpersDependencies,
@@ -294,4 +369,4 @@ export async function tryReadDirectory(
     deps.logger.debug(`Explorer readDirectory failed for ${uri.toString()}: ${String(error)}`);
     return null;
   }
-}
+}

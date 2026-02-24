@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
-import { CopySelectedExplorerItemsArgs, EditorToLlmModule } from './modules/editor-to-llm/editor-to-llm-module';
+import { EditorToLlmModule } from './modules/editor-to-llm/editor-to-llm-module';
+import { CopySelectedExplorerItemsArgs } from './modules/editor-to-llm/explorer.helpers';
 import { GuidedRetryStore } from './modules/llm-to-editor/guided-retry/guided-retry-store';
 import { LlmToEditorModule } from './modules/llm-to-editor/llm-to-editor-module';
 import { OutputChannelLogger } from './utils/output-channel-logger';
