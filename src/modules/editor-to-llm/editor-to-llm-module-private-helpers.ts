@@ -1,4 +1,3 @@
-
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
@@ -114,7 +113,8 @@ export async function showCopyResultNotification(
       ? `${messagePrefix}${args.copiedFilesCount} file(s) by '${commandDisplayName}'`
       : `${messagePrefix}${args.copiedFilesCount}/${args.totalFilesCount} available file(s) by '${commandDisplayName}'`;
 
-  const closeUnavailableActionLabel = unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
+  const closeUnavailableActionLabel =
+    unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
   const selectedAction = closeUnavailableActionLabel
     ? await vscode.window.showInformationMessage(message, closeUnavailableActionLabel)
@@ -158,7 +158,9 @@ export async function closeUnavailableTabs(
   }
 }
 
-export async function collectActiveTabGroupFileItems(deps: EditorToLlmModulePrivateHelpersDependencies): Promise<TabBasedFileItemsResult> {
+export async function collectActiveTabGroupFileItems(
+  deps: EditorToLlmModulePrivateHelpersDependencies
+): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
     return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
@@ -189,7 +191,9 @@ export async function collectActiveTabGroupFileItems(deps: EditorToLlmModulePriv
   return { ...readResult, unresolvedTabs };
 }
 
-export async function collectAllOpenTabsFileItems(deps: EditorToLlmModulePrivateHelpersDependencies): Promise<TabBasedFileItemsResult> {
+export async function collectAllOpenTabsFileItems(
+  deps: EditorToLlmModulePrivateHelpersDependencies
+): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
     return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
@@ -217,7 +221,9 @@ export async function collectAllOpenTabsFileItems(deps: EditorToLlmModulePrivate
   return { ...readResult, unresolvedTabs };
 }
 
-export async function collectAllPinnedTabsFileItems(deps: EditorToLlmModulePrivateHelpersDependencies): Promise<TabBasedFileItemsResult> {
+export async function collectAllPinnedTabsFileItems(
+  deps: EditorToLlmModulePrivateHelpersDependencies
+): Promise<TabBasedFileItemsResult> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
     return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
@@ -524,7 +530,10 @@ export function isFileNotFoundError(error: unknown): boolean {
   return false;
 }
 
-export async function tryStat(deps: EditorToLlmModulePrivateHelpersDependencies, uri: vscode.Uri): Promise<vscode.FileStat | null> {
+export async function tryStat(
+  deps: EditorToLlmModulePrivateHelpersDependencies,
+  uri: vscode.Uri
+): Promise<vscode.FileStat | null> {
   try {
     return await vscode.workspace.fs.stat(uri);
   } catch (error) {
@@ -543,4 +552,4 @@ export async function tryReadDirectory(
     deps.logger.debug(`Explorer readDirectory failed for ${uri.toString()}: ${String(error)}`);
     return null;
   }
-}
+}

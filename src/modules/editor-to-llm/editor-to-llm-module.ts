@@ -1,4 +1,3 @@
-
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
@@ -19,26 +18,6 @@ import {
 } from './editor-to-llm-module-private-helpers';
 import { collectActiveFileSelection } from './file-selection';
 import { buildLlmContextText } from './llm-context-formatter';
-
-interface EditorToLlmCollectedFileItem {
-  path: string;
-  content: string | null;
-  languageId?: string;
-  readError?: string;
-}
-
-interface ReadUrisAsFileItemsResult {
-  fileItems: EditorToLlmCollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-}
-
-interface TabBasedFileItemsResult {
-  fileItems: EditorToLlmCollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-  unresolvedTabs: vscode.Tab[];
-}
-
-type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
 
 export interface CopySelectedExplorerItemsArgs {
   clickedUri?: vscode.Uri;
@@ -349,4 +328,4 @@ export class EditorToLlmModule {
   }
 
   private readonly _privateHelpersDeps: EditorToLlmModulePrivateHelpersDependencies;
-}
+}
