@@ -22,6 +22,11 @@ export interface LlmContextLimits {
 
 export type LlmContextLimitsByLlm = Record<string, LlmContextLimits>;
 
+export interface PostFilesPatchActionsConfig {
+  enableSaveAfterFilePatch: boolean;
+  enableLintingAfterFilePatch: boolean;
+}
+
 export interface LlmCopypasterConfig {
   currentLLM: string;
   prompts: LlmCopypasterPromptsConfig;
@@ -31,6 +36,7 @@ export interface LlmCopypasterConfig {
   llmContextLimitsByLlm: LlmContextLimitsByLlm;
   showPromptSizeStatsInCopyNotification: boolean;
   promptSizeApproxCharsPerToken: number;
+  postFilesPatchActions: PostFilesPatchActionsConfig;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -59,6 +65,10 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     },
     showPromptSizeStatsInCopyNotification: true,
     promptSizeApproxCharsPerToken: 3.5, // for code with long var names 3 is more accurate, but not to spam with warning picked 3.5
+    postFilesPatchActions: {
+      enableLintingAfterFilePatch: false,
+      enableSaveAfterFilePatch: false,
+    },
   };
 }
 
@@ -72,6 +82,19 @@ export function mergeConfigs(
     ...((settingsConfig.llmContextLimitsByLlm ?? {}) as LlmContextLimitsByLlm),
     ...(((fileConfig?.llmContextLimitsByLlm ?? {}) as LlmContextLimitsByLlm) ?? {}),
   };
+
+  const mergedPostFilesPatchActions: PostFilesPatchActionsConfig = {
+    ...(defaultConfig.postFilesPatchActions ?? {
+      enableLintingAfterFilePatch: defaultConfig.autoFormatAfterApply,
+      enableSaveAfterFilePatch: false,
+    }),
+    ...(settingsConfig.postFilesPatchActions ?? {}),
+    ...((fileConfig?.postFilesPatchActions ?? {}) as PostFilesPatchActionsConfig),
+  };
+
+  if (mergedPostFilesPatchActions.enableLintingAfterFilePatch === undefined)
+    mergedPostFilesPatchActions.enableLintingAfterFilePatch =
+      fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply;
 
   const mergedConfig: LlmCopypasterConfig = {
     ...defaultConfig,
@@ -95,6 +118,7 @@ export function mergeConfigs(
       fileConfig?.promptSizeApproxCharsPerToken ??
       settingsConfig.promptSizeApproxCharsPerToken ??
       defaultConfig.promptSizeApproxCharsPerToken,
+    postFilesPatchActions: mergedPostFilesPatchActions,
   };
 
   return mergedConfig;
@@ -120,8 +144,23 @@ export class ConfigService {
 
     const currentLlm = configuration.get<string>('currentLLM', defaultConfig.currentLLM);
     const autoFormatAfterApply = configuration.get<boolean>('autoFormatAfterApply', defaultConfig.autoFormatAfterApply);
+    const postFilesPatchAutoFormatAfterApply = configuration.get<boolean>(
+      'postFilesPatchActions.autoFormatAfterApply',
+      defaultConfig.postFilesPatchActions.enableLintingAfterFilePatch
+    );
+    const postFilesPatchAutoSaveAfterApply = configuration.get<boolean>(
+      'postFilesPatchActions.autoSaveAfterApply',
+      defaultConfig.postFilesPatchActions.enableSaveAfterFilePatch
+    );
 
-    return { currentLLM: currentLlm, autoFormatAfterApply };
+    return {
+      currentLLM: currentLlm,
+      autoFormatAfterApply,
+      postFilesPatchActions: {
+        enableLintingAfterFilePatch: postFilesPatchAutoFormatAfterApply ?? autoFormatAfterApply,
+        enableSaveAfterFilePatch: postFilesPatchAutoSaveAfterApply,
+      },
+    };
   }
 }
 

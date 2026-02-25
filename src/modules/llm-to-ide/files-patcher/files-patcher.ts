@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
 
+import { PostFilesPatchActionsConfig } from '../../../config';
 import { FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
-
-export interface ApplyFilesPayloadOptions {
-  autoFormatAfterApply: boolean;
-}
 
 export interface ApplyOk {
   ok: true;
@@ -22,7 +19,7 @@ export type ApplyResult = ApplyOk | ApplyFail;
 
 export async function applyFilesPayloadToWorkspace(
   payload: FilesPayload,
-  options: ApplyFilesPayloadOptions,
+  postFilesPatchActions: PostFilesPatchActionsConfig,
   logger: OutputChannelLogger
 ): Promise<ApplyResult> {
   try {
@@ -58,7 +55,9 @@ export async function applyFilesPayloadToWorkspace(
     const applied = await vscode.workspace.applyEdit(workspaceEdit);
     if (!applied) return { ok: false, errorMessage: 'VS Code refused to apply WorkspaceEdit' };
 
-    if (options.autoFormatAfterApply) await tryFormatAppliedDocuments(payload, logger);
+    if (postFilesPatchActions.enableLintingAfterFilePatch) await tryFormatAppliedDocuments(payload, logger);
+
+    if (postFilesPatchActions.enableSaveAfterFilePatch) await trySaveAppliedDocuments(payload, logger);
 
     return { ok: true, appliedFilesCount };
   } catch (error) {
@@ -87,6 +86,20 @@ async function tryFormatAppliedDocuments(payload: FilesPayload, logger: OutputCh
       await vscode.commands.executeCommand('editor.action.formatDocument');
     } catch (error) {
       logger.debug(`Format skipped for ${file.path}: ${String(error)}`);
+    }
+  }
+}
+
+async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
+  for (const file of payload.files) {
+    const targetUri = toWorkspaceUri(file.path);
+    if (!targetUri) continue;
+
+    try {
+      const document = await vscode.workspace.openTextDocument(targetUri);
+      await document.save();
+    } catch (error) {
+      logger.debug(`Save skipped for ${file.path}: ${String(error)}`);
     }
   }
 }
