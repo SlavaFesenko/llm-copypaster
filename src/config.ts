@@ -82,8 +82,8 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
       enableOpeningPatchedFilesInEditor: true,
     },
-    codeListingHeaderRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
     codeListingHeaderStartFragment: '# ',
+    codeListingHeaderRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
     techPrompt: {
       techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
       placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*]+)}}`, // {{placeholder}}
