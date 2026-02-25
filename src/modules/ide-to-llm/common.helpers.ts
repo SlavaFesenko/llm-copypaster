@@ -29,6 +29,25 @@ export interface TabBasedFileItemsResult {
   unresolvedTabs: vscode.Tab[];
 }
 
+export interface EditorToLlmPromptSizeStats {
+  linesCount: number;
+  approxTokensCount: number;
+  maxLinesCountInContext: number;
+  maxTokensCountInContext: number;
+  isExceeded: boolean;
+  exceededBy: PromptSizeExceededBy[];
+}
+
+export interface ShowCopyResultNotificationArgs {
+  commandName: string;
+  includeTechPrompt: boolean;
+  copiedFilesCount: number;
+  totalFilesCount: number;
+  deletedFileUris: vscode.Uri[];
+  unresolvedTabs: vscode.Tab[];
+  promptSizeStats?: EditorToLlmPromptSizeStats;
+}
+
 export type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
 
 export function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
@@ -118,22 +137,7 @@ export function isFileNotFoundError(error: unknown): boolean {
 
 export async function showCopyResultNotification(
   deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: {
-    commandName: string;
-    includeTechPrompt: boolean;
-    copiedFilesCount: number;
-    totalFilesCount: number;
-    deletedFileUris: vscode.Uri[];
-    unresolvedTabs: vscode.Tab[];
-    promptSizeStats?: {
-      linesCount: number;
-      approxTokensCount: number;
-      maxLinesCountInContext: number;
-      maxTokensCountInContext: number;
-      isExceeded: boolean;
-      exceededBy: PromptSizeExceededBy[];
-    };
-  }
+  args: ShowCopyResultNotificationArgs
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
@@ -169,16 +173,7 @@ export async function showCopyResultNotification(
 
 async function tryGetShouldShowPromptSizeStats(
   deps: EditorToLlmModulePrivateHelpersDependencies,
-  promptSizeStats:
-    | {
-        linesCount: number;
-        approxTokensCount: number;
-        maxLinesCountInContext: number;
-        maxTokensCountInContext: number;
-        isExceeded: boolean;
-        exceededBy: PromptSizeExceededBy[];
-      }
-    | undefined
+  promptSizeStats?: EditorToLlmPromptSizeStats
 ): Promise<boolean> {
   if (!promptSizeStats) return false;
 
@@ -191,16 +186,7 @@ async function tryGetShouldShowPromptSizeStats(
   }
 }
 
-function buildPromptSizeStatsSuffix(
-  promptSizeStats: {
-    linesCount: number;
-    approxTokensCount: number;
-    maxLinesCountInContext: number;
-    maxTokensCountInContext: number;
-    isExceeded: boolean;
-    exceededBy: PromptSizeExceededBy[];
-  } | null
-): string {
+function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats | null): string {
   if (!promptSizeStats) return '';
 
   const isLinesExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.LINES);
