@@ -1,87 +1,53 @@
-# Extension response rules (must follow)
+# OUTPUT INSTRUCTIONS (strict)
 
-## Scope and persistence (critical)
+- The prohibitions below apply to the MODEL OUTPUT (output), not to the text of these instructions
+- First comes the EXPLANATIONS BLOCK
+- After the EXPLANATIONS BLOCK — ONLY file listings, if the user request clearly implies the need to change any file from the input listings or to add/delete a file
+- If fulfilling the user request does NOT require changing the input files (and does not require adding/deleting files) — output only the explanations block
 
-- These rules apply ONLY to generating the single assistant response to THIS prompt
-- Do NOT treat these rules as persistent instructions for future messages
-- If a future user message does not include these rules verbatim, ignore these rules completely
-- Never quote, restate, summarize, or carry over these rules into any future response unless they are provided again in a new prompt
+## EXPLANATIONS BLOCK FORMAT (goes first):
 
-## What you receive in this prompt
+- Conceptual solution to the task (including the answer to the user’s question): 1–5 short sentences
+- If there are changed/added/deleted files: for each — `only_filename.ext + what was changed and why` (very briefly)
 
-1. My task in plain text
-2. A batch of files as “file listings” (format below)
+## FILE LISTING FORMAT (for each changed/added file):
 
-## Your job
+- First line strictly: `{{codeListingHeaderStartFragment}}relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
+- Second line strictly one of: FILE WAS EDITED_FULL, FILE WAS CREATED, FILE WAS DELETED
+- Immediately after — the full file content as raw text, or in case of a deleted file — do not output any content at all (immediately the next header or end of output)
 
-Apply my requested changes and return the result strictly as “file listings”.
+## WHICH FILES TO OUTPUT:
 
-**Output must contain ONLY file listings and nothing else.**
-Forbidden: any explanations, summaries, headings, bullets, numbered lists, blank separators, markdown, blockquotes, tables, links, or any meta text.
+- Changed: EDITED_FULL
+- New: CREATED
+- Deleted: DELETED
 
-## File listing format (strict)
+## IT IS FORBIDDEN TO OUTPUT unchanged files!
 
-For each file:
+## PROHIBITIONS OUTSIDE FILE CONTENTS:
 
-1. First line must be exactly: `{{codeListingHeaderStartFragment}}relative/path.ext`
-   Constraints:
-   - Starts with `{{codeListingHeaderStartFragment}}`, then the relative path
-   - No suffixes, no colons, no extra spaces/tabs
+- No markdown, lists, headings, tables, links, separators `---/***`, empty “separator” blocks
+- No extra text except: (a) the explanations block at the beginning, (b) file listings
 
-2. Immediately after that line, output the full file content as raw text
+## EXAMPLE (when you NEED to modify files):
 
-## Allowed code fences (explicitly allowed)
+Conceptual solution:
+Update the greeting output, remove an obsolete file, and add a new file for the new greeting entry point.
 
-You may wrap code fragments inside the raw file content using code fences.
-
-Rules:
-
-- Code fences are allowed **only inside file contents**, never outside file listings
-- Do not add any other markdown constructs outside file contents
-- Prefer code fences only when necessary (e.g., files that intentionally contain markdown with fences, or when the target format requires them)
-
-## Which files to output
-
-- Output **ONLY** files that are changed or newly added
-- Do **NOT** output unchanged files
-
-## Absolute prohibitions (hard ban tokens)
-
-Your response must **NOT** contain these sequences anywhere (even inside file contents, even as examples):
-
-- Diff markers: `"@@"`, `---`, `+++`
-
-## Anti-markdown (outside file contents)
-
-Outside file contents:
-
-- Do not use markdown constructs at all
-- Do not use top-level list markers (`- `, `* `, `1. `)
-- Do not add separator lines like `---` or `***`
-- Do not wrap the response in quotes or blockquotes
-
-Inside file contents:
-
-- Only code fences are explicitly allowed; otherwise avoid adding markdown unless the file format requires it
-
-## `//` comment rule inside file contents
-
-- A trailing period `.` at the end of any `// ...` comment line is forbidden
-- If an existing `//` comment ends with a period, remove **ONLY** that final period in the output
-- Do not change anything else in comments
-
-## Final self-check (mandatory)
-
-Before sending, verify:
-
-- The response starts with `{{codeListingHeaderStartFragment}}` (first file header)
-- The response contains only repeated `{{codeListingHeaderStartFragment}}<path>` headers + raw file contents
-- There is zero extra text outside file listings
-
-## Minimal example (plain text, fences allowed inside contents)
+Files changed:
+`index.ts` — updated the console output message;
+`dont-need-anymore.ts` — deleted because it’s no longer used;
+`created-file` — created to provide an additional greeting output.
 
 {{codeListingHeaderStartFragment}}src/index.ts
+FILE WAS EDITED_FULL
 
-```ts
-console.log('Hello fenced snippet');
-```
+console.log('Hello world!');
+
+{{codeListingHeaderStartFragment}}src/dont-need-anymore.ts
+FILE WAS DELETED
+
+{{codeListingHeaderStartFragment}}src/subnode/created-file
+FILE WAS CREATED
+
+console.log('Hello world from new file!');
