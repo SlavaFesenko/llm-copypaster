@@ -16,7 +16,9 @@ export class LlmToIdeModule {
 
   public async applyClipboardToFiles(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const validation = validateClipboardTextToFilesPayload(clipboardText);
+    const config = await this._configService.getConfig();
+
+    const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
     if (!validation.ok) {
       this._guidedRetryStore.saveLastError({
@@ -30,7 +32,6 @@ export class LlmToIdeModule {
       return;
     }
 
-    const config = await this._configService.getConfig();
     const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
 
     const applyResult = await applyFilesPayloadToWorkspace(sanitizedPayload, config.postFilesPatchActions, this._logger);
@@ -53,7 +54,9 @@ export class LlmToIdeModule {
 
   public async validateClipboardPayload(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const validation = validateClipboardTextToFilesPayload(clipboardText);
+    const config = await this._configService.getConfig();
+
+    const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
     if (!validation.ok) {
       this._guidedRetryStore.saveLastError({
@@ -72,7 +75,9 @@ export class LlmToIdeModule {
 
   public async sanitizeClipboardPayload(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const validation = validateClipboardTextToFilesPayload(clipboardText);
+    const config = await this._configService.getConfig();
+
+    const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
     if (!validation.ok) {
       this._guidedRetryStore.saveLastError({
@@ -86,7 +91,6 @@ export class LlmToIdeModule {
       return;
     }
 
-    const config = await this._configService.getConfig();
     const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
 
     const ronParkClipboardText = sanitizedPayload.files

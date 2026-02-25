@@ -1,13 +1,17 @@
+import { LlmCopypasterConfig } from '../../../config';
 import { FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
 
 type ParseResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
 
-const headerRegex = /^#\s+(.+)\s*$/gm;
+export function validateClipboardTextToFilesPayload(
+  rawClipboardText: string,
+  config: LlmCopypasterConfig
+): ValidationResult<FilesPayload> {
+  const headerRegex = new RegExp(config.headerRegex, 'gm');
 
-export function validateClipboardTextToFilesPayload(rawClipboardText: string): ValidationResult<FilesPayload> {
-  const parsed = parseConcatenatedFileListings(rawClipboardText);
+  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex);
 
   if (!parsed.ok) return parsed;
 
@@ -16,7 +20,7 @@ export function validateClipboardTextToFilesPayload(rawClipboardText: string): V
   return parsed;
 }
 
-function parseConcatenatedFileListings(rawText: string): ParseResult<FilesPayload> {
+function parseConcatenatedFileListings(rawText: string, headerRegex: RegExp): ParseResult<FilesPayload> {
   const matches = [...rawText.matchAll(headerRegex)];
 
   if (matches.length === 0) return { ok: false, errorMessage: 'No file headers found (expected "# relative/path.ext")' };

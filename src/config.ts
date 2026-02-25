@@ -37,6 +37,7 @@ export interface LlmCopypasterConfig {
   showPromptSizeStatsInCopyNotification: boolean;
   promptSizeApproxCharsPerToken: number;
   postFilesPatchActions: PostFilesPatchActionsConfig;
+  headerRegex: string;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -69,6 +70,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
       enableSaveAfterFilePatch: true,
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
     },
+    headerRegex: '^#\s+(.+)\s*$', // catches format like: # path/filename
   };
 }
 
