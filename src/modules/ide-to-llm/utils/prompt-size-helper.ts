@@ -6,7 +6,6 @@ export interface BuildPromptWithSizeStatsArgs {
 }
 
 export interface BuildPromptWithSizeStatsResult {
-  promptTextWithStats: string;
   linesCount: number;
   approxTokensCount: number;
   maxLinesCountInContext: number;
@@ -30,19 +29,7 @@ export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): Bu
 
   const isExceeded = exceededBy.length > 0;
 
-  const statsFooterText = buildPromptFooterText({
-    linesCount,
-    approxTokensCount,
-    maxLinesCountInContext: limits.maxLinesCountInContext,
-    maxTokensCountInContext: limits.maxTokensCountInContext,
-    isExceeded,
-    exceededBy,
-  });
-
-  const promptTextWithStats = `${normalizedPromptText}\n\n${statsFooterText}\n`;
-
   return {
-    promptTextWithStats,
     linesCount,
     approxTokensCount,
     maxLinesCountInContext: limits.maxLinesCountInContext,
@@ -91,29 +78,4 @@ function estimateTokensCount(text: string, config: LlmCopypasterConfig): number 
   const safeApproxCharsPerToken = Math.max(1, approxCharsPerToken);
 
   return Math.ceil(text.length / safeApproxCharsPerToken);
-}
-
-function buildPromptFooterText(args: {
-  linesCount: number;
-  approxTokensCount: number;
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
-  isExceeded: boolean;
-  exceededBy: ('LINES' | 'TOKENS')[];
-}): string {
-  const baseStats = `[CONTEXT STATS] Lines: ${args.linesCount} | Tokens (approx): ${args.approxTokensCount}`;
-
-  const maxLinesPart =
-    args.maxLinesCountInContext === 0 ? 'Max lines: unlimited' : `Max lines: ${args.maxLinesCountInContext}`;
-  const maxTokensPart =
-    args.maxTokensCountInContext === 0 ? 'Max tokens: unlimited' : `Max tokens: ${args.maxTokensCountInContext}`;
-  const limitsPart = `${maxLinesPart} | ${maxTokensPart}`;
-
-  if (!args.isExceeded) return `${baseStats}\n${limitsPart}`;
-
-  const exceededParts: string[] = [];
-  if (args.exceededBy.includes('LINES')) exceededParts.push('lines');
-  if (args.exceededBy.includes('TOKENS')) exceededParts.push('tokens');
-
-  return `${baseStats}\n${limitsPart}\nExceeded by: ${exceededParts.join(', ')}`;
 }

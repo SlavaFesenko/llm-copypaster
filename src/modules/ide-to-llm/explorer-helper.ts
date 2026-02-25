@@ -55,12 +55,12 @@ export class ExplorerHelper {
         techPromptText,
       });
 
-      const promptWithStatsResult = buildPromptWithSizeStats({
+      const promptStatsResult = buildPromptWithSizeStats({
         promptText: contextText,
         config,
       });
 
-      await vscode.env.clipboard.writeText(promptWithStatsResult.promptTextWithStats);
+      await vscode.env.clipboard.writeText(contextText);
 
       await showCopyResultNotification(this._deps, {
         commandName: 'Copy Explorer Items',
@@ -70,12 +70,12 @@ export class ExplorerHelper {
         deletedFileUris: selection.deletedFileUris,
         unresolvedTabs: [],
         promptSizeStats: {
-          linesCount: promptWithStatsResult.linesCount,
-          approxTokensCount: promptWithStatsResult.approxTokensCount,
-          maxLinesCountInContext: promptWithStatsResult.maxLinesCountInContext,
-          maxTokensCountInContext: promptWithStatsResult.maxTokensCountInContext,
-          isExceeded: promptWithStatsResult.isExceeded,
-          exceededBy: promptWithStatsResult.exceededBy,
+          linesCount: promptStatsResult.linesCount,
+          approxTokensCount: promptStatsResult.approxTokensCount,
+          maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
+          maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
+          isExceeded: promptStatsResult.isExceeded,
+          exceededBy: promptStatsResult.exceededBy,
         },
       });
 

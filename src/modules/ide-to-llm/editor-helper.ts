@@ -309,12 +309,12 @@ export class EditorHelper {
       techPromptText,
     });
 
-    const promptWithStatsResult = buildPromptWithSizeStats({
+    const promptStatsResult = buildPromptWithSizeStats({
       promptText: contextText,
       config,
     });
 
-    await vscode.env.clipboard.writeText(promptWithStatsResult.promptTextWithStats);
+    await vscode.env.clipboard.writeText(contextText);
 
     await showCopyResultNotification(this._deps, {
       commandName: args.commandName,
@@ -324,12 +324,12 @@ export class EditorHelper {
       deletedFileUris: args.deletedFileUris,
       unresolvedTabs: args.unresolvedTabs,
       promptSizeStats: {
-        linesCount: promptWithStatsResult.linesCount,
-        approxTokensCount: promptWithStatsResult.approxTokensCount,
-        maxLinesCountInContext: promptWithStatsResult.maxLinesCountInContext,
-        maxTokensCountInContext: promptWithStatsResult.maxTokensCountInContext,
-        isExceeded: promptWithStatsResult.isExceeded,
-        exceededBy: promptWithStatsResult.exceededBy,
+        linesCount: promptStatsResult.linesCount,
+        approxTokensCount: promptStatsResult.approxTokensCount,
+        maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
+        maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
+        isExceeded: promptStatsResult.isExceeded,
+        exceededBy: promptStatsResult.exceededBy,
       },
     });
   }
