@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { PostFilesPatchActionsConfig } from '../../../config';
-import { FilesPayload } from '../../../types/files-payload';
+import { FilePayloadOperationType, FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
 
@@ -31,6 +31,14 @@ export async function applyFilesPayloadToWorkspace(
       const targetUri = toWorkspaceUri(file.path);
 
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
+
+      const operation = file.operation ?? FilePayloadOperationType.EditedFull;
+
+      if (operation === FilePayloadOperationType.Deleted) {
+        workspaceEdit.deleteFile(targetUri, { ignoreIfNotExists: true });
+        appliedFilesCount++;
+        continue;
+      }
 
       await ensureParentDirectoryExists(targetUri, logger);
 
@@ -78,6 +86,9 @@ async function fileExists(uri: vscode.Uri): Promise<boolean> {
 
 async function tryFormatAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
   for (const file of payload.files) {
+    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
+    if (operation === FilePayloadOperationType.Deleted) continue;
+
     const targetUri = toWorkspaceUri(file.path);
     if (!targetUri) continue;
 
@@ -94,6 +105,9 @@ async function tryFormatAppliedDocuments(payload: FilesPayload, logger: OutputCh
 
 async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
   for (const file of payload.files) {
+    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
+    if (operation === FilePayloadOperationType.Deleted) continue;
+
     const targetUri = toWorkspaceUri(file.path);
     if (!targetUri) continue;
 
@@ -108,6 +122,9 @@ async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChan
 
 async function tryOpenAppliedDocumentsInEditor(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
   for (const file of payload.files) {
+    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
+    if (operation === FilePayloadOperationType.Deleted) continue;
+
     const targetUri = toWorkspaceUri(file.path);
     if (!targetUri) continue;
 

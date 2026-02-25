@@ -1,5 +1,5 @@
 import { LlmCopypasterConfig } from '../../../config';
-import { FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
+import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
 
@@ -23,7 +23,8 @@ export function validateClipboardTextToFilesPayload(
 function parseConcatenatedFileListings(rawText: string, headerRegex: RegExp): ParseResult<FilesPayload> {
   const matches = [...rawText.matchAll(headerRegex)];
 
-  if (matches.length === 0) return { ok: false, errorMessage: 'No file headers found (expected "# relative/path.ext")' };
+  if (matches.length === 0)
+    return { ok: false, errorMessage: 'No file headers found (expected "## FILE: relative/path.ext")' };
 
   const files: FilesPayloadFile[] = [];
 
@@ -35,17 +36,63 @@ function parseConcatenatedFileListings(rawText: string, headerRegex: RegExp): Pa
 
     if (!path) return { ok: false, errorMessage: 'Empty file path in header' };
 
-    const contentStartIndex = (current.index ?? 0) + current[0].length;
-    const contentEndIndex = next?.index ?? rawText.length;
+    const sectionStartIndex = (current.index ?? 0) + current[0].length;
+    const sectionEndIndex = next?.index ?? rawText.length;
 
-    const content = rawText.slice(contentStartIndex, contentEndIndex).replace(/^\r?\n/, '');
+    const sectionRawText = rawText.slice(sectionStartIndex, sectionEndIndex).replace(/^\r?\n/, '');
+    const parsedSection = parseFileSection(sectionRawText);
+
+    if (!parsedSection.ok) return { ok: false, errorMessage: `${path}: ${parsedSection.errorMessage}` };
 
     files.push({
       path,
-      content,
-      sourceRange: { start: contentStartIndex, end: contentEndIndex },
+      content: parsedSection.value.content,
+      operation: parsedSection.value.operation,
+      sourceRange: { start: sectionStartIndex, end: sectionEndIndex },
     });
   }
 
   return { ok: true, value: { files, warnings: [], errors: [] } };
+}
+
+function parseFileSection(rawSectionText: string): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
+  const { firstLine, restText } = splitFirstLine(rawSectionText);
+
+  if (!firstLine) return { ok: true, value: { content: rawSectionText } };
+
+  const operation = tryParseOperationLine(firstLine);
+
+  if (!operation) return { ok: true, value: { content: rawSectionText } };
+
+  if (operation === FilePayloadOperationType.Deleted) return { ok: true, value: { content: '', operation } };
+
+  const normalizedContent = restText.replace(/^\r?\n/, '');
+
+  return { ok: true, value: { content: normalizedContent, operation } };
+}
+
+function splitFirstLine(text: string): { firstLine: string; restText: string } {
+  const newLineMatch = text.match(/\r?\n/);
+
+  if (!newLineMatch) return { firstLine: text.trimEnd(), restText: '' };
+
+  const newLineIndex = newLineMatch.index ?? 0;
+  const newLineLength = newLineMatch[0].length;
+
+  const firstLine = text.slice(0, newLineIndex).trimEnd();
+  const restText = text.slice(newLineIndex + newLineLength);
+
+  return { firstLine, restText };
+}
+
+function tryParseOperationLine(line: string): FilePayloadOperationType | undefined {
+  const trimmedLine = line.trim();
+
+  if (trimmedLine === 'FILE WAS EDITED_FULL') return FilePayloadOperationType.EditedFull;
+
+  if (trimmedLine === 'FILE WAS CREATED') return FilePayloadOperationType.Created;
+
+  if (trimmedLine === 'FILE WAS DELETED') return FilePayloadOperationType.Deleted;
+
+  return undefined;
 }
