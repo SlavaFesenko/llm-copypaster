@@ -17,7 +17,7 @@ export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
 
   if (!techPromptText.trim()) return listings;
 
-  const techPromptDelimiter = args.config.techPromptDelimiter;
+  const techPromptDelimiter = args.config.techPrompt.techPromptDelimiter;
 
   return `\n${techPromptDelimiter}\n${techPromptText}\n${techPromptDelimiter}\n${listings}`;
 }
