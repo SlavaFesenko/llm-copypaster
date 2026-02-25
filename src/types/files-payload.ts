@@ -3,11 +3,17 @@ export interface FilesPayloadSourceRange {
   end: number;
 }
 
+export enum FilePayloadOperationType {
+  EditedFull = 'EDITED_FULL',
+  Created = 'CREATED',
+  Deleted = 'DELETED',
+}
+
 export interface FilesPayloadFile {
   path: string;
   content: string;
   sourceRange?: FilesPayloadSourceRange;
-  operation?: 'create' | 'update' | 'deleteMarker';
+  operation?: FilePayloadOperationType;
 }
 
 export interface FilesPayload {
