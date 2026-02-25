@@ -7,6 +7,14 @@ export interface LlmCopypasterPromptsConfig {
   overrides: Record<string, string>;
 }
 
+export interface LlmCopypasterTechPromptBuilderDetails {
+  id: string;
+  promptConcatenationEnabled: boolean;
+  relativePathToPrompt: string;
+}
+
+export type LlmCopypasterTechPromptBuilderOverrides = Record<string, Partial<LlmCopypasterTechPromptBuilderDetails>>;
+
 export interface LlmCopypasterSanitizationRule {
   id: string;
   pattern: string;
@@ -40,6 +48,8 @@ export interface LlmCopypasterConfig {
   codeListingHeaderRegex: string;
   codeListingHeaderStartFragment: string;
   techPromptDelimiter: string;
+  techPromptBuilders: LlmCopypasterTechPromptBuilderDetails[];
+  techPromptBuildersOverrides?: LlmCopypasterTechPromptBuilderOverrides;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -75,6 +85,19 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     codeListingHeaderRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
     codeListingHeaderStartFragment: '# ',
     techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
+    techPromptBuilders: [
+      {
+        id: 'llm-response-rules',
+        promptConcatenationEnabled: true,
+        relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
+      },
+      {
+        id: 'web-git-prompt',
+        promptConcatenationEnabled: true,
+        relativePathToPrompt: 'prompts/web-git-prompt.md',
+      },
+    ],
+    techPromptBuildersOverrides: {},
   };
 }
 
