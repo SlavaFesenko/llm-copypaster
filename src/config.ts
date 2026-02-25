@@ -78,57 +78,6 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
   };
 }
 
-export function mergeConfigs(
-  defaultConfig: LlmCopypasterConfig,
-  settingsConfig: Partial<LlmCopypasterConfig>,
-  fileConfig: Partial<LlmCopypasterConfig> | null
-): LlmCopypasterConfig {
-  const mergedLlmContextLimitsByLlm: LlmContextLimitsByLlm = {
-    ...(defaultConfig.llmContextLimitsByLlm ?? {}),
-    ...((settingsConfig.llmContextLimitsByLlm ?? {}) as LlmContextLimitsByLlm),
-    ...(((fileConfig?.llmContextLimitsByLlm ?? {}) as LlmContextLimitsByLlm) ?? {}),
-  };
-
-  const mergedPostFilesPatchActions: PostFilesPatchActionsConfig = {
-    ...defaultConfig.postFilesPatchActions,
-    ...(settingsConfig.postFilesPatchActions ?? {}),
-    ...((fileConfig?.postFilesPatchActions ?? {}) as PostFilesPatchActionsConfig),
-  };
-
-  const mergedConfig: LlmCopypasterConfig = {
-    ...defaultConfig,
-    ...settingsConfig,
-    prompts: {
-      ...defaultConfig.prompts,
-      ...(settingsConfig.prompts ?? {}),
-      ...(fileConfig?.prompts ?? {}),
-    },
-    sanitizationRules: fileConfig?.sanitizationRules ?? settingsConfig.sanitizationRules ?? defaultConfig.sanitizationRules,
-    includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
-    currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
-    llmContextLimitsByLlm: mergedLlmContextLimitsByLlm,
-    showPromptSizeStatsInCopyNotification:
-      fileConfig?.showPromptSizeStatsInCopyNotification ??
-      settingsConfig.showPromptSizeStatsInCopyNotification ??
-      defaultConfig.showPromptSizeStatsInCopyNotification,
-    promptSizeApproxCharsPerToken:
-      fileConfig?.promptSizeApproxCharsPerToken ??
-      settingsConfig.promptSizeApproxCharsPerToken ??
-      defaultConfig.promptSizeApproxCharsPerToken,
-    postFilesPatchActions: mergedPostFilesPatchActions,
-    codeListingHeaderRegex:
-      fileConfig?.codeListingHeaderRegex ?? settingsConfig.codeListingHeaderRegex ?? defaultConfig.codeListingHeaderRegex,
-    codeListingHeaderStartFragment:
-      fileConfig?.codeListingHeaderStartFragment ??
-      settingsConfig.codeListingHeaderStartFragment ??
-      defaultConfig.codeListingHeaderStartFragment,
-    techPromptDelimiter:
-      fileConfig?.techPromptDelimiter ?? settingsConfig.techPromptDelimiter ?? defaultConfig.techPromptDelimiter,
-  };
-
-  return mergedConfig;
-}
-
 export class ConfigService {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
@@ -138,10 +87,11 @@ export class ConfigService {
   public async getConfig(): Promise<LlmCopypasterConfig> {
     const defaultConfig = buildDefaultConfig();
 
+    // settingsConfig and fileConfig are not read for now, just for a structure
     const settingsConfig = this._readSettingsConfig(defaultConfig);
-    const fileConfig = await readWorkspaceJsonConfigFile(this._logger);
+    const fileConfig = await this._readWorkspaceJsonConfigFile(this._logger);
 
-    const mergedConfig = mergeConfigs(defaultConfig, settingsConfig, fileConfig);
+    const mergedConfig = this._mergeConfigs(defaultConfig, settingsConfig, fileConfig);
 
     this._notifyIfInvalidCodeListingHeaderConfig(mergedConfig);
 
@@ -167,56 +117,38 @@ export class ConfigService {
     );
   }
 
+  private _mergeConfigs(
+    defaultConfig: LlmCopypasterConfig,
+    settingsConfig: Partial<LlmCopypasterConfig>,
+    fileConfig: Partial<LlmCopypasterConfig> | null
+  ): LlmCopypasterConfig {
+    return defaultConfig; // for now it's fine, we don't work with configs yet
+  }
+
   private _readSettingsConfig(defaultConfig: LlmCopypasterConfig): Partial<LlmCopypasterConfig> {
-    const configuration = vscode.workspace.getConfiguration('llmCopypaster');
-
-    const currentLlm = configuration.get<string>('currentLLM', defaultConfig.currentLLM);
-    const postFilesPatchAutoFormatAfterApply = configuration.get<boolean>(
-      'postFilesPatchActions.autoFormatAfterApply',
-      defaultConfig.postFilesPatchActions.enableLintingAfterFilePatch
-    );
-    const postFilesPatchAutoSaveAfterApply = configuration.get<boolean>(
-      'postFilesPatchActions.autoSaveAfterApply',
-      defaultConfig.postFilesPatchActions.enableSaveAfterFilePatch
-    );
-    const postFilesPatchEnableOpeningPatchedFilesInEditor = configuration.get<boolean>(
-      'postFilesPatchActions.enableOpeningPatchedFilesInEditor',
-      defaultConfig.postFilesPatchActions.enableOpeningPatchedFilesInEditor
-    );
-
-    return {
-      currentLLM: currentLlm,
-      postFilesPatchActions: {
-        enableLintingAfterFilePatch:
-          postFilesPatchAutoFormatAfterApply ?? defaultConfig.postFilesPatchActions.enableLintingAfterFilePatch,
-        enableSaveAfterFilePatch: postFilesPatchAutoSaveAfterApply,
-        enableOpeningPatchedFilesInEditor: postFilesPatchEnableOpeningPatchedFilesInEditor,
-      },
-    };
-  }
-}
-
-const workspaceConfigFileName = '.llm-copypaster.json';
-
-export async function readWorkspaceJsonConfigFile(
-  logger: OutputChannelLogger
-): Promise<Partial<LlmCopypasterConfig> | null> {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-
-  if (!workspaceFolder) {
-    return null;
+    return defaultConfig; // for now it's fine, we don't work with configs yet
   }
 
-  const configUri = vscode.Uri.joinPath(workspaceFolder.uri, workspaceConfigFileName);
+  private async _readWorkspaceJsonConfigFile(logger: OutputChannelLogger): Promise<Partial<LlmCopypasterConfig> | null> {
+    const workspaceConfigFileName = '.llm-copypaster.json';
 
-  try {
-    const bytes = await vscode.workspace.fs.readFile(configUri);
-    const jsonText = Buffer.from(bytes).toString('utf8');
-    const parsed = JSON.parse(jsonText) as Partial<LlmCopypasterConfig>;
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
-    return parsed;
-  } catch (error) {
-    logger.debug(`Workspace config not loaded: ${String(error)}`);
-    return null;
+    if (!workspaceFolder) {
+      return null;
+    }
+
+    const configUri = vscode.Uri.joinPath(workspaceFolder.uri, workspaceConfigFileName);
+
+    try {
+      const bytes = await vscode.workspace.fs.readFile(configUri);
+      const jsonText = Buffer.from(bytes).toString('utf8');
+      const parsed = JSON.parse(jsonText) as Partial<LlmCopypasterConfig>;
+
+      return parsed;
+    } catch (error) {
+      logger.debug(`Workspace config not loaded: ${String(error)}`);
+      return null;
+    }
   }
 }
