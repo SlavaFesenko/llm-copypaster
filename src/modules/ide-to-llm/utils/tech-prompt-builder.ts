@@ -8,7 +8,7 @@ import {
 } from '../../../config';
 import { FilePayloadOperationType } from '../../../types/files-payload';
 
-export class BuilderTechPrompt {
+export class TechPromptBuilder {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
