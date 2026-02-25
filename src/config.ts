@@ -66,8 +66,8 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     showPromptSizeStatsInCopyNotification: true,
     promptSizeApproxCharsPerToken: 3.5, // for code with long var names 3 is more accurate, but not to spam with warning picked 3.5
     postFilesPatchActions: {
-      enableLintingAfterFilePatch: true,
       enableSaveAfterFilePatch: true,
+      enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
     },
   };
 }
