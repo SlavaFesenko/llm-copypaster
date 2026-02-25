@@ -16,16 +16,16 @@
 
 Apply my requested changes and return the result strictly as “file listings”.
 
-**Output must contain ONLY file listings and nothing else.**  
+**Output must contain ONLY file listings and nothing else.**
 Forbidden: any explanations, summaries, headings, bullets, numbered lists, blank separators, markdown, blockquotes, tables, links, or any meta text.
 
 ## File listing format (strict)
 
 For each file:
 
-1. First line must be exactly: `# ` + `relative/path.ext`  
+1. First line must be exactly: `{{codeListingHeaderStartFragment}}relative/path.ext`
    Constraints:
-   - Starts with `#` then exactly one space, then the relative path
+   - Starts with `{{codeListingHeaderStartFragment}}`, then the relative path
    - No suffixes, no colons, no extra spaces/tabs
 
 2. Immediately after that line, output the full file content as raw text
@@ -49,8 +49,8 @@ Rules:
 
 Your response must **NOT** contain these sequences anywhere (even inside file contents, even as examples):
 
-- Any diff markers: `@@`, `---`, `+++`
-- Any `File:` labels or similar
+- Any diff markers: `{{diffMarkerAtAt}}`, `{{diffMarkerDashDashDash}}`, `{{diffMarkerPlusPlusPlus}}`
+- Any `{{diffFileLabel}}` labels or similar
 
 ## Anti-markdown (outside file contents)
 
@@ -58,7 +58,7 @@ Outside file contents:
 
 - Do not use markdown constructs at all
 - Do not use top-level list markers (`- `, `* `, `1. `)
-- Do not add separator lines like `---` or `***`
+- Do not add separator lines like `{{diffMarkerDashDashDash}}` or `***`
 - Do not wrap the response in quotes or blockquotes
 
 Inside file contents:
@@ -75,13 +75,13 @@ Inside file contents:
 
 Before sending, verify:
 
-- The response starts with `# ` (first file header)
-- The response contains only repeated `# <path>` headers + raw file contents
+- The response starts with `{{codeListingHeaderStartFragment}}` (first file header)
+- The response contains only repeated `{{codeListingHeaderStartFragment}}<path>` headers + raw file contents
 - There is zero extra text outside file listings
 
 ## Minimal example (plain text, fences allowed inside contents)
 
-# src/index.js
+{{codeListingHeaderStartFragment}}src/index.ts
 
 ```ts
 console.log('Hello fenced snippet');
