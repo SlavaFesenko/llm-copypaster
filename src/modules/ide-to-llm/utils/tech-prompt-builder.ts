@@ -1,171 +1,139 @@
 import * as vscode from 'vscode';
 
 import type { LlmCopypasterConfig, TechPromptBuilderDetails } from '../../../config';
-import { buildDefaultConfig } from '../../../config';
 
-export async function getTechPrompt(
-  extensionContext: vscode.ExtensionContext,
-  config?: LlmCopypasterConfig
-): Promise<string> {
-  const resolvedConfig = config ?? buildDefaultConfig();
+export class BuilderTechPrompt {
+  public constructor(
+    private readonly _extensionContext: vscode.ExtensionContext,
+    private readonly _config: LlmCopypasterConfig
+  ) {}
 
-  const techPromptConfig = resolvedConfig.techPrompt;
+  public async build(): Promise<string> {
+    const techPromptConfig = this._config.techPrompt;
 
-  const promptBuilderDetailsList = techPromptConfig.builders;
+    const promptBuilderDetailsList = techPromptConfig.builders;
 
-  const builtPrompts: string[] = [];
+    const builtPrompts: string[] = [];
 
-  for (const promptBuilderDetails of promptBuilderDetailsList) {
-    if (!promptBuilderDetails.promptConcatenationEnabled) continue;
+    for (const promptBuilderDetails of promptBuilderDetailsList) {
+      if (!promptBuilderDetails.promptConcatenationEnabled) continue;
 
-    const promptText = await _tryReadPromptText(extensionContext, promptBuilderDetails.relativePathToPrompt);
+      const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToPrompt);
 
-    if (!promptText) continue;
+      if (!promptText) continue;
 
-    const processedPromptText = _processPromptTextByBuilderHandlerId(promptText, resolvedConfig, promptBuilderDetails);
+      const processedPromptText = this._processPromptTextByBuilderHandlerId(promptText, promptBuilderDetails);
 
-    if (!processedPromptText.trim()) continue;
+      if (!processedPromptText.trim()) continue;
 
-    builtPrompts.push(processedPromptText);
+      builtPrompts.push(processedPromptText);
+    }
+
+    if (builtPrompts.length === 0) return '';
+
+    const delimiterLine = `\n${techPromptConfig.techPromptDelimiter}\n`;
+
+    return builtPrompts.join(delimiterLine);
   }
 
-  if (builtPrompts.length === 0) return '';
+  private async _tryReadPromptText(relativePathToPrompt: string): Promise<string | null> {
+    const promptUri = vscode.Uri.joinPath(this._extensionContext.extensionUri, relativePathToPrompt);
 
-  const delimiterLine = `\n${techPromptConfig.techPromptDelimiter}\n`;
+    try {
+      const bytes = await vscode.workspace.fs.readFile(promptUri);
 
-  return builtPrompts.join(delimiterLine);
-}
-
-async function _tryReadPromptText(
-  extensionContext: vscode.ExtensionContext,
-  relativePathToPrompt: string
-): Promise<string | null> {
-  const promptUri = vscode.Uri.joinPath(extensionContext.extensionUri, relativePathToPrompt);
-
-  try {
-    const bytes = await vscode.workspace.fs.readFile(promptUri);
-
-    return Buffer.from(bytes).toString('utf8');
-  } catch {
-    return null;
-  }
-}
-
-function _processPromptTextByBuilderHandlerId(
-  promptText: string,
-  config: LlmCopypasterConfig,
-  promptBuilderDetails: TechPromptBuilderDetails
-): string {
-  const promptBuilderHandlerById = _buildPromptBuilderHandlerById(config);
-
-  const promptBuilderHandler = promptBuilderHandlerById[promptBuilderDetails.builderHandlerId];
-
-  if (!promptBuilderHandler) return _buildGenericPrompt(promptText, config, promptBuilderDetails);
-
-  return promptBuilderHandler(promptText, promptBuilderDetails);
-}
-
-function _buildPromptBuilderHandlerById(
-  config: LlmCopypasterConfig
-): Record<string, (promptText: string, promptBuilderDetails: TechPromptBuilderDetails) => string> {
-  return {
-    llmResponseRules: (promptText, promptBuilderDetails) =>
-      _buildLlmResponseRulesPrompt(promptText, config, promptBuilderDetails),
-    webGitPrompt: (promptText, promptBuilderDetails) => _buildWebGitPrompt(promptText, config, promptBuilderDetails),
-  };
-}
-
-function _buildLlmResponseRulesPrompt(
-  promptText: string,
-  config: LlmCopypasterConfig,
-  _promptBuilderDetails: TechPromptBuilderDetails
-): string {
-  let nextPromptText = promptText;
-
-  nextPromptText = _replacePlaceholdersWithData(
-    nextPromptText,
-    'codeListingHeaderStartFragment',
-    config.codeListingHeaderStartFragment,
-    config
-  );
-
-  nextPromptText = _replacePlaceholdersWithData(
-    nextPromptText,
-    'codeListingHeaderRegex',
-    config.codeListingHeaderRegex,
-    config
-  );
-
-  return nextPromptText;
-}
-
-function _buildWebGitPrompt(
-  promptText: string,
-  config: LlmCopypasterConfig,
-  _promptBuilderDetails: TechPromptBuilderDetails
-): string {
-  let nextPromptText = promptText;
-
-  nextPromptText = _replacePlaceholdersWithData(
-    nextPromptText,
-    'codeListingHeaderStartFragment',
-    config.codeListingHeaderStartFragment,
-    config
-  );
-
-  nextPromptText = _replacePlaceholdersWithData(
-    nextPromptText,
-    'codeListingHeaderRegex',
-    config.codeListingHeaderRegex,
-    config
-  );
-
-  return nextPromptText;
-}
-
-function _buildGenericPrompt(
-  promptText: string,
-  config: LlmCopypasterConfig,
-  _promptBuilderDetails: TechPromptBuilderDetails
-): string {
-  let nextPromptText = promptText;
-
-  nextPromptText = _replacePlaceholdersWithData(
-    nextPromptText,
-    'codeListingHeaderStartFragment',
-    config.codeListingHeaderStartFragment,
-    config
-  );
-
-  nextPromptText = _replacePlaceholdersWithData(
-    nextPromptText,
-    'codeListingHeaderRegex',
-    config.codeListingHeaderRegex,
-    config
-  );
-
-  return nextPromptText;
-}
-
-function _replacePlaceholdersWithData(
-  promptText: string,
-  placeholderKey: string,
-  placeholderValue: string,
-  config: LlmCopypasterConfig
-): string {
-  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
-
-  let placeholderRegex: RegExp;
-
-  try {
-    placeholderRegex = new RegExp(placeholderRegexPattern, 'g');
-  } catch {
-    return promptText;
+      return Buffer.from(bytes).toString('utf8');
+    } catch {
+      return null;
+    }
   }
 
-  return promptText.replace(placeholderRegex, (fullMatch, foundPlaceholderKey: string) => {
-    if (foundPlaceholderKey !== placeholderKey) return fullMatch;
+  private _processPromptTextByBuilderHandlerId(promptText: string, promptBuilderDetails: TechPromptBuilderDetails): string {
+    const promptBuilderHandlerById = this._buildPromptBuilderHandlerById();
 
-    return placeholderValue;
-  });
+    const promptBuilderHandler = promptBuilderHandlerById[promptBuilderDetails.builderHandlerId];
+
+    if (!promptBuilderHandler) return this._buildGenericPrompt(promptText);
+
+    return promptBuilderHandler(promptText);
+  }
+
+  private _buildPromptBuilderHandlerById(): Record<string, (promptText: string) => string> {
+    return {
+      llmResponseRules: promptText => this._buildLlmResponseRulesPrompt(promptText),
+      webGitPrompt: promptText => this._buildWebGitPrompt(promptText),
+    };
+  }
+
+  private _buildLlmResponseRulesPrompt(promptText: string): string {
+    let nextPromptText = promptText;
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderStartFragment',
+      this._config.codeListingHeaderStartFragment
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderRegex',
+      this._config.codeListingHeaderRegex
+    );
+
+    return nextPromptText;
+  }
+
+  private _buildWebGitPrompt(promptText: string): string {
+    let nextPromptText = promptText;
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderStartFragment',
+      this._config.codeListingHeaderStartFragment
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderRegex',
+      this._config.codeListingHeaderRegex
+    );
+
+    return nextPromptText;
+  }
+
+  private _buildGenericPrompt(promptText: string): string {
+    let nextPromptText = promptText;
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderStartFragment',
+      this._config.codeListingHeaderStartFragment
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderRegex',
+      this._config.codeListingHeaderRegex
+    );
+
+    return nextPromptText;
+  }
+
+  private _replacePlaceholdersWithData(promptText: string, placeholderKey: string, placeholderValue: string): string {
+    const placeholderRegexPattern = this._config.techPrompt.placeholderRegexPattern;
+
+    let placeholderRegex: RegExp;
+
+    try {
+      placeholderRegex = new RegExp(placeholderRegexPattern, 'g');
+    } catch {
+      return promptText;
+    }
+
+    return promptText.replace(placeholderRegex, (fullMatch, foundPlaceholderKey: string) => {
+      if (foundPlaceholderKey !== placeholderKey) return fullMatch;
+
+      return placeholderValue;
+    });
+  }
 }
