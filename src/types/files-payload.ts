@@ -1,12 +1,12 @@
-export interface FilesPayloadSourceRange {
-  start: number;
-  end: number;
-}
-
 export enum FilePayloadOperationType {
   EditedFull = 'EDITED_FULL',
   Created = 'CREATED',
   Deleted = 'DELETED',
+}
+
+export interface FilesPayloadSourceRange {
+  start: number;
+  end: number;
 }
 
 export interface FilesPayloadFile {
