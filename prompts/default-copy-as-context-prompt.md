@@ -49,7 +49,7 @@ Rules:
 
 Your response must **NOT** contain these sequences anywhere (even inside file contents, even as examples):
 
-- Any diff markers: `diff`, `patch`, `@@`, `---`, `+++`
+- Any diff markers: `@@`, `---`, `+++`
 - Any `File:` labels or similar
 
 ## Anti-markdown (outside file contents)
@@ -85,12 +85,4 @@ Before sending, verify:
 
 ```ts
 console.log('Hello fenced snippet');
-```
-
-# docs/example.css
-
-```css
-body {
-  font-size: 14px;
-}
 ```
