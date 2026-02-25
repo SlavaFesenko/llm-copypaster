@@ -9,6 +9,7 @@ export interface LlmCopypasterPromptsConfig {
 
 export interface LlmCopypasterTechPromptBuilderDetails {
   id: string;
+  builderHandlerId: string;
   promptConcatenationEnabled: boolean;
   relativePathToPrompt: string;
 }
@@ -85,11 +86,13 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     techPromptBuilders: [
       {
         id: 'llm-response-rules',
+        builderHandlerId: 'llmResponseRules',
         promptConcatenationEnabled: true,
         relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
       },
       {
         id: 'web-git-prompt',
+        builderHandlerId: 'webGitPrompt',
         promptConcatenationEnabled: true,
         relativePathToPrompt: 'prompts/web-git-prompt.md',
       },

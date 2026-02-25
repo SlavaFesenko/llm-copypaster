@@ -3,9 +3,6 @@ import * as vscode from 'vscode';
 import type { LlmCopypasterConfig, LlmCopypasterTechPromptBuilderDetails } from '../../../config';
 import { buildDefaultConfig } from '../../../config';
 
-const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
-const WEB_GIT_PROMPT_ID = 'web-git-prompt';
-
 export async function getTechPrompt(
   extensionContext: vscode.ExtensionContext,
   config?: LlmCopypasterConfig
@@ -23,12 +20,7 @@ export async function getTechPrompt(
 
     if (!promptText) continue;
 
-    const processedPromptText = await _processPromptTextByPromptId(
-      promptBuilderDetails.id,
-      promptText,
-      resolvedConfig,
-      promptBuilderDetails
-    );
+    const processedPromptText = _processPromptTextByBuilderHandlerId(promptText, resolvedConfig, promptBuilderDetails);
 
     if (!processedPromptText.trim()) continue;
 
@@ -57,17 +49,28 @@ async function _tryReadPromptText(
   }
 }
 
-async function _processPromptTextByPromptId(
-  promptId: string,
+function _processPromptTextByBuilderHandlerId(
   promptText: string,
   config: LlmCopypasterConfig,
   promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails
-): Promise<string> {
-  if (promptId === LLM_RESPONSE_RULES_PROMPT_ID)
-    return _buildLlmResponseRulesPrompt(promptText, config, promptBuilderDetails);
-  if (promptId === WEB_GIT_PROMPT_ID) return _buildWebGitPrompt(promptText, config, promptBuilderDetails);
+): string {
+  const promptBuilderHandlerById = _buildPromptBuilderHandlerById(config);
 
-  return _buildGenericPrompt(promptText, config, promptBuilderDetails);
+  const promptBuilderHandler = promptBuilderHandlerById[promptBuilderDetails.builderHandlerId];
+
+  if (!promptBuilderHandler) return _buildGenericPrompt(promptText, config, promptBuilderDetails);
+
+  return promptBuilderHandler(promptText, promptBuilderDetails);
+}
+
+function _buildPromptBuilderHandlerById(
+  config: LlmCopypasterConfig
+): Record<string, (promptText: string, promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails) => string> {
+  return {
+    llmResponseRules: (promptText, promptBuilderDetails) =>
+      _buildLlmResponseRulesPrompt(promptText, config, promptBuilderDetails),
+    webGitPrompt: (promptText, promptBuilderDetails) => _buildWebGitPrompt(promptText, config, promptBuilderDetails),
+  };
 }
 
 function _buildLlmResponseRulesPrompt(
