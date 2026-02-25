@@ -59,6 +59,8 @@ export async function applyFilesPayloadToWorkspace(
 
     if (postFilesPatchActions.enableSaveAfterFilePatch) await trySaveAppliedDocuments(payload, logger);
 
+    if (postFilesPatchActions.enableOpeningPatchedFilesInEditor) await tryOpenAppliedDocumentsInEditor(payload, logger);
+
     return { ok: true, appliedFilesCount };
   } catch (error) {
     return { ok: false, errorMessage: String(error) };
@@ -100,6 +102,20 @@ async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChan
       await document.save();
     } catch (error) {
       logger.debug(`Save skipped for ${file.path}: ${String(error)}`);
+    }
+  }
+}
+
+async function tryOpenAppliedDocumentsInEditor(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
+  for (const file of payload.files) {
+    const targetUri = toWorkspaceUri(file.path);
+    if (!targetUri) continue;
+
+    try {
+      const document = await vscode.workspace.openTextDocument(targetUri);
+      await vscode.window.showTextDocument(document, { preview: false, preserveFocus: true });
+    } catch (error) {
+      logger.debug(`Open in editor skipped for ${file.path}: ${String(error)}`);
     }
   }
 }

@@ -25,6 +25,7 @@ export type LlmContextLimitsByLlm = Record<string, LlmContextLimits>;
 export interface PostFilesPatchActionsConfig {
   enableSaveAfterFilePatch: boolean;
   enableLintingAfterFilePatch: boolean;
+  enableOpeningPatchedFilesInEditor: boolean;
 }
 
 export interface LlmCopypasterConfig {
@@ -69,6 +70,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     postFilesPatchActions: {
       enableSaveAfterFilePatch: true,
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
+      enableOpeningPatchedFilesInEditor: true,
     },
     headerRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
   };
@@ -89,6 +91,7 @@ export function mergeConfigs(
     ...(defaultConfig.postFilesPatchActions ?? {
       enableLintingAfterFilePatch: defaultConfig.autoFormatAfterApply,
       enableSaveAfterFilePatch: false,
+      enableOpeningPatchedFilesInEditor: true,
     }),
     ...(settingsConfig.postFilesPatchActions ?? {}),
     ...((fileConfig?.postFilesPatchActions ?? {}) as PostFilesPatchActionsConfig),
@@ -154,6 +157,10 @@ export class ConfigService {
       'postFilesPatchActions.autoSaveAfterApply',
       defaultConfig.postFilesPatchActions.enableSaveAfterFilePatch
     );
+    const postFilesPatchEnableOpeningPatchedFilesInEditor = configuration.get<boolean>(
+      'postFilesPatchActions.enableOpeningPatchedFilesInEditor',
+      defaultConfig.postFilesPatchActions.enableOpeningPatchedFilesInEditor
+    );
 
     return {
       currentLLM: currentLlm,
@@ -161,6 +168,7 @@ export class ConfigService {
       postFilesPatchActions: {
         enableLintingAfterFilePatch: postFilesPatchAutoFormatAfterApply ?? autoFormatAfterApply,
         enableSaveAfterFilePatch: postFilesPatchAutoSaveAfterApply,
+        enableOpeningPatchedFilesInEditor: postFilesPatchEnableOpeningPatchedFilesInEditor,
       },
     };
   }
