@@ -49,8 +49,7 @@ Rules:
 
 Your response must **NOT** contain these sequences anywhere (even inside file contents, even as examples):
 
-- Any diff markers: `{{diffMarkerAtAt}}`, `{{diffMarkerDashDashDash}}`, `{{diffMarkerPlusPlusPlus}}`
-- Any `{{diffFileLabel}}` labels or similar
+- Diff markers: `"@@"`, `---`, `+++`
 
 ## Anti-markdown (outside file contents)
 
@@ -58,7 +57,7 @@ Outside file contents:
 
 - Do not use markdown constructs at all
 - Do not use top-level list markers (`- `, `* `, `1. `)
-- Do not add separator lines like `{{diffMarkerDashDashDash}}` or `***`
+- Do not add separator lines like `---` or `***`
 - Do not wrap the response in quotes or blockquotes
 
 Inside file contents:
