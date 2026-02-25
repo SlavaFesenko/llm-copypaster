@@ -11,7 +11,7 @@ import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-g
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
-import { loadDefaultCopyAsContextPrompt } from './utils/tech-prompt-builder';
+import { getTechPrompt } from './utils/tech-prompt-builder';
 
 export class EditorHelper {
   public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
@@ -298,7 +298,7 @@ export class EditorHelper {
     }
 
     const config = await this._deps.configService.getConfig();
-    const techPromptText = args.includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._deps.extensionContext) : '';
+    const techPromptText = args.includeTechPrompt ? await getTechPrompt(this._deps.extensionContext) : '';
 
     const fileItems = args.selectionFileItems;
 

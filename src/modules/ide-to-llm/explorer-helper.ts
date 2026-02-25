@@ -9,7 +9,7 @@ import {
 } from './common.helpers';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
-import { loadDefaultCopyAsContextPrompt } from './utils/tech-prompt-builder';
+import { getTechPrompt } from './utils/tech-prompt-builder';
 
 export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];
@@ -46,7 +46,7 @@ export class ExplorerHelper {
 
     if (selection.fileItems.length > 0) {
       const config = await this._deps.configService.getConfig();
-      const techPromptText = includeTechPrompt ? await loadDefaultCopyAsContextPrompt(this._deps.extensionContext) : '';
+      const techPromptText = includeTechPrompt ? await getTechPrompt(this._deps.extensionContext) : '';
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
