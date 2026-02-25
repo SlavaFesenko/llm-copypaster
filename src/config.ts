@@ -32,13 +32,14 @@ export interface LlmCopypasterConfig {
   currentLLM: string;
   prompts: LlmCopypasterPromptsConfig;
   sanitizationRules: LlmCopypasterSanitizationRule[];
-  autoFormatAfterApply: boolean;
   includeTechPrompt: boolean;
   llmContextLimitsByLlm: LlmContextLimitsByLlm;
   showPromptSizeStatsInCopyNotification: boolean;
   promptSizeApproxCharsPerToken: number;
   postFilesPatchActions: PostFilesPatchActionsConfig;
   codeListingHeaderRegex: string;
+  codeListingHeaderStartFragment: string;
+  techPromptDelimiter: string;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -57,7 +58,6 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
         disabledForPaths: ['docs/'],
       },
     ],
-    autoFormatAfterApply: false,
     includeTechPrompt: true,
     llmContextLimitsByLlm: {
       default: {
@@ -73,6 +73,8 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
       enableOpeningPatchedFilesInEditor: true,
     },
     codeListingHeaderRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
+    codeListingHeaderStartFragment: '# ',
+    techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
   };
 }
 
@@ -88,18 +90,10 @@ export function mergeConfigs(
   };
 
   const mergedPostFilesPatchActions: PostFilesPatchActionsConfig = {
-    ...(defaultConfig.postFilesPatchActions ?? {
-      enableLintingAfterFilePatch: defaultConfig.autoFormatAfterApply,
-      enableSaveAfterFilePatch: false,
-      enableOpeningPatchedFilesInEditor: true,
-    }),
+    ...defaultConfig.postFilesPatchActions,
     ...(settingsConfig.postFilesPatchActions ?? {}),
     ...((fileConfig?.postFilesPatchActions ?? {}) as PostFilesPatchActionsConfig),
   };
-
-  if (mergedPostFilesPatchActions.enableLintingAfterFilePatch === undefined)
-    mergedPostFilesPatchActions.enableLintingAfterFilePatch =
-      fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply;
 
   const mergedConfig: LlmCopypasterConfig = {
     ...defaultConfig,
@@ -110,8 +104,6 @@ export function mergeConfigs(
       ...(fileConfig?.prompts ?? {}),
     },
     sanitizationRules: fileConfig?.sanitizationRules ?? settingsConfig.sanitizationRules ?? defaultConfig.sanitizationRules,
-    autoFormatAfterApply:
-      fileConfig?.autoFormatAfterApply ?? settingsConfig.autoFormatAfterApply ?? defaultConfig.autoFormatAfterApply,
     includeTechPrompt: fileConfig?.includeTechPrompt ?? settingsConfig.includeTechPrompt ?? defaultConfig.includeTechPrompt,
     currentLLM: fileConfig?.currentLLM ?? settingsConfig.currentLLM ?? defaultConfig.currentLLM,
     llmContextLimitsByLlm: mergedLlmContextLimitsByLlm,
@@ -124,6 +116,14 @@ export function mergeConfigs(
       settingsConfig.promptSizeApproxCharsPerToken ??
       defaultConfig.promptSizeApproxCharsPerToken,
     postFilesPatchActions: mergedPostFilesPatchActions,
+    codeListingHeaderRegex:
+      fileConfig?.codeListingHeaderRegex ?? settingsConfig.codeListingHeaderRegex ?? defaultConfig.codeListingHeaderRegex,
+    codeListingHeaderStartFragment:
+      fileConfig?.codeListingHeaderStartFragment ??
+      settingsConfig.codeListingHeaderStartFragment ??
+      defaultConfig.codeListingHeaderStartFragment,
+    techPromptDelimiter:
+      fileConfig?.techPromptDelimiter ?? settingsConfig.techPromptDelimiter ?? defaultConfig.techPromptDelimiter,
   };
 
   return mergedConfig;
@@ -141,14 +141,36 @@ export class ConfigService {
     const settingsConfig = this._readSettingsConfig(defaultConfig);
     const fileConfig = await readWorkspaceJsonConfigFile(this._logger);
 
-    return mergeConfigs(defaultConfig, settingsConfig, fileConfig);
+    const mergedConfig = mergeConfigs(defaultConfig, settingsConfig, fileConfig);
+
+    this._notifyIfInvalidCodeListingHeaderConfig(mergedConfig);
+
+    return mergedConfig;
+  }
+
+  private _notifyIfInvalidCodeListingHeaderConfig(config: LlmCopypasterConfig): void {
+    const exampleHeaderLine = `${config.codeListingHeaderStartFragment}path/filename`;
+
+    let headerRegex: RegExp;
+
+    try {
+      headerRegex = new RegExp(config.codeListingHeaderRegex);
+    } catch (error) {
+      vscode.window.showErrorMessage(`Invalid "codeListingHeaderRegex" in config: ${String(error)}`);
+      return;
+    }
+
+    if (headerRegex.test(exampleHeaderLine)) return;
+
+    vscode.window.showErrorMessage(
+      `Invalid listing header config: "${exampleHeaderLine}" does not match codeListingHeaderRegex`
+    );
   }
 
   private _readSettingsConfig(defaultConfig: LlmCopypasterConfig): Partial<LlmCopypasterConfig> {
     const configuration = vscode.workspace.getConfiguration('llmCopypaster');
 
     const currentLlm = configuration.get<string>('currentLLM', defaultConfig.currentLLM);
-    const autoFormatAfterApply = configuration.get<boolean>('autoFormatAfterApply', defaultConfig.autoFormatAfterApply);
     const postFilesPatchAutoFormatAfterApply = configuration.get<boolean>(
       'postFilesPatchActions.autoFormatAfterApply',
       defaultConfig.postFilesPatchActions.enableLintingAfterFilePatch
@@ -164,9 +186,9 @@ export class ConfigService {
 
     return {
       currentLLM: currentLlm,
-      autoFormatAfterApply,
       postFilesPatchActions: {
-        enableLintingAfterFilePatch: postFilesPatchAutoFormatAfterApply ?? autoFormatAfterApply,
+        enableLintingAfterFilePatch:
+          postFilesPatchAutoFormatAfterApply ?? defaultConfig.postFilesPatchActions.enableLintingAfterFilePatch,
         enableSaveAfterFilePatch: postFilesPatchAutoSaveAfterApply,
         enableOpeningPatchedFilesInEditor: postFilesPatchEnableOpeningPatchedFilesInEditor,
       },

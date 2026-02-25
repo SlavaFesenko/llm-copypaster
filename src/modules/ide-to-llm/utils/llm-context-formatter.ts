@@ -8,27 +8,22 @@ export interface BuildLlmContextTextArgs {
   techPromptText?: string;
 }
 
-const TECH_PROMPT_DELIMITER = '---';
-
 export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
-  const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem)).join('\n');
+  const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
-  if (!args.includeTechPrompt) {
-    return listings;
-  }
+  if (!args.includeTechPrompt) return listings;
 
   const techPromptText = args.techPromptText ?? '';
 
-  if (!techPromptText.trim()) {
-    return listings;
-  }
+  if (!techPromptText.trim()) return listings;
 
-  return `\n${TECH_PROMPT_DELIMITER}\n${techPromptText}\n${TECH_PROMPT_DELIMITER}\n${listings}`;
+  const techPromptDelimiter = args.config.techPromptDelimiter;
+
+  return `\n${techPromptDelimiter}\n${techPromptText}\n${techPromptDelimiter}\n${listings}`;
 }
 
-function buildSingleFileListing(fileItem: EditorToLlmFileItem): string {
-  const codeListingHeaderStartFragment = '# '; // TODO replace to config
-  const headerLine = `${codeListingHeaderStartFragment}${fileItem.path}`;
+function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
+  const headerLine = `${config.codeListingHeaderStartFragment}${fileItem.path}`;
 
   const contentLines: string[] = [];
 
