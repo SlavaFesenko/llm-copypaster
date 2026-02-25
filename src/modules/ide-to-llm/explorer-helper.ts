@@ -7,9 +7,9 @@ import {
   readUrisAsFileItems,
   showCopyResultNotification,
 } from './common.helpers';
-import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
+import { loadDefaultCopyAsContextPrompt } from './utils/tech-prompt-builder';
 
 export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];

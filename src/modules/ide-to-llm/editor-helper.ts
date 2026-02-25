@@ -8,10 +8,10 @@ import {
   tryGetUriFromTab,
 } from './common.helpers';
 import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-group-picker-helpers';
-import { loadDefaultCopyAsContextPrompt } from './utils/default-copy-as-context-prompt-loader';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
+import { loadDefaultCopyAsContextPrompt } from './utils/tech-prompt-builder';
 
 export class EditorHelper {
   public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
