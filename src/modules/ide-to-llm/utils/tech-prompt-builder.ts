@@ -78,47 +78,85 @@ function _buildPromptBuilderHandlerById(
 function _buildLlmResponseRulesPrompt(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: TechPromptBuilderDetails
+  _promptBuilderDetails: TechPromptBuilderDetails
 ): string {
-  const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
+  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
 
-  return _replacePlaceholdersWithData(promptText, placeholderValuesByKey, config.techPrompt.placeholderRegexPattern);
+  let nextPromptText = promptText;
+
+  nextPromptText = _replacePlaceholdersWithData(
+    nextPromptText,
+    'codeListingHeaderStartFragment',
+    config.codeListingHeaderStartFragment,
+    placeholderRegexPattern
+  );
+
+  nextPromptText = _replacePlaceholdersWithData(
+    nextPromptText,
+    'codeListingHeaderRegex',
+    config.codeListingHeaderRegex,
+    placeholderRegexPattern
+  );
+
+  return nextPromptText;
 }
 
 function _buildWebGitPrompt(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: TechPromptBuilderDetails
+  _promptBuilderDetails: TechPromptBuilderDetails
 ): string {
-  const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
+  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
 
-  return _replacePlaceholdersWithData(promptText, placeholderValuesByKey, config.techPrompt.placeholderRegexPattern);
+  let nextPromptText = promptText;
+
+  nextPromptText = _replacePlaceholdersWithData(
+    nextPromptText,
+    'codeListingHeaderStartFragment',
+    config.codeListingHeaderStartFragment,
+    placeholderRegexPattern
+  );
+
+  nextPromptText = _replacePlaceholdersWithData(
+    nextPromptText,
+    'codeListingHeaderRegex',
+    config.codeListingHeaderRegex,
+    placeholderRegexPattern
+  );
+
+  return nextPromptText;
 }
 
 function _buildGenericPrompt(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: TechPromptBuilderDetails
-): string {
-  const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
-
-  return _replacePlaceholdersWithData(promptText, placeholderValuesByKey, config.techPrompt.placeholderRegexPattern);
-}
-
-function _buildCommonPlaceholderValuesByKey(
-  config: LlmCopypasterConfig,
   _promptBuilderDetails: TechPromptBuilderDetails
-): Record<string, string> {
-  return {
-    codeListingHeaderStartFragment: config.codeListingHeaderStartFragment,
-    techPromptDelimiter: config.techPrompt.techPromptDelimiter,
-    codeListingHeaderRegex: config.codeListingHeaderRegex,
-  };
+): string {
+  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
+
+  let nextPromptText = promptText;
+
+  nextPromptText = _replacePlaceholdersWithData(
+    nextPromptText,
+    'codeListingHeaderStartFragment',
+    config.codeListingHeaderStartFragment,
+    placeholderRegexPattern
+  );
+
+  nextPromptText = _replacePlaceholdersWithData(
+    nextPromptText,
+    'codeListingHeaderRegex',
+    config.codeListingHeaderRegex,
+    placeholderRegexPattern
+  );
+
+  return nextPromptText;
 }
 
 function _replacePlaceholdersWithData(
   promptText: string,
-  placeholderValuesByKey: Record<string, string>,
+  placeholderKey: string,
+  placeholderValue: string,
   placeholderRegexPattern: string
 ): string {
   let placeholderRegex: RegExp;
@@ -129,10 +167,8 @@ function _replacePlaceholdersWithData(
     return promptText;
   }
 
-  return promptText.replace(placeholderRegex, (fullMatch, key: string) => {
-    const placeholderValue = placeholderValuesByKey[key];
-
-    if (placeholderValue === undefined) return fullMatch;
+  return promptText.replace(placeholderRegex, (fullMatch, foundPlaceholderKey: string) => {
+    if (foundPlaceholderKey !== placeholderKey) return fullMatch;
 
     return placeholderValue;
   });
