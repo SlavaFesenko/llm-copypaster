@@ -53,10 +53,13 @@ export interface LlmCopypasterConfig {
   postFilesPatchActions: PostFilesPatchActionsConfig;
   codeListingHeaderRegex: string;
   codeListingHeaderStartFragment: string;
+  codeListingHeaderStartFragmentWithSpace: string;
   techPrompt: TechPromptConfig;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
+  const codeListingHeaderStartFragmentSymbols = '#';
+
   return {
     currentLLM: 'default',
     sanitizationRules: [
@@ -82,8 +85,9 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
       enableOpeningPatchedFilesInEditor: true,
     },
-    codeListingHeaderStartFragment: '# ',
-    codeListingHeaderRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
+    codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
+    codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
+    codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`, // catches format like: codeListingHeaderStartFragmentSymbols path/filename
     techPrompt: {
       techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
       placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*]+)}}`, // {{placeholder}}
@@ -124,7 +128,7 @@ export class ConfigService {
   }
 
   private _notifyIfInvalidCodeListingHeaderConfig(config: LlmCopypasterConfig): void {
-    const exampleHeaderLine = `${config.codeListingHeaderStartFragment}path/filename`;
+    const exampleHeaderLine = `${config.codeListingHeaderStartFragmentWithSpace}path/filename`;
 
     let headerRegex: RegExp;
 

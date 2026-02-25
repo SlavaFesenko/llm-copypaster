@@ -43,7 +43,7 @@ export class BuilderTechPrompt {
     nextPromptText = this._replacePlaceholdersWithData(
       nextPromptText,
       'codeListingHeaderStartFragment',
-      this._config.codeListingHeaderStartFragment
+      this._config.codeListingHeaderStartFragmentWithSpace
     );
 
     if (!nextPromptText.trim()) return null;

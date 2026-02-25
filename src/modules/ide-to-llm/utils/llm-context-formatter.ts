@@ -23,7 +23,7 @@ export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
 }
 
 function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
-  const headerLine = `${config.codeListingHeaderStartFragment}${fileItem.path}`;
+  const headerLine = `${config.codeListingHeaderStartFragmentWithSpace}${fileItem.path}`;
 
   const contentLines: string[] = [];
 
