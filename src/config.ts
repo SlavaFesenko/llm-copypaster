@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-export interface LlmCopypasterPromptsConfig {
+export interface PromptsConfig {
   default: string;
   overrides: Record<string, string>;
 }
@@ -14,7 +14,13 @@ export interface LlmCopypasterTechPromptBuilderDetails {
   relativePathToPrompt: string;
 }
 
-export interface LlmCopypasterSanitizationRule {
+export interface TechPromptConfig {
+  techPromptDelimiter: string;
+  placeholderRegexPattern: string;
+  builders: LlmCopypasterTechPromptBuilderDetails[];
+}
+
+export interface SanitizationRule {
   id: string;
   pattern: string;
   replaceWith: string;
@@ -37,8 +43,7 @@ export interface PostFilesPatchActionsConfig {
 
 export interface LlmCopypasterConfig {
   currentLLM: string;
-  prompts: LlmCopypasterPromptsConfig;
-  sanitizationRules: LlmCopypasterSanitizationRule[];
+  sanitizationRules: SanitizationRule[];
   includeTechPrompt: boolean;
   llmContextLimitsByLlm: LlmContextLimitsByLlm;
   showPromptSizeStatsInCopyNotification: boolean;
@@ -46,17 +51,12 @@ export interface LlmCopypasterConfig {
   postFilesPatchActions: PostFilesPatchActionsConfig;
   codeListingHeaderRegex: string;
   codeListingHeaderStartFragment: string;
-  techPromptDelimiter: string;
-  techPromptBuilders: LlmCopypasterTechPromptBuilderDetails[];
+  techPrompt: TechPromptConfig;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
   return {
     currentLLM: 'default',
-    prompts: {
-      default: '',
-      overrides: {},
-    },
     sanitizationRules: [
       {
         id: 'strip-codefence',
@@ -82,21 +82,24 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     },
     codeListingHeaderRegex: String.raw`^#\s+(.+)\s*$`, // catches format like: # path/filename
     codeListingHeaderStartFragment: '# ',
-    techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
-    techPromptBuilders: [
-      {
-        id: 'llm-response-rules',
-        builderHandlerId: 'llmResponseRules',
-        promptConcatenationEnabled: true,
-        relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
-      },
-      {
-        id: 'web-git-prompt',
-        builderHandlerId: 'webGitPrompt',
-        promptConcatenationEnabled: true,
-        relativePathToPrompt: 'prompts/web-git-prompt.md',
-      },
-    ],
+    techPrompt: {
+      techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
+      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*]+)}}`, // {{placeholder}}
+      builders: [
+        {
+          id: 'llm-response-rules',
+          builderHandlerId: 'llmResponseRules',
+          promptConcatenationEnabled: true,
+          relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
+        },
+        {
+          id: 'web-git-prompt',
+          builderHandlerId: 'webGitPrompt',
+          promptConcatenationEnabled: true,
+          relativePathToPrompt: 'prompts/web-git-prompt.md',
+        },
+      ],
+    },
   };
 }
 

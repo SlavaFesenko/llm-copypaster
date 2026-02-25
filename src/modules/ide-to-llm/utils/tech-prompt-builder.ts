@@ -9,7 +9,9 @@ export async function getTechPrompt(
 ): Promise<string> {
   const resolvedConfig = config ?? buildDefaultConfig();
 
-  const promptBuilderDetailsList = resolvedConfig.techPromptBuilders;
+  const techPromptConfig = resolvedConfig.techPrompt;
+
+  const promptBuilderDetailsList = techPromptConfig.builders;
 
   const builtPrompts: string[] = [];
 
@@ -29,7 +31,7 @@ export async function getTechPrompt(
 
   if (builtPrompts.length === 0) return '';
 
-  const delimiterLine = `\n${resolvedConfig.techPromptDelimiter}\n`;
+  const delimiterLine = `\n${techPromptConfig.techPromptDelimiter}\n`;
 
   return builtPrompts.join(delimiterLine);
 }
@@ -80,7 +82,7 @@ function _buildLlmResponseRulesPrompt(
 ): string {
   const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
 
-  return _replaceMustacheLikePlaceholders(promptText, placeholderValuesByKey);
+  return _replacePlaceholdersWithData(promptText, placeholderValuesByKey, config.techPrompt.placeholderRegexPattern);
 }
 
 function _buildWebGitPrompt(
@@ -90,7 +92,7 @@ function _buildWebGitPrompt(
 ): string {
   const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
 
-  return _replaceMustacheLikePlaceholders(promptText, placeholderValuesByKey);
+  return _replacePlaceholdersWithData(promptText, placeholderValuesByKey, config.techPrompt.placeholderRegexPattern);
 }
 
 function _buildGenericPrompt(
@@ -100,7 +102,7 @@ function _buildGenericPrompt(
 ): string {
   const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
 
-  return _replaceMustacheLikePlaceholders(promptText, placeholderValuesByKey);
+  return _replacePlaceholdersWithData(promptText, placeholderValuesByKey, config.techPrompt.placeholderRegexPattern);
 }
 
 function _buildCommonPlaceholderValuesByKey(
@@ -109,13 +111,23 @@ function _buildCommonPlaceholderValuesByKey(
 ): Record<string, string> {
   return {
     codeListingHeaderStartFragment: config.codeListingHeaderStartFragment,
-    techPromptDelimiter: config.techPromptDelimiter,
+    techPromptDelimiter: config.techPrompt.techPromptDelimiter,
     codeListingHeaderRegex: config.codeListingHeaderRegex,
   };
 }
 
-function _replaceMustacheLikePlaceholders(promptText: string, placeholderValuesByKey: Record<string, string>): string {
-  const placeholderRegex = /{{([a-zA-Z0-9*]+)}}/g;
+function _replacePlaceholdersWithData(
+  promptText: string,
+  placeholderValuesByKey: Record<string, string>,
+  placeholderRegexPattern: string
+): string {
+  let placeholderRegex: RegExp;
+
+  try {
+    placeholderRegex = new RegExp(placeholderRegexPattern, 'g');
+  } catch {
+    return promptText;
+  }
 
   return promptText.replace(placeholderRegex, (fullMatch, key: string) => {
     const placeholderValue = placeholderValuesByKey[key];
