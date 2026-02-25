@@ -58,7 +58,8 @@ export interface LlmCopypasterConfig {
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
-  const codeListingHeaderStartFragmentSymbols = '#';
+  // such symbols selected to highlight file-header in LLM-interface + to be quite unique
+  const codeListingHeaderStartFragmentSymbols = '## LLM-COPYPASTER-FILE:';
 
   return {
     currentLLM: 'default',
