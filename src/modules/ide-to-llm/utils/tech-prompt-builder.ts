@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 
-import type { LlmCopypasterConfig, TechPromptBuilderDetails } from '../../../config';
-
-const TECH_PROMPT_BUILDER_DETAILS_ID_LLM_RESPONSE_RULES = 'llm-response-rules';
-const TECH_PROMPT_BUILDER_DETAILS_ID_WEB_GIT_PROMPT = 'web-git-prompt';
+import {
+  LLM_RESPONSE_RULES_PROMPT_ID,
+  WEB_GIT_PROMPT_ID,
+  type LlmCopypasterConfig,
+  type TechPromptBuilderDetails,
+} from '../../../config';
 
 export class BuilderTechPrompt {
   public constructor(
@@ -29,9 +31,7 @@ export class BuilderTechPrompt {
   }
 
   private async _buildLlmResponseRulesPrompt(): Promise<string | null> {
-    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(
-      TECH_PROMPT_BUILDER_DETAILS_ID_LLM_RESPONSE_RULES
-    );
+    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(LLM_RESPONSE_RULES_PROMPT_ID);
     if (!promptBuilderDetails) return null;
     if (!promptBuilderDetails.promptConcatenationEnabled) return null;
 
@@ -52,7 +52,7 @@ export class BuilderTechPrompt {
   }
 
   private async _buildWebGitPrompt(): Promise<string | null> {
-    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(TECH_PROMPT_BUILDER_DETAILS_ID_WEB_GIT_PROMPT);
+    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
     if (!promptBuilderDetails) return null;
     if (!promptBuilderDetails.promptConcatenationEnabled) return null;
 

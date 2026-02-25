@@ -2,6 +2,9 @@ import * as vscode from 'vscode';
 
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
+export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
+export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
+
 export interface PromptsConfig {
   default: string;
   overrides: Record<string, string>;
@@ -9,7 +12,6 @@ export interface PromptsConfig {
 
 export interface TechPromptBuilderDetails {
   id: string;
-  builderHandlerId: string;
   promptConcatenationEnabled: boolean;
   relativePathToPrompt: string;
 }
@@ -87,14 +89,12 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
       placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*]+)}}`, // {{placeholder}}
       builders: [
         {
-          id: 'llm-response-rules',
-          builderHandlerId: 'llmResponseRules',
+          id: LLM_RESPONSE_RULES_PROMPT_ID,
           promptConcatenationEnabled: true,
           relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
         },
         {
-          id: 'web-git-prompt',
-          builderHandlerId: 'webGitPrompt',
+          id: WEB_GIT_PROMPT_ID,
           promptConcatenationEnabled: true,
           relativePathToPrompt: 'prompts/web-git-prompt.md',
         },
