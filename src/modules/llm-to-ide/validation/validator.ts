@@ -9,7 +9,7 @@ export function validateClipboardTextToFilesPayload(
   rawClipboardText: string,
   config: LlmCopypasterConfig
 ): ValidationResult<FilesPayload> {
-  const headerRegex = new RegExp(config.headerRegex, 'gm');
+  const headerRegex = new RegExp(config.codeListingHeaderRegex, 'gm');
 
   const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex);
 
