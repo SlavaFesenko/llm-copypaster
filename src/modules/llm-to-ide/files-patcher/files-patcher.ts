@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
-import { ensureParentDirectoryExists } from './fs-helpers';
 
 export interface ApplyFilesPayloadOptions {
   autoFormatAfterApply: boolean;
@@ -89,5 +88,15 @@ async function tryFormatAppliedDocuments(payload: FilesPayload, logger: OutputCh
     } catch (error) {
       logger.debug(`Format skipped for ${file.path}: ${String(error)}`);
     }
+  }
+}
+
+export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri): Promise<void> {
+  const parentUri = vscode.Uri.joinPath(targetFileUri, '..');
+
+  try {
+    await vscode.workspace.fs.createDirectory(parentUri);
+  } catch {
+    // ignore
   }
 }
