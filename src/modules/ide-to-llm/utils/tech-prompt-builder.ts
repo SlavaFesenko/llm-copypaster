@@ -13,29 +13,12 @@ export class BuilderTechPrompt {
 
   public async build(): Promise<string> {
     const techPromptConfig = this._config.techPrompt;
-
     const builtPrompts: string[] = [];
 
-    const llmResponseRulesPromptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(
-      techPromptConfig.builders,
-      TECH_PROMPT_BUILDER_DETAILS_ID_LLM_RESPONSE_RULES
-    );
-
-    const llmResponseRulesPrompt = await this._tryBuildPromptByDetails(llmResponseRulesPromptBuilderDetails, promptText =>
-      this._buildLlmResponseRulesPrompt(promptText, llmResponseRulesPromptBuilderDetails)
-    );
-
+    const llmResponseRulesPrompt = await this._buildLlmResponseRulesPrompt();
     if (llmResponseRulesPrompt) builtPrompts.push(llmResponseRulesPrompt);
 
-    const webGitPromptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(
-      techPromptConfig.builders,
-      TECH_PROMPT_BUILDER_DETAILS_ID_WEB_GIT_PROMPT
-    );
-
-    const webGitPrompt = await this._tryBuildPromptByDetails(webGitPromptBuilderDetails, promptText =>
-      this._buildWebGitPrompt(promptText, webGitPromptBuilderDetails)
-    );
-
+    const webGitPrompt = await this._buildWebGitPrompt();
     if (webGitPrompt) builtPrompts.push(webGitPrompt);
 
     if (builtPrompts.length === 0) return '';
@@ -45,10 +28,54 @@ export class BuilderTechPrompt {
     return builtPrompts.join(delimiterLine);
   }
 
-  private _tryFindTechPromptBuilderDetailsById(
-    techPromptBuilderDetailsList: TechPromptBuilderDetails[],
-    techPromptBuilderDetailsId: string
-  ): TechPromptBuilderDetails | null {
+  private async _buildLlmResponseRulesPrompt(): Promise<string | null> {
+    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(
+      TECH_PROMPT_BUILDER_DETAILS_ID_LLM_RESPONSE_RULES
+    );
+    if (!promptBuilderDetails) return null;
+    if (!promptBuilderDetails.promptConcatenationEnabled) return null;
+
+    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToPrompt);
+    if (!promptText) return null;
+
+    let nextPromptText = promptText;
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'codeListingHeaderStartFragment',
+      this._config.codeListingHeaderStartFragment
+    );
+
+    if (!nextPromptText.trim()) return null;
+
+    return nextPromptText;
+  }
+
+  private async _buildWebGitPrompt(): Promise<string | null> {
+    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(TECH_PROMPT_BUILDER_DETAILS_ID_WEB_GIT_PROMPT);
+    if (!promptBuilderDetails) return null;
+    if (!promptBuilderDetails.promptConcatenationEnabled) return null;
+
+    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToPrompt);
+    if (!promptText) return null;
+
+    let nextPromptText = promptText;
+
+    // TO~DO: implement when needed
+    // nextPromptText = this._replacePlaceholdersWithData(
+    //   nextPromptText,
+    //   'codeListingHeaderStartFragment',
+    //   this._config.codeListingHeaderStartFragment
+    // );
+
+    if (!nextPromptText.trim()) return null;
+
+    return nextPromptText;
+  }
+
+  private _tryFindTechPromptBuilderDetailsById(techPromptBuilderDetailsId: string): TechPromptBuilderDetails | null {
+    const techPromptBuilderDetailsList = this._config.techPrompt.builders;
+
     const foundTechPromptBuilderDetails = techPromptBuilderDetailsList.find(
       techPromptBuilderDetails => techPromptBuilderDetails.id === techPromptBuilderDetailsId
     );
@@ -56,25 +83,6 @@ export class BuilderTechPrompt {
     if (!foundTechPromptBuilderDetails) return null;
 
     return foundTechPromptBuilderDetails;
-  }
-
-  private async _tryBuildPromptByDetails(
-    techPromptBuilderDetails: TechPromptBuilderDetails | null,
-    buildPromptText: (promptText: string) => string
-  ): Promise<string | null> {
-    if (!techPromptBuilderDetails) return null;
-
-    if (!techPromptBuilderDetails.promptConcatenationEnabled) return null;
-
-    const promptText = await this._tryReadPromptText(techPromptBuilderDetails.relativePathToPrompt);
-
-    if (!promptText) return null;
-
-    const processedPromptText = buildPromptText(promptText);
-
-    if (!processedPromptText.trim()) return null;
-
-    return processedPromptText;
   }
 
   private async _tryReadPromptText(relativePathToPrompt: string): Promise<string | null> {
@@ -87,64 +95,6 @@ export class BuilderTechPrompt {
     } catch {
       return null;
     }
-  }
-
-  private _buildLlmResponseRulesPrompt(promptText: string, promptBuilderDetails: TechPromptBuilderDetails | null): string {
-    if (!promptBuilderDetails) return '';
-
-    let nextPromptText = promptText;
-
-    nextPromptText = this._replacePlaceholdersWithData(
-      nextPromptText,
-      'codeListingHeaderStartFragment',
-      this._config.codeListingHeaderStartFragment
-    );
-
-    nextPromptText = this._replacePlaceholdersWithData(
-      nextPromptText,
-      'codeListingHeaderRegex',
-      this._config.codeListingHeaderRegex
-    );
-
-    return nextPromptText;
-  }
-
-  private _buildWebGitPrompt(promptText: string, promptBuilderDetails: TechPromptBuilderDetails | null): string {
-    if (!promptBuilderDetails) return '';
-
-    let nextPromptText = promptText;
-
-    nextPromptText = this._replacePlaceholdersWithData(
-      nextPromptText,
-      'codeListingHeaderStartFragment',
-      this._config.codeListingHeaderStartFragment
-    );
-
-    nextPromptText = this._replacePlaceholdersWithData(
-      nextPromptText,
-      'codeListingHeaderRegex',
-      this._config.codeListingHeaderRegex
-    );
-
-    return nextPromptText;
-  }
-
-  private _buildGenericPrompt(promptText: string): string {
-    let nextPromptText = promptText;
-
-    nextPromptText = this._replacePlaceholdersWithData(
-      nextPromptText,
-      'codeListingHeaderStartFragment',
-      this._config.codeListingHeaderStartFragment
-    );
-
-    nextPromptText = this._replacePlaceholdersWithData(
-      nextPromptText,
-      'codeListingHeaderRegex',
-      this._config.codeListingHeaderRegex
-    );
-
-    return nextPromptText;
   }
 
   private _replacePlaceholdersWithData(promptText: string, placeholderKey: string, placeholderValue: string): string {
