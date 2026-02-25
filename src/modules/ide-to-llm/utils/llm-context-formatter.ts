@@ -27,7 +27,8 @@ export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
 }
 
 function buildSingleFileListing(fileItem: EditorToLlmFileItem): string {
-  const headerLine = `# ${fileItem.path}`;
+  const fileListingHeaderStartFragment = '# '; // TODO replace to config
+  const headerLine = `${fileListingHeaderStartFragment}${fileItem.path}`;
 
   const contentLines: string[] = [];
 
