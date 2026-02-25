@@ -6,6 +6,7 @@ import {
   type LlmCopypasterConfig,
   type TechPromptBuilderDetails,
 } from '../../../config';
+import { FilePayloadOperationType } from '../../../types/files-payload';
 
 export class BuilderTechPrompt {
   public constructor(
@@ -44,6 +45,24 @@ export class BuilderTechPrompt {
       nextPromptText,
       'codeListingHeaderStartFragment',
       this._config.codeListingHeaderStartFragmentWithSpace
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'filePayloadOperationTypeEditedFull',
+      FilePayloadOperationType.EditedFull
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'filePayloadOperationTypeCreated',
+      FilePayloadOperationType.Created
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
+      'filePayloadOperationTypeDeleted',
+      FilePayloadOperationType.Deleted
     );
 
     if (!nextPromptText.trim()) return null;

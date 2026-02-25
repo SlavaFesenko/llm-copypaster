@@ -13,14 +13,14 @@
 ## FILE LISTING FORMAT (for each changed/added file):
 
 - First line strictly: `{{codeListingHeaderStartFragment}}relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
-- Second line strictly one of: FILE WAS EDITED_FULL, FILE WAS CREATED, FILE WAS DELETED
+- Second line strictly one of: FILE WAS {{filePayloadOperationTypeEditedFull}}, FILE WAS {{filePayloadOperationTypeCreated}}, FILE WAS {{filePayloadOperationTypeDeleted}}
 - Immediately after — the full file content as raw text, or in case of a deleted file — do not output any content at all (immediately the next header or end of output)
 
 ## WHICH FILES TO OUTPUT:
 
-- Changed: EDITED_FULL
-- New: CREATED
-- Deleted: DELETED
+- Changed: {{filePayloadOperationTypeEditedFull}}
+- New: {{filePayloadOperationTypeCreated}}
+- Deleted: {{filePayloadOperationTypeDeleted}}
 
 ## IT IS FORBIDDEN TO OUTPUT unchanged files!
 
@@ -40,14 +40,14 @@ Files changed:
 `created-file` — created to provide an additional greeting output.
 
 {{codeListingHeaderStartFragment}}src/index.ts
-FILE WAS EDITED_FULL
+FILE WAS {{filePayloadOperationTypeEditedFull}}
 
 console.log('Hello world!');
 
 {{codeListingHeaderStartFragment}}src/dont-need-anymore.ts
-FILE WAS DELETED
+FILE WAS {{filePayloadOperationTypeDeleted}}
 
 {{codeListingHeaderStartFragment}}src/subnode/created-file
-FILE WAS CREATED
+FILE WAS {{filePayloadOperationTypeCreated}}
 
 console.log('Hello world from new file!');
