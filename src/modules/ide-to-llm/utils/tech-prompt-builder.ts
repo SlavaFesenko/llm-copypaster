@@ -80,22 +80,20 @@ function _buildLlmResponseRulesPrompt(
   config: LlmCopypasterConfig,
   _promptBuilderDetails: TechPromptBuilderDetails
 ): string {
-  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
-
   let nextPromptText = promptText;
 
   nextPromptText = _replacePlaceholdersWithData(
     nextPromptText,
     'codeListingHeaderStartFragment',
     config.codeListingHeaderStartFragment,
-    placeholderRegexPattern
+    config
   );
 
   nextPromptText = _replacePlaceholdersWithData(
     nextPromptText,
     'codeListingHeaderRegex',
     config.codeListingHeaderRegex,
-    placeholderRegexPattern
+    config
   );
 
   return nextPromptText;
@@ -106,22 +104,20 @@ function _buildWebGitPrompt(
   config: LlmCopypasterConfig,
   _promptBuilderDetails: TechPromptBuilderDetails
 ): string {
-  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
-
   let nextPromptText = promptText;
 
   nextPromptText = _replacePlaceholdersWithData(
     nextPromptText,
     'codeListingHeaderStartFragment',
     config.codeListingHeaderStartFragment,
-    placeholderRegexPattern
+    config
   );
 
   nextPromptText = _replacePlaceholdersWithData(
     nextPromptText,
     'codeListingHeaderRegex',
     config.codeListingHeaderRegex,
-    placeholderRegexPattern
+    config
   );
 
   return nextPromptText;
@@ -132,22 +128,20 @@ function _buildGenericPrompt(
   config: LlmCopypasterConfig,
   _promptBuilderDetails: TechPromptBuilderDetails
 ): string {
-  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
-
   let nextPromptText = promptText;
 
   nextPromptText = _replacePlaceholdersWithData(
     nextPromptText,
     'codeListingHeaderStartFragment',
     config.codeListingHeaderStartFragment,
-    placeholderRegexPattern
+    config
   );
 
   nextPromptText = _replacePlaceholdersWithData(
     nextPromptText,
     'codeListingHeaderRegex',
     config.codeListingHeaderRegex,
-    placeholderRegexPattern
+    config
   );
 
   return nextPromptText;
@@ -157,8 +151,10 @@ function _replacePlaceholdersWithData(
   promptText: string,
   placeholderKey: string,
   placeholderValue: string,
-  placeholderRegexPattern: string
+  config: LlmCopypasterConfig
 ): string {
+  const placeholderRegexPattern = config.techPrompt.placeholderRegexPattern;
+
   let placeholderRegex: RegExp;
 
   try {
