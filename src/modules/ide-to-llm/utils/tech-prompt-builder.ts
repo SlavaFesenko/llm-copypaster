@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import type { LlmCopypasterConfig, LlmCopypasterTechPromptBuilderDetails } from '../../../config';
+import type { LlmCopypasterConfig, TechPromptBuilderDetails } from '../../../config';
 import { buildDefaultConfig } from '../../../config';
 
 export async function getTechPrompt(
@@ -54,7 +54,7 @@ async function _tryReadPromptText(
 function _processPromptTextByBuilderHandlerId(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails
+  promptBuilderDetails: TechPromptBuilderDetails
 ): string {
   const promptBuilderHandlerById = _buildPromptBuilderHandlerById(config);
 
@@ -67,7 +67,7 @@ function _processPromptTextByBuilderHandlerId(
 
 function _buildPromptBuilderHandlerById(
   config: LlmCopypasterConfig
-): Record<string, (promptText: string, promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails) => string> {
+): Record<string, (promptText: string, promptBuilderDetails: TechPromptBuilderDetails) => string> {
   return {
     llmResponseRules: (promptText, promptBuilderDetails) =>
       _buildLlmResponseRulesPrompt(promptText, config, promptBuilderDetails),
@@ -78,7 +78,7 @@ function _buildPromptBuilderHandlerById(
 function _buildLlmResponseRulesPrompt(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails
+  promptBuilderDetails: TechPromptBuilderDetails
 ): string {
   const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
 
@@ -88,7 +88,7 @@ function _buildLlmResponseRulesPrompt(
 function _buildWebGitPrompt(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails
+  promptBuilderDetails: TechPromptBuilderDetails
 ): string {
   const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
 
@@ -98,7 +98,7 @@ function _buildWebGitPrompt(
 function _buildGenericPrompt(
   promptText: string,
   config: LlmCopypasterConfig,
-  promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails
+  promptBuilderDetails: TechPromptBuilderDetails
 ): string {
   const placeholderValuesByKey = _buildCommonPlaceholderValuesByKey(config, promptBuilderDetails);
 
@@ -107,7 +107,7 @@ function _buildGenericPrompt(
 
 function _buildCommonPlaceholderValuesByKey(
   config: LlmCopypasterConfig,
-  _promptBuilderDetails: LlmCopypasterTechPromptBuilderDetails
+  _promptBuilderDetails: TechPromptBuilderDetails
 ): Record<string, string> {
   return {
     codeListingHeaderStartFragment: config.codeListingHeaderStartFragment,

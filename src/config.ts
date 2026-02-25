@@ -7,7 +7,7 @@ export interface PromptsConfig {
   overrides: Record<string, string>;
 }
 
-export interface LlmCopypasterTechPromptBuilderDetails {
+export interface TechPromptBuilderDetails {
   id: string;
   builderHandlerId: string;
   promptConcatenationEnabled: boolean;
@@ -17,7 +17,7 @@ export interface LlmCopypasterTechPromptBuilderDetails {
 export interface TechPromptConfig {
   techPromptDelimiter: string;
   placeholderRegexPattern: string;
-  builders: LlmCopypasterTechPromptBuilderDetails[];
+  builders: TechPromptBuilderDetails[];
 }
 
 export interface SanitizationRule {
