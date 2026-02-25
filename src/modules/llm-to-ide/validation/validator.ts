@@ -1,28 +1,8 @@
 import { FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
 
-export interface ValidationOk<T> {
-  ok: true;
-  value: T;
-}
+export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
 
-export interface ValidationFail {
-  ok: false;
-  errorMessage: string;
-}
-
-export type ValidationResult<T> = ValidationOk<T> | ValidationFail;
-
-interface ParseOk<T> {
-  ok: true;
-  value: T;
-}
-
-interface ParseFail {
-  ok: false;
-  errorMessage: string;
-}
-
-type ParseResult<T> = ParseOk<T> | ParseFail;
+type ParseResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
 
 const headerRegex = /^#\s+(.+)\s*$/gm;
 
