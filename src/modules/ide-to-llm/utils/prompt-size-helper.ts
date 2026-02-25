@@ -5,13 +5,18 @@ export interface BuildPromptWithSizeStatsArgs {
   config: LlmCopypasterConfig;
 }
 
+export enum PromptSizeExceededBy {
+  LINES = 'LINES',
+  TOKENS = 'TOKENS',
+}
+
 export interface BuildPromptWithSizeStatsResult {
   linesCount: number;
   approxTokensCount: number;
   maxLinesCountInContext: number;
   maxTokensCountInContext: number;
   isExceeded: boolean;
-  exceededBy: ('LINES' | 'TOKENS')[];
+  exceededBy: PromptSizeExceededBy[];
 }
 
 export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): BuildPromptWithSizeStatsResult {
@@ -22,10 +27,13 @@ export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): Bu
 
   const limits = resolveLimitsForCurrentLlm(args.config);
 
-  const exceededBy: ('LINES' | 'TOKENS')[] = [];
+  const exceededBy: PromptSizeExceededBy[] = [];
 
-  if (limits.maxLinesCountInContext !== 0 && linesCount > limits.maxLinesCountInContext) exceededBy.push('LINES');
-  if (limits.maxTokensCountInContext !== 0 && approxTokensCount > limits.maxTokensCountInContext) exceededBy.push('TOKENS');
+  if (limits.maxLinesCountInContext !== 0 && linesCount > limits.maxLinesCountInContext)
+    exceededBy.push(PromptSizeExceededBy.LINES);
+
+  if (limits.maxTokensCountInContext !== 0 && approxTokensCount > limits.maxTokensCountInContext)
+    exceededBy.push(PromptSizeExceededBy.TOKENS);
 
   const isExceeded = exceededBy.length > 0;
 

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
@@ -130,7 +131,7 @@ export async function showCopyResultNotification(
       maxLinesCountInContext: number;
       maxTokensCountInContext: number;
       isExceeded: boolean;
-      exceededBy: ('LINES' | 'TOKENS')[];
+      exceededBy: PromptSizeExceededBy[];
     };
   }
 ): Promise<void> {
@@ -174,7 +175,7 @@ async function tryGetShouldShowPromptSizeStats(
         maxLinesCountInContext: number;
         maxTokensCountInContext: number;
         isExceeded: boolean;
-        exceededBy: ('LINES' | 'TOKENS')[];
+        exceededBy: PromptSizeExceededBy[];
       }
     | undefined
 ): Promise<boolean> {
@@ -196,13 +197,13 @@ function buildPromptSizeStatsSuffix(
     maxLinesCountInContext: number;
     maxTokensCountInContext: number;
     isExceeded: boolean;
-    exceededBy: ('LINES' | 'TOKENS')[];
+    exceededBy: PromptSizeExceededBy[];
   } | null
 ): string {
   if (!promptSizeStats) return '';
 
-  const isLinesExceeded = promptSizeStats.exceededBy.includes('LINES');
-  const isTokensExceeded = promptSizeStats.exceededBy.includes('TOKENS');
+  const isLinesExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.LINES);
+  const isTokensExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.TOKENS);
 
   const linesPart = `${isLinesExceeded ? 'Lines!:' : 'Lines:'} ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(
     promptSizeStats.maxLinesCountInContext
