@@ -19,6 +19,7 @@ export interface TechPromptBuilderDetails {
 export interface TechPromptConfig {
   techPromptDelimiter: string;
   placeholderRegexPattern: string;
+  fileStatusPrefix: string;
   builders: TechPromptBuilderDetails[];
 }
 
@@ -90,8 +91,9 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
     codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`, // catches format like: codeListingHeaderStartFragmentSymbols path/filename
     techPrompt: {
-      techPromptDelimiter: '--' + '-', // avoid a literal '---' in source (it can be treated as a special delimiter by some parsers/linters);
+      techPromptDelimiter: '--' + '-', // avoid a literal triple-hyphen sequence in source (it can be treated as a special delimiter by some parsers/linters);
       placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*]+)}}`, // {{placeholder}}
+      fileStatusPrefix: '#### FILE WAS ', // placed in root 'cause accessed by main validator
       builders: [
         {
           id: LLM_RESPONSE_RULES_PROMPT_ID,

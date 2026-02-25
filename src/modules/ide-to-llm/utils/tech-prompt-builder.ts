@@ -49,6 +49,12 @@ export class TechPromptBuilder {
 
     nextPromptText = this._replacePlaceholdersWithData(
       nextPromptText,
+      'fileStatusPrefix',
+      this._config.techPrompt.fileStatusPrefix
+    );
+
+    nextPromptText = this._replacePlaceholdersWithData(
+      nextPromptText,
       'filePayloadOperationTypeEditedFull',
       FilePayloadOperationType.EditedFull
     );

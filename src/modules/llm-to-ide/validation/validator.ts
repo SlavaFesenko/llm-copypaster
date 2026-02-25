@@ -11,7 +11,7 @@ export function validateClipboardTextToFilesPayload(
 ): ValidationResult<FilesPayload> {
   const headerRegex = new RegExp(config.codeListingHeaderRegex, 'gm');
 
-  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex);
+  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex, config.techPrompt.fileStatusPrefix);
 
   if (!parsed.ok) return parsed;
 
@@ -20,7 +20,11 @@ export function validateClipboardTextToFilesPayload(
   return parsed;
 }
 
-function parseConcatenatedFileListings(rawText: string, headerRegex: RegExp): ParseResult<FilesPayload> {
+function parseConcatenatedFileListings(
+  rawText: string,
+  headerRegex: RegExp,
+  fileStatusPrefix: string
+): ParseResult<FilesPayload> {
   const matches = [...rawText.matchAll(headerRegex)];
 
   if (matches.length === 0)
@@ -40,7 +44,7 @@ function parseConcatenatedFileListings(rawText: string, headerRegex: RegExp): Pa
     const sectionEndIndex = next?.index ?? rawText.length;
 
     const sectionRawText = rawText.slice(sectionStartIndex, sectionEndIndex).replace(/^\r?\n/, '');
-    const parsedSection = parseFileSection(sectionRawText);
+    const parsedSection = parseFileSection(sectionRawText, fileStatusPrefix);
 
     if (!parsedSection.ok) return { ok: false, errorMessage: `${path}: ${parsedSection.errorMessage}` };
 
@@ -55,12 +59,15 @@ function parseConcatenatedFileListings(rawText: string, headerRegex: RegExp): Pa
   return { ok: true, value: { files, warnings: [], errors: [] } };
 }
 
-function parseFileSection(rawSectionText: string): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
+function parseFileSection(
+  rawSectionText: string,
+  fileStatusPrefix: string
+): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
   const { firstLine, restText } = splitFirstLine(rawSectionText);
 
   if (!firstLine) return { ok: true, value: { content: rawSectionText } };
 
-  const operation = tryParseOperationLine(firstLine);
+  const operation = tryParseOperationLine(firstLine, fileStatusPrefix);
 
   if (!operation) return { ok: true, value: { content: rawSectionText } };
 
@@ -85,14 +92,17 @@ function splitFirstLine(text: string): { firstLine: string; restText: string } {
   return { firstLine, restText };
 }
 
-function tryParseOperationLine(line: string): FilePayloadOperationType | undefined {
+function tryParseOperationLine(line: string, fileStatusPrefix: string): FilePayloadOperationType | undefined {
   const trimmedLine = line.trim();
+  const trimmedPrefix = fileStatusPrefix.trim();
 
-  if (trimmedLine === 'FILE WAS EDITED_FULL') return FilePayloadOperationType.EditedFull;
+  const prefix = trimmedPrefix ? `${trimmedPrefix} ` : '';
 
-  if (trimmedLine === 'FILE WAS CREATED') return FilePayloadOperationType.Created;
+  if (trimmedLine === `${prefix}${FilePayloadOperationType.EditedFull}`) return FilePayloadOperationType.EditedFull;
 
-  if (trimmedLine === 'FILE WAS DELETED') return FilePayloadOperationType.Deleted;
+  if (trimmedLine === `${prefix}${FilePayloadOperationType.Created}`) return FilePayloadOperationType.Created;
+
+  if (trimmedLine === `${prefix}${FilePayloadOperationType.Deleted}`) return FilePayloadOperationType.Deleted;
 
   return undefined;
 }
