@@ -8,9 +8,7 @@ export async function loadDefaultCopyAsContextPrompt(
   extensionContext: vscode.ExtensionContext,
   config?: LlmCopypasterConfig
 ): Promise<string> {
-  if (cachedDefaultCopyAsContextPrompt !== null) {
-    return applyPromptPlaceholders(cachedDefaultCopyAsContextPrompt, { config: config ?? null });
-  }
+  if (cachedDefaultCopyAsContextPrompt !== null) return applyPromptPlaceholders(cachedDefaultCopyAsContextPrompt, config);
 
   const promptFileUri = vscode.Uri.joinPath(extensionContext.extensionUri, 'prompts', 'default-copy-as-context-prompt.md');
 
@@ -20,7 +18,7 @@ export async function loadDefaultCopyAsContextPrompt(
 
     cachedDefaultCopyAsContextPrompt = text;
 
-    return applyPromptPlaceholders(text, { config: config ?? null });
+    return applyPromptPlaceholders(text, config);
   } catch {
     cachedDefaultCopyAsContextPrompt = '';
 
@@ -28,62 +26,50 @@ export async function loadDefaultCopyAsContextPrompt(
   }
 }
 
-interface PromptPlaceholderContext {
-  config: LlmCopypasterConfig | null;
-}
+type PromptPlaceholderContext = {
+  config?: LlmCopypasterConfig;
+};
 
-type PromptPlaceholderResolver = (context: PromptPlaceholderContext) => string | null;
+type PromptPlaceholderResolver = (context: PromptPlaceholderContext) => string | undefined;
 
-interface PromptPlaceholderResolversMap {
-  [placeholderName: string]: PromptPlaceholderResolver;
-}
-
-interface ApplyPromptPlaceholdersOptions {
-  resolvers?: PromptPlaceholderResolversMap;
-}
+type PromptPlaceholderResolvers = Record<string, PromptPlaceholderResolver>;
 
 const placeholderRegex = /{{\s*([a-zA-Z0-9_.-]+)\s*}}/g;
 
-function buildDefaultPromptPlaceholderResolvers(): PromptPlaceholderResolversMap {
-  return {
-    diffMarkerAtAt: () => '@' + '@', // avoid a literal token in source
-    diffMarkerPlusPlusPlus: () => '+' + '+' + '+', // avoid a literal token in source
-    diffFileLabel: () => 'Fil' + 'e' + ':', // avoid a literal token in source
-  };
-}
+const defaultResolvers: PromptPlaceholderResolvers = {
+  diffMarkerAtAt: () => '@' + '@', // avoid a literal token in source
+  diffMarkerPlusPlusPlus: () => '+' + '+' + '+', // avoid a literal token in source
+  diffFileLabel: () => 'Fil' + 'e' + ':', // avoid a literal token in source
+};
 
-function buildConfigPromptPlaceholderResolvers(): PromptPlaceholderResolversMap {
+function buildResolvers(
+  context: PromptPlaceholderContext,
+  resolversOverride?: PromptPlaceholderResolvers
+): PromptPlaceholderResolvers {
   return {
-    codeListingHeaderStartFragment: context => context.config?.codeListingHeaderStartFragment ?? null,
-    diffMarkerDashDashDash: context => context.config?.techPromptDelimiter ?? null,
-  };
-}
-
-function buildPromptPlaceholderResolvers(context: PromptPlaceholderContext): PromptPlaceholderResolversMap {
-  return {
-    ...buildDefaultPromptPlaceholderResolvers(),
-    ...buildConfigPromptPlaceholderResolvers(),
+    ...defaultResolvers,
+    codeListingHeaderStartFragment: ctx => ctx.config?.codeListingHeaderStartFragment,
+    diffMarkerDashDashDash: ctx => ctx.config?.techPromptDelimiter,
+    ...(resolversOverride ?? {}),
   };
 }
 
 function applyPromptPlaceholders(
   promptTemplate: string,
-  context: PromptPlaceholderContext,
-  options?: ApplyPromptPlaceholdersOptions
+  config?: LlmCopypasterConfig,
+  resolversOverride?: PromptPlaceholderResolvers
 ): string {
-  const resolvers = options?.resolvers ?? buildPromptPlaceholderResolvers(context);
+  const context: PromptPlaceholderContext = { config };
 
-  const replaced = promptTemplate.replace(placeholderRegex, (fullMatch: string, placeholderName: string) => {
+  const resolvers = buildResolvers(context, resolversOverride);
+
+  return promptTemplate.replace(placeholderRegex, (fullMatch: string, placeholderName: string) => {
     const resolver = resolvers[placeholderName];
 
     if (!resolver) return fullMatch;
 
     const resolvedValue = resolver(context);
 
-    if (resolvedValue === null) return fullMatch;
-
-    return resolvedValue;
+    return resolvedValue === undefined ? fullMatch : resolvedValue;
   });
-
-  return replaced;
 }
