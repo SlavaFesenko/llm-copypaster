@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
 
-import type {
-  LlmCopypasterConfig,
-  LlmCopypasterTechPromptBuilderDetails,
-  LlmCopypasterTechPromptBuilderOverrides,
-} from '../../../config';
+import type { LlmCopypasterConfig, LlmCopypasterTechPromptBuilderDetails } from '../../../config';
 import { buildDefaultConfig } from '../../../config';
 
 const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
@@ -16,7 +12,7 @@ export async function getTechPrompt(
 ): Promise<string> {
   const resolvedConfig = config ?? buildDefaultConfig();
 
-  const promptBuilderDetailsList = _resolvePromptBuilderDetailsList(resolvedConfig);
+  const promptBuilderDetailsList = resolvedConfig.techPromptBuilders;
 
   const builtPrompts: string[] = [];
 
@@ -44,25 +40,6 @@ export async function getTechPrompt(
   const delimiterLine = `\n${resolvedConfig.techPromptDelimiter}\n`;
 
   return builtPrompts.join(delimiterLine);
-}
-
-function _resolvePromptBuilderDetailsList(config: LlmCopypasterConfig): LlmCopypasterTechPromptBuilderDetails[] {
-  const basePromptBuilderDetailsList = config.techPromptBuilders;
-
-  const promptBuilderOverridesById = config.techPromptBuildersOverrides ?? {};
-
-  if (Object.keys(promptBuilderOverridesById).length === 0) return basePromptBuilderDetailsList;
-
-  return basePromptBuilderDetailsList.map(promptBuilderDetails => {
-    const promptBuilderOverrides = promptBuilderOverridesById[promptBuilderDetails.id];
-
-    if (!promptBuilderOverrides) return promptBuilderDetails;
-
-    return {
-      ...promptBuilderDetails,
-      ...promptBuilderOverrides,
-    };
-  });
 }
 
 async function _tryReadPromptText(
@@ -145,5 +122,3 @@ function _replaceMustacheLikePlaceholders(promptText: string, placeholderValuesB
     return placeholderValue;
   });
 }
-
-export type { LlmCopypasterTechPromptBuilderOverrides };

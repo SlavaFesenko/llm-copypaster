@@ -13,8 +13,6 @@ export interface LlmCopypasterTechPromptBuilderDetails {
   relativePathToPrompt: string;
 }
 
-export type LlmCopypasterTechPromptBuilderOverrides = Record<string, Partial<LlmCopypasterTechPromptBuilderDetails>>;
-
 export interface LlmCopypasterSanitizationRule {
   id: string;
   pattern: string;
@@ -49,7 +47,6 @@ export interface LlmCopypasterConfig {
   codeListingHeaderStartFragment: string;
   techPromptDelimiter: string;
   techPromptBuilders: LlmCopypasterTechPromptBuilderDetails[];
-  techPromptBuildersOverrides?: LlmCopypasterTechPromptBuilderOverrides;
 }
 
 export function buildDefaultConfig(): LlmCopypasterConfig {
@@ -97,7 +94,6 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
         relativePathToPrompt: 'prompts/web-git-prompt.md',
       },
     ],
-    techPromptBuildersOverrides: {},
   };
 }
 
