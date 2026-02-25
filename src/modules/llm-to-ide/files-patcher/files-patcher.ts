@@ -32,7 +32,7 @@ export async function applyFilesPayloadToWorkspace(
 
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
 
-      await ensureParentDirectoryExists(targetUri);
+      await ensureParentDirectoryExists(targetUri, logger);
 
       const exists = await fileExists(targetUri);
 
@@ -104,12 +104,12 @@ async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChan
   }
 }
 
-export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri): Promise<void> {
+export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, logger?: OutputChannelLogger): Promise<void> {
   const parentUri = vscode.Uri.joinPath(targetFileUri, '..');
 
   try {
     await vscode.workspace.fs.createDirectory(parentUri);
-  } catch {
-    // ignore
+  } catch (error) {
+    logger?.debug(`Create directory skipped for ${parentUri.toString()}: ${String(error)}`);
   }
 }
