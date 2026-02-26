@@ -7,12 +7,17 @@ import {
   type TechPromptBuilderDetails,
 } from '../../../config';
 import { FilePayloadOperationType } from '../../../types/files-payload';
+import { MustacheRenderer } from './mustache-renderer';
 
 export class TechPromptBuilder {
+  private readonly _mustacheRenderer: MustacheRenderer;
+
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
-  ) {}
+  ) {
+    this._mustacheRenderer = new MustacheRenderer(this._config.techPrompt.placeholderRegexPattern);
+  }
 
   public async build(): Promise<string> {
     const techPromptConfig = this._config.techPrompt;
@@ -39,36 +44,44 @@ export class TechPromptBuilder {
     const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToPrompt);
     if (!promptText) return null;
 
+    const webGitPromptConcatenationEnabled = this._tryResolveWebGitPromptConcatenationEnabled();
+
     let nextPromptText = promptText;
 
-    nextPromptText = this._replacePlaceholdersWithData(
+    nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'codeListingHeaderStartFragment',
       this._config.codeListingHeaderStartFragmentWithSpace
     );
 
-    nextPromptText = this._replacePlaceholdersWithData(
+    nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'fileStatusPrefix',
       this._config.techPrompt.fileStatusPrefix
     );
 
-    nextPromptText = this._replacePlaceholdersWithData(
+    nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'filePayloadOperationTypeEditedFull',
       FilePayloadOperationType.EditedFull
     );
 
-    nextPromptText = this._replacePlaceholdersWithData(
+    nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'filePayloadOperationTypeCreated',
       FilePayloadOperationType.Created
     );
 
-    nextPromptText = this._replacePlaceholdersWithData(
+    nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'filePayloadOperationTypeDeleted',
       FilePayloadOperationType.Deleted
+    );
+
+    nextPromptText = this._mustacheRenderer.renderIf(
+      nextPromptText,
+      'webGitPromptConcatenationEnabled',
+      webGitPromptConcatenationEnabled
     );
 
     if (!nextPromptText.trim()) return null;
@@ -98,6 +111,11 @@ export class TechPromptBuilder {
     return nextPromptText;
   }
 
+  private _tryResolveWebGitPromptConcatenationEnabled(): boolean {
+    const webGitPromptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
+    return webGitPromptBuilderDetails?.promptConcatenationEnabled ?? false;
+  }
+
   private _tryFindTechPromptBuilderDetailsById(techPromptBuilderDetailsId: string): TechPromptBuilderDetails | null {
     const techPromptBuilderDetailsList = this._config.techPrompt.builders;
 
@@ -120,23 +138,5 @@ export class TechPromptBuilder {
     } catch {
       return null;
     }
-  }
-
-  private _replacePlaceholdersWithData(promptText: string, placeholderKey: string, placeholderValue: string): string {
-    const placeholderRegexPattern = this._config.techPrompt.placeholderRegexPattern;
-
-    let placeholderRegex: RegExp;
-
-    try {
-      placeholderRegex = new RegExp(placeholderRegexPattern, 'g');
-    } catch {
-      return promptText;
-    }
-
-    return promptText.replace(placeholderRegex, (fullMatch, foundPlaceholderKey: string) => {
-      if (foundPlaceholderKey !== placeholderKey) return fullMatch;
-
-      return placeholderValue;
-    });
   }
 }

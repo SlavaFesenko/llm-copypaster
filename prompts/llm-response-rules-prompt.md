@@ -9,11 +9,13 @@
 
 - Conceptual solution to the task (including the answer to the user’s question): 1–5 short sentences
 - If there are edited/added/deleted files: for each — `only_filename.ext + what was edited and why` (very briefly)
+  {{#if webGitPromptConcatenationEnabled}}
 - If `Web Git Prompt` is provided in the same request, include its required web access log in this `EXPLANATIONS BLOCK` (use the format defined by `Web Git Prompt`)
+  {{/if}}
 - Markdown is allowed inside the `EXPLANATIONS BLOCK` (including markdown links) if it improves readability
 - Emojis are allowed inside the `EXPLANATIONS BLOCK` only, and only from this fixed set:
   - File status: ✏️ edited, ➕ created, ➖ deleted
-  - Web access status: 🌐 opened, ❌ failed, ⛔ blocked
+    {{#if webGitPromptConcatenationEnabled}} - Web access status: 🌐 opened, ❌ failed, ⛔ blocked {{/if}}
 
 ## `FILE LISTING` FORMAT (for each edited/added file):
 
@@ -44,9 +46,11 @@ Files changed:
 ➖ `dont-need-anymore.ts` — deleted because it’s no longer used;
 ➕ `created-file` — created to provide an additional greeting output.
 
+{{#if webGitPromptConcatenationEnabled}}
 Web access log:
 🌐 Opened: [package.json](https://github.com/SlavaFesenko/llm-copypaster/blob/master/package.json) — confirm existing commands
 ❌ Failed: [missing.ts](https://github.com/SlavaFesenko/llm-copypaster/blob/master/src/missing.ts) — 404 Not Found, needed to confirm referenced import
+{{/if}}
 
 {{codeListingHeaderStartFragment}}src/index.ts
 {{fileStatusPrefix}}{{filePayloadOperationTypeEditedFull}}
