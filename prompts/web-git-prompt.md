@@ -5,7 +5,9 @@ You are working with a specific public GitHub repository. If you need the conten
 ## Repository anchors
 
 - Branch: `master`
-- Base file URL (uses `blob`):
+- Base raw file URL (preferred for file content):
+  `https://raw.githubusercontent.com/SlavaFesenko/llm-copypaster/master/<relative/path>`
+- Base GitHub file URL (blob, use only when raw is not enough):
   `https://github.com/SlavaFesenko/llm-copypaster/blob/master/<relative/path>`
 
 ## When you MAY browse the repo
@@ -18,7 +20,7 @@ Browse the repository only if it is necessary to:
 
 Do not browse for unrelated exploration. Fetch only what you need.
 
-## How to locate missing files (blob-only)
+## How to locate missing files (raw-first)
 
 1. Start from known reference files (below) and follow relative paths you see in code (imports, exports, referenced modules).
 2. Convert the discovered relative path into an absolute repo path under `master`, then open it via `blob`.
@@ -39,18 +41,18 @@ If you did not open any web files, explicitly state that no web files were acces
 Structural:
 
 - `package.json`
-  `https://github.com/SlavaFesenko/llm-copypaster/blob/master/package.json`
+  `https://raw.githubusercontent.com/SlavaFesenko/llm-copypaster/master/package.json`
 - `src/config.ts`
-  `https://github.com/SlavaFesenko/llm-copypaster/blob/master/src/config.ts`
+  `https://raw.githubusercontent.com/SlavaFesenko/llm-copypaster/master/src/config.ts`
 - `src/register-commands.ts`
-  `https://github.com/SlavaFesenko/llm-copypaster/blob/master/src/register-commands.ts`
+  `https://raw.githubusercontent.com/SlavaFesenko/llm-copypaster/master/src/register-commands.ts`
 
 Root business-logic modules:
 
 - `src/modules/ide-to-llm/ide-to-llm-module.ts`
-  `https://github.com/SlavaFesenko/llm-copypaster/blob/master/src/modules/ide-to-llm/ide-to-llm-module.ts`
+  `https://raw.githubusercontent.com/SlavaFesenko/llm-copypaster/master/src/modules/ide-to-llm/ide-to-llm-module.ts`
 - `src/modules/llm-to-ide/llm-to-ide-module.ts`
-  `https://github.com/SlavaFesenko/llm-copypaster/blob/master/src/modules/llm-to-ide/llm-to-ide-module.ts`
+  `https://raw.githubusercontent.com/SlavaFesenko/llm-copypaster/master/src/modules/llm-to-ide/llm-to-ide-module.ts`
 
 ## Output discipline (important)
 
