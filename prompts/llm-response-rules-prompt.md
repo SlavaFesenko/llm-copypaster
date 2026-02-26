@@ -8,9 +8,9 @@
 ## EXPLANATIONS BLOCK FORMAT (goes first):
 
 - Conceptual solution to the task (including the answer to the user’s question): 1–5 short sentences
-- If there are changed/added/deleted files: for each — `only_filename.ext + what was changed and why` (very briefly)
+- If there are edited/added/deleted files: for each — `only_filename.ext + what was edited and why` (very briefly)
 
-## FILE LISTING FORMAT (for each changed/added file):
+## FILE LISTING FORMAT (for each edited/added file):
 
 - First line strictly: `{{codeListingHeaderStartFragment}}relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
 - Second line strictly one of: {{fileStatusPrefix}}{{filePayloadOperationTypeEditedFull}}, {{fileStatusPrefix}}{{filePayloadOperationTypeCreated}}, {{fileStatusPrefix}}{{filePayloadOperationTypeDeleted}}
@@ -18,8 +18,8 @@
 
 ## WHICH FILES TO OUTPUT:
 
-- Changed: {{filePayloadOperationTypeEditedFull}}
-- New: {{filePayloadOperationTypeCreated}}
+- Edited (even if user sent an empty file - it's treated as edited): {{filePayloadOperationTypeEditedFull}}
+- Created (file treated as created only if user didn't sent it in request): {{filePayloadOperationTypeCreated}}
 - Deleted: {{filePayloadOperationTypeDeleted}}
 
 ## IT IS FORBIDDEN TO OUTPUT unchanged files!
