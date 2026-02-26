@@ -14,6 +14,7 @@ export interface TechPromptBuilderDetails {
   id: string;
   promptConcatenationEnabled: boolean;
   relativePathToPrompt: string;
+  constants?: Record<string, string>;
 }
 
 export interface TechPromptConfig {
@@ -92,7 +93,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
     codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`, // catches format like: codeListingHeaderStartFragmentSymbols path/filename
     techPrompt: {
       techPromptDelimiter: '--' + '-', // avoid a literal triple-hyphen sequence in source (it can be treated as a special delimiter by some parsers/linters);
-      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*]+)}}`, // {{placeholder}}
+      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
       fileStatusPrefix: '#### FILE WAS ', // placed in root 'cause accessed by main validator
       builders: [
         {
@@ -100,10 +101,22 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
           promptConcatenationEnabled: true,
           relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
         },
+        // todo: сделать для каждой промты блок с опеределением переменных прямо в лиситнге промты, думаю, в формате json:
+        // { promptScopedVars: ['var1': 'var_1_value'], globalScopedVarIds: ['globalVarXXX', 'globalVarYYY']}
+        // Это нужно, чтобы каждую промту юзер мог переопределить как хочет, не завязываясь на конфиг для promptScopedVars,
+        // а globalScopedVarIds будут опердеелны на уровне приложения и лежать в specific-prompt-agnostic конфиге, типа fileStatusPrefix,
+        // globalScopedVarIds - нужны, если определенная логика должна эплаиться на уровне копи-паста, а не локально в скопе промты
         {
           id: WEB_GIT_PROMPT_ID,
           promptConcatenationEnabled: true,
           relativePathToPrompt: 'prompts/web-git-prompt.md',
+          constants: {
+            BRANCH_NAME: 'master',
+            RAW_GITHUB_BASE_URL: 'https://raw.githubusercontent.com/',
+            BLOB_GITHUB_BASE_URL: 'https://github.com/',
+            AUTHOR_REPO: 'SlavaFesenko/llm-copypaster/',
+            WEB_GIT_PROMPT_NAME: 'Web Git Prompt',
+          },
         },
       ],
     },

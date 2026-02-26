@@ -99,12 +99,11 @@ export class TechPromptBuilder {
 
     let nextPromptText = promptText;
 
-    // TO~DO: implement when needed
-    // nextPromptText = this._replacePlaceholdersWithData(
-    //   nextPromptText,
-    //   'codeListingHeaderStartFragment',
-    //   this._config.codeListingHeaderStartFragment
-    // );
+    const constants = promptBuilderDetails.constants ?? {};
+
+    for (const [placeholderKey, placeholderValue] of Object.entries(constants)) {
+      nextPromptText = this._mustacheRenderer.renderConstant(nextPromptText, placeholderKey, placeholderValue);
+    }
 
     if (!nextPromptText.trim()) return null;
 

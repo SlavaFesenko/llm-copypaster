@@ -45,8 +45,8 @@ Files changed:
 ➕ `created-file` — created to provide an additional greeting output.
 
 {{#if webGitPromptConcatenationEnabled}}Web access log:
-🌐 Opened: [package.json](https://github.com/SlavaFesenko/llm-copypaster/blob/master/package.json) — confirm existing commands
-❌ Failed: [missing.ts](https://github.com/SlavaFesenko/llm-copypaster/blob/master/src/missing.ts) — 404 Not Found, needed to confirm referenced import{{/if}}
+🌐 Opened: [package.json](https://full-url/package.json) — confirm existing commands
+❌ Failed: [missing.ts](https://full-url/missing.ts) — 404 Not Found, needed to confirm referenced import{{/if}}
 
 {{codeListingHeaderStartFragment}}src/index.ts
 {{fileStatusPrefix}}{{filePayloadOperationTypeEditedFull}}
