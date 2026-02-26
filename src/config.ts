@@ -102,7 +102,7 @@ export function buildDefaultConfig(): LlmCopypasterConfig {
         },
         {
           id: WEB_GIT_PROMPT_ID,
-          promptConcatenationEnabled: false,
+          promptConcatenationEnabled: true,
           relativePathToPrompt: 'prompts/web-git-prompt.md',
         },
       ],
