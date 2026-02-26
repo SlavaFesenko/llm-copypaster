@@ -1,4 +1,4 @@
-# Web Git Prompt
+# `Web Git Prompt`
 
 You are working with a specific public GitHub repository. If you need the content of a file that was not provided in the chat context, you are allowed to open the repository in the browser and fetch only the minimal required information from the relevant file(s).
 

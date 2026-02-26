@@ -9,7 +9,7 @@
 
 - Conceptual solution to the task (including the answer to the user’s question): 1–5 short sentences
 - If there are edited/added/deleted files: for each — `only_filename.ext + what was edited and why` (very briefly)
-- If `web-git-prompt` is provided in the same request, include its required web access log in this `EXPLANATIONS BLOCK` (use the format defined by `web-git-prompt`)
+- If `Web Git Prompt` is provided in the same request, include its required web access log in this `EXPLANATIONS BLOCK` (use the format defined by `Web Git Prompt`)
 - Markdown is allowed inside the `EXPLANATIONS BLOCK` (including markdown links) if it improves readability
 - Emojis are allowed inside the `EXPLANATIONS BLOCK` only, and only from this fixed set:
   - File status: ✏️ edited, ➕ created, ➖ deleted
