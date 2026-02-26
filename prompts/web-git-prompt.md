@@ -25,6 +25,15 @@ Do not browse for unrelated exploration. Fetch only what you need.
 3. Read only the relevant parts (avoid copying entire large files unless required).
 4. If a path cannot be resolved from available files, explicitly mark it as TBD / not found.
 
+## Response header: web access log (required)
+
+At the very top of every response, include a short web access log with:
+
+- Which web files (URLs) you opened and why (purpose in 3–10 words)
+- Which web files (URLs) you tried to open but could not access, and the error you got
+
+If you did not open any web files, explicitly state that no web files were accessed.
+
 ## Key reference URLs (starting points)
 
 Structural:

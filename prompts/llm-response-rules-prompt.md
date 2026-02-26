@@ -9,6 +9,7 @@
 
 - Conceptual solution to the task (including the answer to the user’s question): 1–5 short sentences
 - If there are edited/added/deleted files: for each — `only_filename.ext + what was edited and why` (very briefly)
+- (Optional) If there's also concatenated `web-git-prompt`, put its output here.
 
 ## FILE LISTING FORMAT (for each edited/added file):
 
@@ -38,6 +39,10 @@ Files changed:
 `index.ts` — updated the console output message;
 `dont-need-anymore.ts` — deleted because it’s no longer used;
 `created-file` — created to provide an additional greeting output.
+
+Web-git files searched:
+[package.json](https://real-path/package.json): explored file to get existing commands.
+[404-file.ts](https://.../404-file.ts): failed to open file (got 404 error), needed it for understanding context for task xxx.
 
 {{codeListingHeaderStartFragment}}src/index.ts
 {{fileStatusPrefix}}{{filePayloadOperationTypeEditedFull}}
