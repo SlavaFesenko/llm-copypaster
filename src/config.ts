@@ -23,8 +23,12 @@ export interface VitalVariablesConfig {
 
 export interface PromptInstructionConfig {
   vitalVariablesConfig: VitalVariablesConfig;
+
+  onMergeIgnoreAll_sharedVariablesById?: boolean;
+  sharedVariablesById: Record<string, string>;
+
+  onMergeIgnoreAll_subInstructionsById?: boolean;
   subInstructionsById: SubInstructionsSetConfig;
-  commonVariablesFreeSet: Record<string, string>;
 }
 
 export interface LlmToIdeSanitizationRuleConfig {
@@ -55,6 +59,8 @@ export interface ProfileSettingsConfig {
   ideToLlmContextConfig: IdeToLlmContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
   promptInstructionConfig: Partial<PromptInstructionConfig>;
+
+  onMergeIgnoreAll_llmToIdeSanitizationRulesById?: boolean;
   llmToIdeSanitizationRulesById: LlmToIdeSanitizationRulesSet;
 }
 
@@ -110,7 +116,7 @@ export function buildBaseSettings(): ProfileSettingsConfig {
           relativePathToSubInstruction: 'prompts/web-git-prompt.md',
         },
       },
-      commonVariablesFreeSet: {
+      sharedVariablesById: {
         BRANCH_NAME: 'master',
         RAW_GITHUB_BASE_URL: '[https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)',
         BLOB_GITHUB_BASE_URL: '[https://github.com/](https://github.com/)',
@@ -136,7 +142,7 @@ export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
                 skipSubInstruction: true,
               },
             },
-            commonVariablesFreeSet: {
+            sharedVariablesById: {
               BRANCH_NAME: 'master',
             },
           },
