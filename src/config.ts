@@ -41,7 +41,7 @@ export interface PromptInstructionsConfig {
   skipSubInstruction?: boolean;
 }
 
-export interface VitalVariablesConfig {
+export interface LlmToIdeParsingAnchors {
   techPromptDelimiter: string;
   codeListingHeaderStartFragment: string;
   codeListingHeaderStartFragmentWithSpace: string;
@@ -86,7 +86,6 @@ export interface ProfileSettingsConfig {
 
   ideToLlmContextConfig: IdeToLlmContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
-  vitalVariablesConfig: VitalVariablesConfig;
 
   promptInstructionConfig: Partial<PromptInstructionConfig>;
 
@@ -101,15 +100,15 @@ export interface ProfileConfig {
 }
 
 export interface LlmCopypasterConfig {
-  baseSettings: ProfileSettingsConfig;
-  profileForDefaultOverrideOfBaseSettings?: string;
-  profiles: Record<string, ProfileConfig>;
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchors;
+  baseSettings: ProfileSettingsConfig; // this settings may be overritten ONLY IN RUNTIME by some of profiles['name'].profileSettingsConfig
+
+  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
+  onMergeIgnoreAll_profilesById?: boolean;
+  profilesById: Record<string, ProfileConfig>;
 }
 
 export function buildBaseSettings(): ProfileSettingsConfig {
-  // such symbols selected to highlight file-header in LLM-interface + to be quite unique
-  const codeListingHeaderStartFragmentSymbols = '## LLM-CPP-FILE:';
-
   return {
     ideToLlmContextConfig: {
       skipPromptSizeStatsInCopyNotification: false,
@@ -130,14 +129,7 @@ export function buildBaseSettings(): ProfileSettingsConfig {
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
       enableOpeningPatchedFilesInEditor: true,
     },
-    vitalVariablesConfig: {
-      techPromptDelimiter: '--' + '-',
-      codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
-      codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
-      codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`,
-      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
-      fileStatusPrefix: '#### FILE WAS ',
-    },
+
     promptInstructionConfig: {
       subInstructionsById: {
         [LLM_RESPONSE_RULES_PROMPT_ID]: {
@@ -159,10 +151,20 @@ export function buildBaseSettings(): ProfileSettingsConfig {
 }
 
 export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
+  // such symbols selected to highlight file-header in LLM-interface + to be quite unique
+  const codeListingHeaderStartFragmentSymbols = '## LLM-CPP-FILE:';
+
   return {
+    llmToIdeParsingAnchors: {
+      techPromptDelimiter: '--' + '-',
+      codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
+      codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
+      codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`,
+      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
+      fileStatusPrefix: '#### FILE WAS ',
+    },
     baseSettings: buildBaseSettings(),
-    profileForDefaultOverrideOfBaseSettings: 'Work Project XXX + Ollama',
-    profiles: {
+    profilesById: {
       'Work Project XXX + Ollama': {
         description: 'Work project profile with Ollama defaults',
         profileSettingsConfig: {
