@@ -56,6 +56,7 @@ export interface PostFilePatchActionsConfig {
 export interface ProfileSettingsConfig {
   skipTechPrompt?: boolean;
   skipCodeListings?: boolean;
+
   ideToLlmContextConfig: IdeToLlmContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
   promptInstructionConfig: Partial<PromptInstructionConfig>;
