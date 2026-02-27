@@ -1,23 +1,25 @@
-import type {
+import {
   IdeToLlmContextConfig,
-  IdeToLlmContextUserConfig,
   LlmCopypasterConfig,
-  LlmCopypasterUserConfig,
   LlmToIdeParsingAnchorsConfig,
-  LlmToIdeParsingAnchorsUserConfig,
   LlmToIdeSanitizationRuleConfig,
-  LlmToIdeSanitizationRuleUserConfig,
   PostFilePatchActionsConfig,
-  PostFilePatchActionsUserConfig,
   ProfileConfig,
   ProfileSettingsConfig,
+  PromptInstructionConfig,
+  PromptInstructionsConfig,
+} from '../../config-service';
+import {
+  IdeToLlmContextUserConfig,
+  LlmCopypasterUserConfig,
+  LlmToIdeParsingAnchorsUserConfig,
+  LlmToIdeSanitizationRuleUserConfig,
+  PostFilePatchActionsUserConfig,
   ProfileSettingsUserConfig,
   ProfileUserConfig,
-  PromptInstructionConfig,
-  PromptInstructionUserConfig,
-  PromptInstructionsConfig,
   PromptInstructionsUserConfig,
-} from '../../config-service';
+  PromptInstructionUserConfig,
+} from './user-config';
 
 export function mergeConfigs(
   defaultConfig: LlmCopypasterConfig,
