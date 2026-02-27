@@ -1,4 +1,4 @@
-import { IdeToLlmContextConfig, LlmCopypasterConfig } from '../../../config-service';
+import { LlmCopypasterConfig } from '../../../config-service';
 
 export interface BuildPromptWithSizeStatsArgs {
   promptText: string;
@@ -19,13 +19,18 @@ export interface BuildPromptWithSizeStatsResult {
   exceededBy: PromptSizeExceededBy[];
 }
 
+interface LlmContextLimits {
+  maxLinesCountInContext: number;
+  maxTokensCountInContext: number;
+}
+
 export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): BuildPromptWithSizeStatsResult {
   const normalizedPromptText = args.promptText ?? '';
 
   const linesCount = countLines(normalizedPromptText);
   const approxTokensCount = estimateTokensCount(normalizedPromptText, args.config);
 
-  const limits = resolveLimitsForCurrentLlm(args.config);
+  const limits = normalizeLimits(args.config.baseSettings.ideToLlmContextConfig);
 
   const exceededBy: PromptSizeExceededBy[] = [];
 
@@ -47,20 +52,7 @@ export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): Bu
   };
 }
 
-function resolveLimitsForCurrentLlm(config: LlmCopypasterConfig): IdeToLlmContextConfig {
-  const limitsByLlm = config.llmContextLimitsByLlm ?? {};
-  const currentLlmKey = String(config.currentLLM ?? 'default');
-
-  const currentLlmLimits = limitsByLlm[currentLlmKey];
-  if (currentLlmLimits) return normalizeLimits(currentLlmLimits);
-
-  const defaultLimits = limitsByLlm['default'];
-  if (defaultLimits) return normalizeLimits(defaultLimits);
-
-  return normalizeLimits({ maxLinesCountInContext: 0, maxTokensCountInContext: 0 });
-}
-
-function normalizeLimits(limits: IdeToLlmContextConfig): IdeToLlmContextConfig {
+function normalizeLimits(limits: { maxLinesCountInContext: number; maxTokensCountInContext: number }): LlmContextLimits {
   const maxLinesCountInContext = Number.isFinite(limits.maxLinesCountInContext)
     ? Math.max(0, limits.maxLinesCountInContext)
     : 0;
@@ -81,7 +73,7 @@ function countLines(text: string): number {
 function estimateTokensCount(text: string, config: LlmCopypasterConfig): number {
   if (!text) return 0;
 
-  const configuredApproxCharsPerToken = Number(config.promptSizeApproxCharsPerToken);
+  const configuredApproxCharsPerToken = Number(config.baseSettings.ideToLlmContextConfig.promptSizeApproxCharsPerToken);
   const approxCharsPerToken = Number.isFinite(configuredApproxCharsPerToken) ? configuredApproxCharsPerToken : 4;
   const safeApproxCharsPerToken = Math.max(1, approxCharsPerToken);
 
