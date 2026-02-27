@@ -17,7 +17,7 @@ import type {
   PromptInstructionUserConfig,
   PromptInstructionsConfig,
   PromptInstructionsUserConfig,
-} from '../../config';
+} from '../../config-service';
 
 export function mergeConfigs(
   defaultConfig: LlmCopypasterConfig,

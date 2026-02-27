@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../config';
+import { LlmCopypasterConfig } from '../../../config-service';
 import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };

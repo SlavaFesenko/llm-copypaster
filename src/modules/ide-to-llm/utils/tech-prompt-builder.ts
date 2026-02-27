@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config';
+import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config-service';
 import { FilePayloadOperationType } from '../../../types/files-payload';
 import { MustacheRenderer } from './mustache-renderer';
 

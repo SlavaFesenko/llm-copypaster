@@ -1,4 +1,4 @@
-import { IdeToLlmContextConfig, LlmCopypasterConfig } from '../../../config';
+import { IdeToLlmContextConfig, LlmCopypasterConfig } from '../../../config-service';
 
 export interface BuildPromptWithSizeStatsArgs {
   promptText: string;

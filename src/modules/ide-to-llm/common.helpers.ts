@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config';
+import { ConfigService } from '../../config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';

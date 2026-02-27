@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { PostFilePatchActionsConfig } from '../../../config';
+import { PostFilePatchActionsConfig } from '../../../config-service';
 import { FilePayloadOperationType, FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
