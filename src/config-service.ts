@@ -114,7 +114,7 @@ export class ConfigService {
       promptInstructionConfig: {
         subInstructionsById: {
           'llm-response-rules-prompt': {
-            relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
+            relativePathToSubInstruction: '.sys-prompts/llm-response-rules-prompt.md',
             ignore: false,
           },
         },
