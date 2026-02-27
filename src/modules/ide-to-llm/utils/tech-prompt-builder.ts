@@ -4,7 +4,7 @@ import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../.
 import { FilePayloadOperationType } from '../../../types/files-payload';
 import { MustacheRenderer } from './mustache-renderer';
 
-export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
+export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules-prompt';
 export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
 
 export class TechPromptBuilder {
@@ -14,11 +14,12 @@ export class TechPromptBuilder {
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
   ) {
-    this._mustacheRenderer = new MustacheRenderer(this._config.techPrompt.placeholderRegexPattern);
+    this._mustacheRenderer = new MustacheRenderer(this._buildPlaceholderRegexPattern());
   }
 
   public async build(): Promise<string> {
-    const techPromptConfig = this._config.techPrompt;
+    const promptInstructionConfig = this._config.baseSettings.promptInstructionConfig;
+    const subInstructionsById = promptInstructionConfig.subInstructionsById ?? {};
     const builtPrompts: string[] = [];
 
     const llmResponseRulesPrompt = await this._buildLlmResponseRulesPrompt();
@@ -27,35 +28,46 @@ export class TechPromptBuilder {
     const webGitPrompt = await this._buildWebGitPrompt();
     if (webGitPrompt) builtPrompts.push(webGitPrompt);
 
+    const otherPromptIds = Object.keys(subInstructionsById).filter(
+      promptId => promptId !== LLM_RESPONSE_RULES_PROMPT_ID && promptId !== WEB_GIT_PROMPT_ID
+    );
+
+    for (const promptId of otherPromptIds) {
+      const otherPromptText = await this._buildGenericPrompt(promptId);
+      if (otherPromptText) builtPrompts.push(otherPromptText);
+    }
+
     if (builtPrompts.length === 0) return '';
 
-    const delimiterLine = `\n${techPromptConfig.techPromptDelimiter}\n`;
+    const delimiterLine = `\n${this._config.llmToIdeParsingAnchors.techPromptDelimiter}\n`;
 
     return builtPrompts.join(delimiterLine);
   }
 
   private async _buildLlmResponseRulesPrompt(): Promise<string | null> {
-    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(LLM_RESPONSE_RULES_PROMPT_ID);
-    if (!promptBuilderDetails) return null;
-    if (!promptBuilderDetails.ignore) return null;
+    const promptInstructionsConfig = this._tryFindPromptInstructionsConfigById(LLM_RESPONSE_RULES_PROMPT_ID);
+    if (!promptInstructionsConfig) return null;
+    if (promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToSubInstruction);
+    const promptText = await this._tryReadPromptText(promptInstructionsConfig);
     if (!promptText) return null;
 
     const webGitPromptConcatenationEnabled = this._tryResolveWebGitPromptConcatenationEnabled();
 
     let nextPromptText = promptText;
 
+    nextPromptText = this._renderSharedVariables(nextPromptText);
+
     nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'codeListingHeaderStartFragment',
-      this._config.codeListingHeaderStartFragmentWithSpace
+      this._getCodeListingHeaderStartFragmentWithSpace()
     );
 
     nextPromptText = this._mustacheRenderer.renderConstant(
       nextPromptText,
       'fileStatusPrefix',
-      this._config.techPrompt.fileStatusPrefix
+      this._config.llmToIdeParsingAnchors.fileStatusPrefix
     );
 
     nextPromptText = this._mustacheRenderer.renderConstant(
@@ -88,45 +100,68 @@ export class TechPromptBuilder {
   }
 
   private async _buildWebGitPrompt(): Promise<string | null> {
-    const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
-    if (!promptBuilderDetails) return null;
-    if (!promptBuilderDetails.ignore) return null;
+    const promptInstructionsConfig = this._tryFindPromptInstructionsConfigById(WEB_GIT_PROMPT_ID);
+    if (!promptInstructionsConfig) return null;
+    if (promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToSubInstruction);
+    const promptText = await this._tryReadPromptText(promptInstructionsConfig);
     if (!promptText) return null;
 
     let nextPromptText = promptText;
 
-    const constants = promptBuilderDetails.constants ?? {};
-
-    for (const [placeholderKey, placeholderValue] of Object.entries(constants)) {
-      nextPromptText = this._mustacheRenderer.renderConstant(nextPromptText, placeholderKey, placeholderValue);
-    }
+    nextPromptText = this._renderSharedVariables(nextPromptText);
 
     if (!nextPromptText.trim()) return null;
 
     return nextPromptText;
   }
 
+  private async _buildGenericPrompt(promptId: string): Promise<string | null> {
+    const promptInstructionsConfig = this._tryFindPromptInstructionsConfigById(promptId);
+    if (!promptInstructionsConfig) return null;
+    if (promptInstructionsConfig.ignore) return null;
+
+    const promptText = await this._tryReadPromptText(promptInstructionsConfig);
+    if (!promptText) return null;
+
+    const nextPromptText = this._renderSharedVariables(promptText);
+
+    if (!nextPromptText.trim()) return null;
+
+    return nextPromptText;
+  }
+
+  private _renderSharedVariables(promptText: string): string {
+    const sharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
+    let nextPromptText = promptText;
+
+    for (const [placeholderKey, placeholderValue] of Object.entries(sharedVariablesById)) {
+      nextPromptText = this._mustacheRenderer.renderConstant(nextPromptText, placeholderKey, placeholderValue);
+    }
+
+    return nextPromptText;
+  }
+
   private _tryResolveWebGitPromptConcatenationEnabled(): boolean {
-    const webGitPromptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
-    return webGitPromptBuilderDetails?.ignore ?? false;
+    const webGitPromptInstructionsConfig = this._tryFindPromptInstructionsConfigById(WEB_GIT_PROMPT_ID);
+    return !webGitPromptInstructionsConfig?.ignore;
   }
 
-  private _tryFindTechPromptBuilderDetailsById(techPromptBuilderDetailsId: string): PromptInstructionsConfig | null {
-    const techPromptBuilderDetailsList = this._config.techPrompt.builders;
+  private _tryFindPromptInstructionsConfigById(promptInstructionsConfigId: string): PromptInstructionsConfig | null {
+    const subInstructionsById = this._config.baseSettings.promptInstructionConfig.subInstructionsById ?? {};
+    const foundPromptInstructionsConfig = subInstructionsById[promptInstructionsConfigId];
 
-    const foundTechPromptBuilderDetails = techPromptBuilderDetailsList.find(
-      techPromptBuilderDetails => techPromptBuilderDetails.id === techPromptBuilderDetailsId
-    );
+    if (!foundPromptInstructionsConfig) return null;
 
-    if (!foundTechPromptBuilderDetails) return null;
-
-    return foundTechPromptBuilderDetails;
+    return foundPromptInstructionsConfig;
   }
 
-  private async _tryReadPromptText(relativePathToPrompt: string): Promise<string | null> {
-    const promptUri = vscode.Uri.joinPath(this._extensionContext.extensionUri, relativePathToPrompt);
+  private async _tryReadPromptText(promptInstructionsConfig: PromptInstructionsConfig): Promise<string | null> {
+    const promptUri = promptInstructionsConfig.isSystemBundledFile
+      ? vscode.Uri.joinPath(this._extensionContext.extensionUri, promptInstructionsConfig.relativePathToSubInstruction)
+      : this._tryBuildWorkspacePromptUri(promptInstructionsConfig.relativePathToSubInstruction);
+
+    if (!promptUri) return null;
 
     try {
       const bytes = await vscode.workspace.fs.readFile(promptUri);
@@ -135,5 +170,27 @@ export class TechPromptBuilder {
     } catch {
       return null;
     }
+  }
+
+  private _tryBuildWorkspacePromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) return null;
+
+    return vscode.Uri.joinPath(workspaceFolder.uri, relativePathToSubInstruction);
+  }
+
+  private _getCodeListingHeaderStartFragmentWithSpace(): string {
+    return this._config.llmToIdeParsingAnchors.codeListingHeaderStartFragment + ' ';
+  }
+
+  private _buildPlaceholderRegexPattern(): string {
+    const placeholderStartFragment = this._escapeRegExp(this._config.llmToIdeParsingAnchors.placeholderStartFragment);
+    const placeholderEndFragment = this._escapeRegExp(this._config.llmToIdeParsingAnchors.placeholderEndFragment);
+
+    return String.raw`${placeholderStartFragment}([a-zA-Z0-9*_]+)${placeholderEndFragment}`;
+  }
+
+  private _escapeRegExp(text: string): string {
+    return text.replace(/[.*+?^${}()|[]\]/g, '\$&');
   }
 }
