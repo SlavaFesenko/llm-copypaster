@@ -1,0 +1,54 @@
+{
+  // Workspace config file for LLM Copypaster
+  // This file supports JSONC (comments, trailing commas)
+
+  "baseSettings": {
+    // If true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
+    "onMergeIgnoreAll_llmToIdeSanitizationRulesById": true,
+    "llmToIdeSanitizationRulesById": {
+      "strip-codefence": {
+        "pattern": "`{3}[^\r\n]*", // ``` | ```lang
+        "replaceWith": "",
+        "disabledForLanguages": ["markdown"],
+        "disabledForPaths": ["docs/"], // just demonstrating the option
+      },
+    },
+  },
+
+  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
+  "onMergeIgnoreAll_profilesById": true,
+  "profilesById": {
+    "Work Project XXX + Ollama": {
+      "description": "Work project profile with Ollama defaults",
+      "version": "1",
+      "profileSettingsConfig": {
+        "promptInstructionConfig": {
+          "subInstructionsById": {
+            "web-git-prompt": {
+              "relativePathToSubInstruction": "prompts/web-git-prompt.md",
+              "skipSubInstruction": true,
+            },
+          },
+          "sharedVariablesById": {
+            "BRANCH_NAME": "master",
+          },
+        },
+      },
+    },
+
+    "Gemini for pet-project": {
+      "description": "Minimal overrides for pet-project with Gemini",
+      "version": "1",
+      "profileSettingsConfig": {
+        "promptInstructionConfig": {
+          "subInstructionsById": {
+            "web-git-prompt": {
+              "relativePathToSubInstruction": "prompts/web-git-prompt.md",
+              "skipSubInstruction": true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
