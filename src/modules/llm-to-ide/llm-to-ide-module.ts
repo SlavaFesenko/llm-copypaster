@@ -34,7 +34,11 @@ export class LlmToIdeModule {
 
     const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
 
-    const applyResult = await applyFilesPayloadToWorkspace(sanitizedPayload, config.postFilesPatchActions, this._logger);
+    const applyResult = await applyFilesPayloadToWorkspace(
+      sanitizedPayload,
+      config.baseSettings.postFilePatchActionsConfig,
+      this._logger
+    );
 
     if (!applyResult.ok) {
       this._guidedRetryStore.saveLastError({

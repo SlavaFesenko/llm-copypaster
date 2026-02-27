@@ -14,14 +14,16 @@ export function applySanitizationRules(
 ): string {
   let outputText = inputText;
 
-  for (const rule of config.sanitizationRules) {
-    if (isRuleDisabledForFile(rule, fileMeta)) continue;
+  const sanitizationRulesById = config.baseSettings.llmToIdeSanitizationRulesById;
+
+  for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
+    if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;
 
     try {
-      const regexp = new RegExp(rule.pattern, 'g');
-      outputText = outputText.replace(regexp, rule.replaceWith);
+      const regexp = new RegExp(ruleConfig.pattern, 'g');
+      outputText = outputText.replace(regexp, ruleConfig.replaceWith);
     } catch (error) {
-      logger.warn(`Sanitization rule failed (${rule.id}) for ${fileMeta.path}: ${String(error)}`);
+      logger.warn(`Sanitization rule failed (${ruleId}) for ${fileMeta.path}: ${String(error)}`);
     }
   }
 
@@ -32,12 +34,13 @@ function isRuleDisabledForFile(
   rule: { disabledForLanguages?: string[]; disabledForPaths?: string[] },
   fileMeta: ApplySanitizationRulesFileMeta
 ): boolean {
-  if (fileMeta.languageId && rule.disabledForLanguages?.includes(fileMeta.languageId)) return true;
+  const disabledForLanguages = rule.disabledForLanguages ?? [];
+  const disabledForPaths = rule.disabledForPaths ?? [];
 
-  if (rule.disabledForPaths) {
-    for (const disabledPathPrefix of rule.disabledForPaths) {
-      if (fileMeta.path.startsWith(disabledPathPrefix)) return true;
-    }
+  if (fileMeta.languageId && disabledForLanguages.includes(fileMeta.languageId)) return true;
+
+  for (const disabledPathPrefix of disabledForPaths) {
+    if (fileMeta.path.startsWith(disabledPathPrefix)) return true;
   }
 
   return false;
