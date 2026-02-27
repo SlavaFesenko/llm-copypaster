@@ -157,11 +157,11 @@ export function mapSubInstructionsById(
     const userSubInstruction = userSubInstructionsById[subInstructionId];
 
     if (!baseSubInstruction) {
-      if (!userSubInstruction.relativePathToSubInstruction || userSubInstruction.skipSubInstruction === undefined) continue;
+      if (!userSubInstruction.relativePathToSubInstruction || userSubInstruction.ignore === undefined) continue;
 
       nextSubInstructionsById[subInstructionId] = {
         relativePathToSubInstruction: userSubInstruction.relativePathToSubInstruction,
-        skipSubInstruction: userSubInstruction.skipSubInstruction,
+        ignore: userSubInstruction.ignore,
       };
 
       continue;
@@ -170,7 +170,7 @@ export function mapSubInstructionsById(
     nextSubInstructionsById[subInstructionId] = {
       relativePathToSubInstruction:
         userSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
-      skipSubInstruction: userSubInstruction.skipSubInstruction ?? baseSubInstruction.skipSubInstruction,
+      ignore: userSubInstruction.ignore ?? baseSubInstruction.ignore,
     };
   }
 

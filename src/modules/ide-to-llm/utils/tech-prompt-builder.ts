@@ -37,7 +37,7 @@ export class TechPromptBuilder {
   private async _buildLlmResponseRulesPrompt(): Promise<string | null> {
     const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(LLM_RESPONSE_RULES_PROMPT_ID);
     if (!promptBuilderDetails) return null;
-    if (!promptBuilderDetails.skipSubInstruction) return null;
+    if (!promptBuilderDetails.ignore) return null;
 
     const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToSubInstruction);
     if (!promptText) return null;
@@ -90,7 +90,7 @@ export class TechPromptBuilder {
   private async _buildWebGitPrompt(): Promise<string | null> {
     const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
     if (!promptBuilderDetails) return null;
-    if (!promptBuilderDetails.skipSubInstruction) return null;
+    if (!promptBuilderDetails.ignore) return null;
 
     const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToSubInstruction);
     if (!promptText) return null;
@@ -110,7 +110,7 @@ export class TechPromptBuilder {
 
   private _tryResolveWebGitPromptConcatenationEnabled(): boolean {
     const webGitPromptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
-    return webGitPromptBuilderDetails?.skipSubInstruction ?? false;
+    return webGitPromptBuilderDetails?.ignore ?? false;
   }
 
   private _tryFindTechPromptBuilderDetailsById(techPromptBuilderDetailsId: string): PromptInstructionsConfig | null {

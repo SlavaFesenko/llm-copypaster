@@ -5,7 +5,7 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export interface PromptInstructionsConfig {
   relativePathToSubInstruction: string;
-  skipSubInstruction: boolean;
+  ignore: boolean;
 }
 
 export interface LlmToIdeParsingAnchorsConfig {
@@ -115,11 +115,11 @@ export class ConfigService {
         subInstructionsById: {
           'llm-response-rules-prompt': {
             relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
-            skipSubInstruction: false,
+            ignore: false,
           },
           'web-git-prompt': {
             relativePathToSubInstruction: 'prompts/web-git-prompt.md',
-            skipSubInstruction: false,
+            ignore: false,
           },
         },
         sharedVariablesById: {

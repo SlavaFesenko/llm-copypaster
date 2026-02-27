@@ -1,6 +1,6 @@
 export interface PromptInstructionsUserConfig {
   relativePathToSubInstruction?: string;
-  skipSubInstruction?: boolean;
+  ignore?: boolean;
 }
 
 export interface LlmToIdeParsingAnchorsUserConfig {
