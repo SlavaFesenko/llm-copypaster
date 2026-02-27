@@ -148,7 +148,14 @@ export function buildBaseSettings(): ProfileSettingsConfig {
       maxLinesCountInContext: 1000,
       maxTokensCountInContext: 12000,
     },
-    llmToIdeSanitizationRulesById: {},
+    llmToIdeSanitizationRulesById: {
+      'strip-codefence': {
+        pattern: '`{3}[^\r\n]*',
+        replaceWith: '',
+        disabledForLanguages: ['markdown'],
+        disabledForPaths: ['docs/'],
+      },
+    },
     postFilePatchActionsConfig: {
       enableSaveAfterFilePatch: true,
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again

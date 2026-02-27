@@ -2,19 +2,6 @@
   // Workspace config file for LLM Copypaster
   // This file supports JSONC (comments, trailing commas)
 
-  "baseSettings": {
-    // If true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-    "onMergeIgnoreAll_llmToIdeSanitizationRulesById": true,
-    "llmToIdeSanitizationRulesById": {
-      "strip-codefence": {
-        "pattern": "`{3}[^\r\n]*", // ``` | ```lang
-        "replaceWith": "",
-        "disabledForLanguages": ["markdown"],
-        "disabledForPaths": ["docs/"], // just demonstrating the option
-      },
-    },
-  },
-
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   "onMergeIgnoreAll_profilesById": true,
   "profilesById": {
