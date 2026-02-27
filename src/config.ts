@@ -18,19 +18,17 @@ export interface PromptInstructionsUserConfig {
 export interface LlmToIdeParsingAnchorsConfig {
   techPromptDelimiter: string;
   codeListingHeaderStartFragment: string;
-  codeListingHeaderStartFragmentWithSpace: string;
-  codeListingHeaderRegex: string;
-  placeholderRegexPattern: string;
   fileStatusPrefix: string;
+  placeholderStartFragment: string;
+  placeholderEndFragment: string;
 }
 
 export interface LlmToIdeParsingAnchorsUserConfig {
   techPromptDelimiter?: string;
   codeListingHeaderStartFragment?: string;
-  codeListingHeaderStartFragmentWithSpace?: string;
-  codeListingHeaderRegex?: string;
-  placeholderRegexPattern?: string;
   fileStatusPrefix?: string;
+  placeholderStartFragment?: string;
+  placeholderEndFragment?: string;
 }
 
 export interface PromptInstructionConfig {
@@ -186,16 +184,14 @@ export function buildBaseSettings(): ProfileSettingsConfig {
 
 export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
   // such symbols selected to highlight file-header in LLM-interface + to be quite unique
-  const codeListingHeaderStartFragmentSymbols = '## LLM-CPP-FILE:';
 
   return {
     llmToIdeParsingAnchors: {
       techPromptDelimiter: '--' + '-',
-      codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
-      codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
-      codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`,
-      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
+      codeListingHeaderStartFragment: '## LLM-CPP-FILE:',
       fileStatusPrefix: '#### FILE WAS ',
+      placeholderStartFragment: '{{',
+      placeholderEndFragment: '}}',
     },
     baseSettings: buildBaseSettings(),
     profilesById: {},
@@ -245,7 +241,7 @@ export class ConfigService {
 
   private _mergeLlmToIdeParsingAnchors(
     baseAnchors: LlmToIdeParsingAnchorsConfig,
-    userAnchors: LlmToIdeParsingAnchorsUserConfig | undefined
+    userAnchors?: LlmToIdeParsingAnchorsUserConfig
   ): LlmToIdeParsingAnchorsConfig {
     if (!userAnchors) return baseAnchors;
 
@@ -253,11 +249,9 @@ export class ConfigService {
       techPromptDelimiter: userAnchors.techPromptDelimiter ?? baseAnchors.techPromptDelimiter,
       codeListingHeaderStartFragment:
         userAnchors.codeListingHeaderStartFragment ?? baseAnchors.codeListingHeaderStartFragment,
-      codeListingHeaderStartFragmentWithSpace:
-        userAnchors.codeListingHeaderStartFragmentWithSpace ?? baseAnchors.codeListingHeaderStartFragmentWithSpace,
-      codeListingHeaderRegex: userAnchors.codeListingHeaderRegex ?? baseAnchors.codeListingHeaderRegex,
-      placeholderRegexPattern: userAnchors.placeholderRegexPattern ?? baseAnchors.placeholderRegexPattern,
       fileStatusPrefix: userAnchors.fileStatusPrefix ?? baseAnchors.fileStatusPrefix,
+      placeholderStartFragment: userAnchors.placeholderStartFragment ?? baseAnchors.placeholderStartFragment,
+      placeholderEndFragment: userAnchors.placeholderEndFragment ?? baseAnchors.placeholderEndFragment,
     };
   }
 
