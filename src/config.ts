@@ -5,120 +5,156 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
 export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
 
-export interface PromptsConfig {
-  default: string;
-  overrides: Record<string, string>;
+export interface PromptInstructionsConfig {
+  relativePathToSubInstruction: string;
+  skipSubInstruction?: boolean;
 }
 
-export interface TechPromptBuilderDetails {
-  id: string;
-  promptConcatenationEnabled: boolean;
-  relativePathToPrompt: string;
-  constants?: Record<string, string>;
-}
+export type SubInstructionsSetConfig = Record<string, PromptInstructionsConfig>;
 
-export interface TechPromptConfig {
+export interface VitalVariablesConfig {
   techPromptDelimiter: string;
+  codeListingHeaderStartFragment: string;
+  codeListingHeaderStartFragmentWithSpace: string;
+  codeListingHeaderRegex: string;
   placeholderRegexPattern: string;
   fileStatusPrefix: string;
-  builders: TechPromptBuilderDetails[];
 }
 
-export interface SanitizationRule {
-  id: string;
+export interface PromptInstructionConfig {
+  vitalVariablesConfig: VitalVariablesConfig;
+  subInstructionsById: SubInstructionsSetConfig;
+  commonVariablesFreeSet: Record<string, string>;
+}
+
+export interface LlmToIdeSanitizationRuleConfig {
   pattern: string;
   replaceWith: string;
   disabledForLanguages?: string[];
   disabledForPaths?: string[];
 }
 
-export interface LlmContextLimits {
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
+export type LlmToIdeSanitizationRulesSet = Record<string, LlmToIdeSanitizationRuleConfig>;
+
+export interface IdeToLlmContextConfig {
+  skipPromptSizeStatsInCopyNotification?: boolean;
+  promptSizeApproxCharsPerToken?: number;
+  maxLinesCountInContext?: number;
+  maxTokensCountInContext?: number;
 }
 
-export type LlmContextLimitsByLlm = Record<string, LlmContextLimits>;
-
-export interface PostFilesPatchActionsConfig {
+export interface PostFilePatchActionsConfig {
   enableSaveAfterFilePatch: boolean;
   enableLintingAfterFilePatch: boolean;
   enableOpeningPatchedFilesInEditor: boolean;
 }
 
-export interface LlmCopypasterConfig {
-  currentLLM: string;
-  sanitizationRules: SanitizationRule[];
-  includeTechPrompt: boolean;
-  llmContextLimitsByLlm: LlmContextLimitsByLlm;
-  showPromptSizeStatsInCopyNotification: boolean;
-  promptSizeApproxCharsPerToken: number;
-  postFilesPatchActions: PostFilesPatchActionsConfig;
-  codeListingHeaderRegex: string;
-  codeListingHeaderStartFragment: string;
-  codeListingHeaderStartFragmentWithSpace: string;
-  techPrompt: TechPromptConfig;
+export interface ProfileSettingsConfig {
+  skipTechPrompt?: boolean;
+  skipCodeListings?: boolean;
+  ideToLlmContextConfig: IdeToLlmContextConfig;
+  postFilePatchActionsConfig: PostFilePatchActionsConfig;
+  promptInstructionConfig: Partial<PromptInstructionConfig>;
+  llmToIdeSanitizationRulesById: LlmToIdeSanitizationRulesSet;
 }
 
-export function buildDefaultConfig(): LlmCopypasterConfig {
+export interface ProfileConfig {
+  description?: string;
+  profileSettingsConfig: Partial<ProfileSettingsConfig>;
+}
+
+export interface LlmCopypasterConfig {
+  baseSettings: ProfileSettingsConfig;
+  profileForDefaultOverrideOfBaseSettings?: string;
+  profiles: Record<string, ProfileConfig>;
+}
+
+export function buildBaseSettings(): ProfileSettingsConfig {
   // such symbols selected to highlight file-header in LLM-interface + to be quite unique
   const codeListingHeaderStartFragmentSymbols = '## LLM-CPP-FILE:';
 
   return {
-    currentLLM: 'default',
-    sanitizationRules: [
-      {
-        id: 'strip-codefence',
-        pattern: '`{3}[^\r\n]*', // Matches a triple-backtick fence marker with an optional language tag on the same line (does not consume the newline)
+    ideToLlmContextConfig: {
+      skipPromptSizeStatsInCopyNotification: false,
+      promptSizeApproxCharsPerToken: 3.5,
+      maxLinesCountInContext: 1000,
+      maxTokensCountInContext: 12000,
+    },
+    llmToIdeSanitizationRulesById: {
+      'strip-codefence': {
+        pattern: '`{3}[^\r\n]*',
         replaceWith: '',
         disabledForLanguages: ['markdown'],
         disabledForPaths: ['docs/'],
       },
-    ],
-    includeTechPrompt: true,
-    llmContextLimitsByLlm: {
-      default: {
-        maxLinesCountInContext: 1000, // personal observation, after this limit LLM degrades
-        maxTokensCountInContext: 12000, // personal observation, after this limit LLM degrades
-      },
     },
-    showPromptSizeStatsInCopyNotification: true,
-    promptSizeApproxCharsPerToken: 3.5, // for code with long var names 3 is more accurate, but not to spam with warning picked 3.5
-    postFilesPatchActions: {
+    postFilePatchActionsConfig: {
       enableSaveAfterFilePatch: true,
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
       enableOpeningPatchedFilesInEditor: true,
     },
-    codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
-    codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
-    codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`, // catches format like: codeListingHeaderStartFragmentSymbols path/filename
-    techPrompt: {
-      techPromptDelimiter: '--' + '-', // avoid a literal triple-hyphen sequence in source (it can be treated as a special delimiter by some parsers/linters);
-      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
-      fileStatusPrefix: '#### FILE WAS ', // placed in root 'cause accessed by main validator
-      builders: [
-        {
-          id: LLM_RESPONSE_RULES_PROMPT_ID,
-          promptConcatenationEnabled: true,
-          relativePathToPrompt: 'prompts/llm-response-rules-prompt.md',
+    promptInstructionConfig: {
+      vitalVariablesConfig: {
+        techPromptDelimiter: '--' + '-',
+        codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
+        codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
+        codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`,
+        placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
+        fileStatusPrefix: '#### FILE WAS ',
+      },
+      subInstructionsById: {
+        [LLM_RESPONSE_RULES_PROMPT_ID]: {
+          relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
         },
-        // todo: сделать для каждой промты блок с опеределением переменных прямо в лиситнге промты, думаю, в формате json:
-        // { promptScopedVars: ['var1': 'var_1_value'], globalScopedVarIds: ['globalVarXXX', 'globalVarYYY']}
-        // Это нужно, чтобы каждую промту юзер мог переопределить как хочет, не завязываясь на конфиг для promptScopedVars,
-        // а globalScopedVarIds будут опердеелны на уровне приложения и лежать в specific-prompt-agnostic конфиге, типа fileStatusPrefix,
-        // globalScopedVarIds - нужны, если определенная логика должна эплаиться на уровне копи-паста, а не локально в скопе промты
-        {
-          id: WEB_GIT_PROMPT_ID,
-          promptConcatenationEnabled: true,
-          relativePathToPrompt: 'prompts/web-git-prompt.md',
-          constants: {
-            BRANCH_NAME: 'master',
-            RAW_GITHUB_BASE_URL: 'https://raw.githubusercontent.com/',
-            BLOB_GITHUB_BASE_URL: 'https://github.com/',
-            AUTHOR_REPO: 'SlavaFesenko/llm-copypaster/',
-            WEB_GIT_PROMPT_NAME: 'Web Git Prompt',
+        [WEB_GIT_PROMPT_ID]: {
+          relativePathToSubInstruction: 'prompts/web-git-prompt.md',
+        },
+      },
+      commonVariablesFreeSet: {
+        BRANCH_NAME: 'master',
+        RAW_GITHUB_BASE_URL: '[https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)',
+        BLOB_GITHUB_BASE_URL: '[https://github.com/](https://github.com/)',
+        AUTHOR_REPO: 'SlavaFesenko/llm-copypaster/',
+        WEB_GIT_PROMPT_NAME: 'Web Git Prompt',
+      },
+    },
+  };
+}
+
+export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
+  return {
+    baseSettings: buildBaseSettings(),
+    profileForDefaultOverrideOfBaseSettings: 'Work Project XXX + Ollama',
+    profiles: {
+      'Work Project XXX + Ollama': {
+        description: 'Work project profile with Ollama defaults',
+        profileSettingsConfig: {
+          promptInstructionConfig: {
+            subInstructionsById: {
+              [WEB_GIT_PROMPT_ID]: {
+                relativePathToSubInstruction: 'prompts/web-git-prompt.md',
+                skipSubInstruction: true,
+              },
+            },
+            commonVariablesFreeSet: {
+              BRANCH_NAME: 'master',
+            },
           },
         },
-      ],
+      },
+      'Gemini for pet-project': {
+        description: 'Minimal overrides for pet-project with Gemini',
+        profileSettingsConfig: {
+          promptInstructionConfig: {
+            subInstructionsById: {
+              [WEB_GIT_PROMPT_ID]: {
+                relativePathToSubInstruction: 'prompts/web-git-prompt.md',
+                skipSubInstruction: true,
+              },
+            },
+          },
+        },
+      },
     },
   };
 }
@@ -130,7 +166,7 @@ export class ConfigService {
   ) {}
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
-    const defaultConfig = buildDefaultConfig();
+    const defaultConfig = buildLlmCopypasterConfig();
 
     // settingsConfig and fileConfig are not read for now, just for a structure
     const settingsConfig = this._readSettingsConfig(defaultConfig);
@@ -138,28 +174,7 @@ export class ConfigService {
 
     const mergedConfig = this._mergeConfigs(defaultConfig, settingsConfig, fileConfig);
 
-    this._notifyIfInvalidCodeListingHeaderConfig(mergedConfig);
-
     return mergedConfig;
-  }
-
-  private _notifyIfInvalidCodeListingHeaderConfig(config: LlmCopypasterConfig): void {
-    const exampleHeaderLine = `${config.codeListingHeaderStartFragmentWithSpace}path/filename`;
-
-    let headerRegex: RegExp;
-
-    try {
-      headerRegex = new RegExp(config.codeListingHeaderRegex);
-    } catch (error) {
-      vscode.window.showErrorMessage(`Invalid "codeListingHeaderRegex" in config: ${String(error)}`);
-      return;
-    }
-
-    if (headerRegex.test(exampleHeaderLine)) return;
-
-    vscode.window.showErrorMessage(
-      `Invalid listing header config: "${exampleHeaderLine}" does not match codeListingHeaderRegex`
-    );
   }
 
   private _mergeConfigs(

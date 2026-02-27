@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 
-import { buildDefaultConfig, LlmCopypasterConfig, SanitizationRule } from '../../config';
+import { buildLlmCopypasterConfig, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
 
 suite('applySanitizationRules', () => {
-  const defaultConfig = buildDefaultConfig();
+  const defaultConfig = buildLlmCopypasterConfig();
 
   test('applies strip-codefence cases', () => {
     const cases = [...buildStripCodefenceCases()];
@@ -24,14 +24,14 @@ suite('applySanitizationRules', () => {
   test('logs warn and keeps output unchanged when rule RegExp construction fails', () => {
     const { logger, warnCalls } = createLoggerMock();
 
-    const invalidRule: SanitizationRule = {
+    const invalidRule: LlmToIdeSanitizationRuleConfig = {
       id: 'invalid-regexp',
       pattern: '[',
       replaceWith: '',
     };
 
     const config: LlmCopypasterConfig = {
-      ...buildDefaultConfig(),
+      ...buildLlmCopypasterConfig(),
       sanitizationRules: [invalidRule],
     };
 

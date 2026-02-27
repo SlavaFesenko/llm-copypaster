@@ -4,7 +4,7 @@ import {
   LLM_RESPONSE_RULES_PROMPT_ID,
   WEB_GIT_PROMPT_ID,
   type LlmCopypasterConfig,
-  type TechPromptBuilderDetails,
+  type PromptInstructionsConfig,
 } from '../../../config';
 import { FilePayloadOperationType } from '../../../types/files-payload';
 import { MustacheRenderer } from './mustache-renderer';
@@ -39,9 +39,9 @@ export class TechPromptBuilder {
   private async _buildLlmResponseRulesPrompt(): Promise<string | null> {
     const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(LLM_RESPONSE_RULES_PROMPT_ID);
     if (!promptBuilderDetails) return null;
-    if (!promptBuilderDetails.promptConcatenationEnabled) return null;
+    if (!promptBuilderDetails.skipSubInstruction) return null;
 
-    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToPrompt);
+    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToSubInstruction);
     if (!promptText) return null;
 
     const webGitPromptConcatenationEnabled = this._tryResolveWebGitPromptConcatenationEnabled();
@@ -92,9 +92,9 @@ export class TechPromptBuilder {
   private async _buildWebGitPrompt(): Promise<string | null> {
     const promptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
     if (!promptBuilderDetails) return null;
-    if (!promptBuilderDetails.promptConcatenationEnabled) return null;
+    if (!promptBuilderDetails.skipSubInstruction) return null;
 
-    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToPrompt);
+    const promptText = await this._tryReadPromptText(promptBuilderDetails.relativePathToSubInstruction);
     if (!promptText) return null;
 
     let nextPromptText = promptText;
@@ -112,10 +112,10 @@ export class TechPromptBuilder {
 
   private _tryResolveWebGitPromptConcatenationEnabled(): boolean {
     const webGitPromptBuilderDetails = this._tryFindTechPromptBuilderDetailsById(WEB_GIT_PROMPT_ID);
-    return webGitPromptBuilderDetails?.promptConcatenationEnabled ?? false;
+    return webGitPromptBuilderDetails?.skipSubInstruction ?? false;
   }
 
-  private _tryFindTechPromptBuilderDetailsById(techPromptBuilderDetailsId: string): TechPromptBuilderDetails | null {
+  private _tryFindTechPromptBuilderDetailsById(techPromptBuilderDetailsId: string): PromptInstructionsConfig | null {
     const techPromptBuilderDetailsList = this._config.techPrompt.builders;
 
     const foundTechPromptBuilderDetails = techPromptBuilderDetailsList.find(

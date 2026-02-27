@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { PostFilesPatchActionsConfig } from '../../../config';
+import { PostFilePatchActionsConfig } from '../../../config';
 import { FilePayloadOperationType, FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
@@ -19,7 +19,7 @@ export type ApplyResult = ApplyOk | ApplyFail;
 
 export async function applyFilesPayloadToWorkspace(
   payload: FilesPayload,
-  postFilesPatchActions: PostFilesPatchActionsConfig,
+  postFilesPatchActions: PostFilePatchActionsConfig,
   logger: OutputChannelLogger
 ): Promise<ApplyResult> {
   try {

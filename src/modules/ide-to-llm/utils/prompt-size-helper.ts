@@ -1,4 +1,4 @@
-import { LlmContextLimits, LlmCopypasterConfig } from '../../../config';
+import { IdeToLlmContextConfig, LlmCopypasterConfig } from '../../../config';
 
 export interface BuildPromptWithSizeStatsArgs {
   promptText: string;
@@ -47,7 +47,7 @@ export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): Bu
   };
 }
 
-function resolveLimitsForCurrentLlm(config: LlmCopypasterConfig): LlmContextLimits {
+function resolveLimitsForCurrentLlm(config: LlmCopypasterConfig): IdeToLlmContextConfig {
   const limitsByLlm = config.llmContextLimitsByLlm ?? {};
   const currentLlmKey = String(config.currentLLM ?? 'default');
 
@@ -60,7 +60,7 @@ function resolveLimitsForCurrentLlm(config: LlmCopypasterConfig): LlmContextLimi
   return normalizeLimits({ maxLinesCountInContext: 0, maxTokensCountInContext: 0 });
 }
 
-function normalizeLimits(limits: LlmContextLimits): LlmContextLimits {
+function normalizeLimits(limits: IdeToLlmContextConfig): IdeToLlmContextConfig {
   const maxLinesCountInContext = Number.isFinite(limits.maxLinesCountInContext)
     ? Math.max(0, limits.maxLinesCountInContext)
     : 0;
