@@ -38,8 +38,6 @@ export interface LlmToIdeSanitizationRuleConfig {
   disabledForPaths?: string[];
 }
 
-export type LlmToIdeSanitizationRulesSet = Record<string, LlmToIdeSanitizationRuleConfig>;
-
 export interface IdeToLlmContextConfig {
   skipPromptSizeStatsInCopyNotification?: boolean;
   promptSizeApproxCharsPerToken?: number;
@@ -63,7 +61,7 @@ export interface ProfileSettingsConfig {
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_llmToIdeSanitizationRulesById?: boolean;
-  llmToIdeSanitizationRulesById: LlmToIdeSanitizationRulesSet;
+  llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
 export interface ProfileConfig {
