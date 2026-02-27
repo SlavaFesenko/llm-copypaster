@@ -10,8 +10,6 @@ export interface PromptInstructionsConfig {
   skipSubInstruction?: boolean;
 }
 
-export type SubInstructionsSetConfig = Record<string, PromptInstructionsConfig>;
-
 export interface VitalVariablesConfig {
   techPromptDelimiter: string;
   codeListingHeaderStartFragment: string;
@@ -28,7 +26,7 @@ export interface PromptInstructionConfig {
   sharedVariablesById: Record<string, string>;
 
   onMergeIgnoreAll_subInstructionsById?: boolean;
-  subInstructionsById: SubInstructionsSetConfig;
+  subInstructionsById: Record<string, PromptInstructionsConfig>;
 }
 
 export interface LlmToIdeSanitizationRuleConfig {
