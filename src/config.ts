@@ -56,6 +56,7 @@ export interface ProfileSettingsConfig {
   ideToLlmContextConfig: IdeToLlmContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
   vitalVariablesConfig: VitalVariablesConfig;
+
   promptInstructionConfig: Partial<PromptInstructionConfig>;
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
