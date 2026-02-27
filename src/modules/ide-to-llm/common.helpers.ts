@@ -179,7 +179,7 @@ async function tryGetShouldShowPromptSizeStats(
 
   try {
     const config = await deps.configService.getConfig();
-    return config.showPromptSizeStatsInCopyNotification !== false;
+    return config.baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
   } catch (error) {
     deps.logger.debug(`Failed reading config for prompt size stats notification: ${String(error)}`);
     return true;
