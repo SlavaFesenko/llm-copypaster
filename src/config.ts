@@ -265,7 +265,7 @@ export class ConfigService {
   }
 
   private async _readWorkspaceJsonConfigFile(logger: OutputChannelLogger): Promise<LlmCopypasterUserConfig | null> {
-    const workspaceConfigFileName = '.llm-copypaster.json';
+    const workspaceConfigFileName = 'llm-copypaster.config.jsonc';
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
