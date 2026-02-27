@@ -96,11 +96,12 @@ export interface ProfileSettingsConfig {
 
 export interface ProfileConfig {
   description?: string;
+  version?: string;
   profileSettingsConfig: Partial<ProfileSettingsConfig>;
 }
 
 export interface LlmCopypasterConfig {
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchors;
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchors; // profile-agnostic settings as they have to be singleton
   baseSettings: ProfileSettingsConfig; // this settings may be overritten ONLY IN RUNTIME by some of profiles['name'].profileSettingsConfig
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
