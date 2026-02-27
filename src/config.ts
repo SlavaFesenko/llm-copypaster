@@ -125,7 +125,7 @@ export interface ProfileUserConfig {
 
 export interface LlmCopypasterConfig {
   llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
-  baseSettings: ProfileSettingsConfig; // this settings may be overritten ONLY IN RUNTIME by some of profiles['name'].profileSettingsConfig
+  baseSettings: ProfileSettingsConfig; // this settings may be overwritten ONLY IN RUNTIME by some of profiles['name'].profileSettingsConfig
   profilesById: Record<string, ProfileConfig>;
 }
 
