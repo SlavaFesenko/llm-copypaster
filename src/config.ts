@@ -2,37 +2,6 @@ import * as vscode from 'vscode';
 
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-// MERGE RULES (base -> workspace-file -> default profile override)
-//
-// 1) Merge order:
-//    - Start from baseSettings
-//    - Apply workspace JSON config overrides (from .llm-copypaster.json) if present
-//    - If profileForDefaultOverrideOfBaseSettings is set: apply that profile override last
-//
-// 2) Non-ById fields (everything that is NOT "*ById"):
-//    - Deep-merge objects by property
-//    - If a property is not provided in override -> keep base value
-//    - If a property is provided in override -> override only that property
-//    - No "append" semantics here (just standard override)
-//
-// 3) ById maps (sharedVariablesById, subInstructionsById, llmToIdeSanitizationRulesById):
-//    - Default behavior: merge by key (id)
-//      - If key exists in override -> FULL REPLACE value for that key (no partial patch inside the value)
-//      - If key does not exist in base -> add it (append)
-//    - If onMergeIgnoreAll_<mapName> === true:
-//      - Ignore all base entries for this map
-//      - Use only override entries
-//
-// 4) Error policy for "full replace only" map values:
-//    - If a ById key is overridden, the override value must be complete for its type
-//      (e.g. subInstructionsById[ID] must contain relativePathToSubInstruction, etc.)
-//    - If required fields are missing -> merge should throw (invalid user override)
-//
-// 5) vitalVariablesConfig:
-//    - Treated as "replace only"
-//    - If override provides vitalVariablesConfig -> it must be a full object (otherwise throw)
-//    - If not provided -> keep base vitalVariablesConfig
-
 export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
 export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
 
