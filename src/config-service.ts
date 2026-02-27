@@ -117,15 +117,11 @@ export class ConfigService {
             relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
             ignore: false,
           },
-          'web-git-prompt': {
-            relativePathToSubInstruction: 'prompts/web-git-prompt.md',
-            ignore: false,
-          },
         },
         sharedVariablesById: {
           BRANCH_NAME: 'master',
-          RAW_GITHUB_BASE_URL: 'https://raw.githubusercontent.com/',
-          BLOB_GITHUB_BASE_URL: 'https://github.com/',
+          RAW_GITHUB_BASE_URL: '[https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)',
+          BLOB_GITHUB_BASE_URL: '[https://github.com/](https://github.com/)',
           AUTHOR_REPO: 'SlavaFesenko/llm-copypaster/',
           WEB_GIT_PROMPT_NAME: 'Web Git Prompt',
         },

@@ -2,6 +2,17 @@
   // Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig
   // This file supports JSONC (comments, trailing commas)
 
+  "baseSettings": {
+    "promptInstructionConfig": {
+      "subInstructionsById": {
+        "web-git-prompt": {
+          "relativePathToSubInstruction": "prompts/web-git-prompt.md",
+          "ignore": false,
+        },
+      },
+    },
+  },
+
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   "onMergeIgnoreAll_profilesById": true,
   "profilesById": {
@@ -13,7 +24,7 @@
           "subInstructionsById": {
             "web-git-prompt": {
               "relativePathToSubInstruction": "prompts/web-git-prompt.md",
-              "skipSubInstruction": true,
+              "ignore": true,
             },
           },
           "sharedVariablesById": {
@@ -31,7 +42,7 @@
           "subInstructionsById": {
             "web-git-prompt": {
               "relativePathToSubInstruction": "prompts/web-git-prompt.md",
-              "skipSubInstruction": true,
+              "ignore": true,
             },
           },
         },
