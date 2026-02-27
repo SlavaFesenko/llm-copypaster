@@ -186,7 +186,6 @@ export class TechPromptBuilder {
     promptUri?: vscode.Uri
   ): void {
     const source = promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace';
-    const path = promptUri?.fsPath ?? promptInstructionsConfig.relativePathToSubInstruction;
 
     let errorText = '';
 
@@ -196,7 +195,7 @@ export class TechPromptBuilder {
     else errorText = 'Unknown error';
 
     vscode.window.showWarningMessage(
-      `Prompt file not found or unreadable: id="${promptId}", source="${source}", path="${path}", error="${errorText}"`
+      `Prompt file not found or unreadable: id="${promptId}", source="${source}", error="${errorText}"`
     );
   }
 
