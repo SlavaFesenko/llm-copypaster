@@ -1,18 +1,17 @@
 import assert from 'node:assert/strict';
 
-import { buildSystemConfig, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config-service';
+import { ConfigService, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config-service';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
 
 suite('applySanitizationRules', () => {
-  const defaultConfig = buildSystemConfig();
-
   test('applies strip-codefence cases', () => {
     const cases = [...buildStripCodefenceCases()];
 
     for (const testCase of cases) {
       const { logger, warnCalls } = createLoggerMock();
+      const defaultConfig = new ConfigService(logger).buildSystemConfig();
 
       const outputText = applySanitizationRules(testCase.inputText, testCase.fileMeta, defaultConfig, logger);
 
@@ -25,14 +24,22 @@ suite('applySanitizationRules', () => {
     const { logger, warnCalls } = createLoggerMock();
 
     const invalidRule: LlmToIdeSanitizationRuleConfig = {
-      id: 'invalid-regexp',
       pattern: '[',
       replaceWith: '',
+      disabledForLanguages: [],
+      disabledForPaths: [],
     };
 
+    const systemConfig = new ConfigService(logger).buildSystemConfig();
+
     const config: LlmCopypasterConfig = {
-      ...buildSystemConfig(),
-      sanitizationRules: [invalidRule],
+      ...systemConfig,
+      baseSettings: {
+        ...systemConfig.baseSettings,
+        llmToIdeSanitizationRulesById: {
+          'invalid-regexp': invalidRule,
+        },
+      },
     };
 
     const inputText = 'hello';

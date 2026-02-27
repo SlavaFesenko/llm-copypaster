@@ -67,7 +67,7 @@ export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = this._buildSystemConfig();
+    const systemConfig = this.buildSystemConfig();
     const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
 
     const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildBaseSettings());
@@ -75,7 +75,7 @@ export class ConfigService {
     return mergedConfig;
   }
 
-  private _buildSystemConfig(): LlmCopypasterConfig {
+  public buildSystemConfig(): LlmCopypasterConfig {
     return {
       llmToIdeParsingAnchors: {
         techPromptDelimiter: '--' + '-',
