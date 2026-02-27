@@ -156,7 +156,7 @@ export function buildBaseSettings(): ProfileSettingsConfig {
     },
     postFilePatchActionsConfig: {
       enableSaveAfterFilePatch: true,
-      enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
+      enableLintingAfterFilePatch: false,
       enableOpeningPatchedFilesInEditor: true,
     },
 
@@ -182,7 +182,7 @@ export function buildBaseSettings(): ProfileSettingsConfig {
   };
 }
 
-export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
+export function buildSystemConfig(): LlmCopypasterConfig {
   // such symbols selected to highlight file-header in LLM-interface + to be quite unique
 
   return {
@@ -205,25 +205,21 @@ export class ConfigService {
   ) {}
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
-    const defaultConfig = buildLlmCopypasterConfig();
+    const systemConfig = buildSystemConfig();
+    const userFileConfig = await this._readWorkspaceJsonConfigFile(this._logger);
 
-    const settingsConfig = this._readSettingsConfig();
-    const fileConfig = await this._readWorkspaceJsonConfigFile(this._logger);
-
-    const mergedConfig = this._mergeConfigs(defaultConfig, settingsConfig, fileConfig);
+    const mergedConfig = this._mergeConfigs(systemConfig, userFileConfig);
 
     return mergedConfig;
   }
 
   private _mergeConfigs(
     defaultConfig: LlmCopypasterConfig,
-    settingsConfig: LlmCopypasterUserConfig,
-    fileConfig: LlmCopypasterUserConfig | null
+    userFileConfig: LlmCopypasterUserConfig | null
   ): LlmCopypasterConfig {
-    const mergedWithSettings = this._applyUserConfig(defaultConfig, settingsConfig);
-    if (!fileConfig) return mergedWithSettings;
+    if (!userFileConfig) return defaultConfig;
 
-    return this._applyUserConfig(mergedWithSettings, fileConfig);
+    return this._applyUserConfig(defaultConfig, userFileConfig);
   }
 
   private _applyUserConfig(baseConfig: LlmCopypasterConfig, userConfig: LlmCopypasterUserConfig): LlmCopypasterConfig {
@@ -471,10 +467,6 @@ export class ConfigService {
     }
 
     return nextProfilesById;
-  }
-
-  private _readSettingsConfig(): LlmCopypasterUserConfig {
-    return {};
   }
 
   private async _readWorkspaceJsonConfigFile(logger: OutputChannelLogger): Promise<LlmCopypasterUserConfig | null> {

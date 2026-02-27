@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 
-import { buildLlmCopypasterConfig, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config';
+import { buildSystemConfig, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
 
 suite('applySanitizationRules', () => {
-  const defaultConfig = buildLlmCopypasterConfig();
+  const defaultConfig = buildSystemConfig();
 
   test('applies strip-codefence cases', () => {
     const cases = [...buildStripCodefenceCases()];
@@ -31,7 +31,7 @@ suite('applySanitizationRules', () => {
     };
 
     const config: LlmCopypasterConfig = {
-      ...buildLlmCopypasterConfig(),
+      ...buildSystemConfig(),
       sanitizationRules: [invalidRule],
     };
 
