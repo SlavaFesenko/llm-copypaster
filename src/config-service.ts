@@ -5,6 +5,7 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export interface PromptInstructionsConfig {
   relativePathToSubInstruction: string;
+  isSystemBundledFile: boolean;
   ignore: boolean;
 }
 
@@ -115,13 +116,14 @@ export class ConfigService {
         subInstructionsById: {
           'llm-response-rules-prompt': {
             relativePathToSubInstruction: '.sys-prompts/llm-response-rules-prompt.md',
+            isSystemBundledFile: true,
             ignore: false,
           },
         },
         sharedVariablesById: {
           BRANCH_NAME: 'master',
-          RAW_GITHUB_BASE_URL: '[https://raw.githubusercontent.com/](https://raw.githubusercontent.com/)',
-          BLOB_GITHUB_BASE_URL: '[https://github.com/](https://github.com/)',
+          RAW_GITHUB_BASE_URL: 'https://raw.githubusercontent.com/',
+          BLOB_GITHUB_BASE_URL: 'https://github.com/',
           AUTHOR_REPO: 'SlavaFesenko/llm-copypaster/',
           WEB_GIT_PROMPT_NAME: 'Web Git Prompt',
         },
