@@ -22,9 +22,11 @@ export interface VitalVariablesConfig {
 export interface PromptInstructionConfig {
   vitalVariablesConfig: VitalVariablesConfig;
 
+  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_sharedVariablesById?: boolean;
   sharedVariablesById: Record<string, string>;
 
+  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_subInstructionsById?: boolean;
   subInstructionsById: Record<string, PromptInstructionsConfig>;
 }
@@ -59,6 +61,7 @@ export interface ProfileSettingsConfig {
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
   promptInstructionConfig: Partial<PromptInstructionConfig>;
 
+  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_llmToIdeSanitizationRulesById?: boolean;
   llmToIdeSanitizationRulesById: LlmToIdeSanitizationRulesSet;
 }
