@@ -1,5 +1,5 @@
 {
-  // Workspace config file for LLM Copypaster
+  // Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig
   // This file supports JSONC (comments, trailing commas)
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
