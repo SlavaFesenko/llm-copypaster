@@ -60,7 +60,7 @@ export interface ProfileConfig {
 export interface LlmCopypasterConfig {
   llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
   baseSettings: ProfileSettingsConfig;
-  profilesById: Record<string, ProfileConfig>;
+  profilesById?: Record<string, ProfileConfig>;
 }
 
 export class ConfigService {
@@ -85,7 +85,6 @@ export class ConfigService {
         placeholderEndFragment: '}}',
       },
       baseSettings: this._buildBaseSettings(),
-      profilesById: {},
     };
   }
 
@@ -122,8 +121,8 @@ export class ConfigService {
         },
         sharedVariablesById: {
           BRANCH_NAME: 'master',
-          RAW_GITHUB_BASE_URL: 'https://raw.githubusercontent.com/',
-          BLOB_GITHUB_BASE_URL: 'https://github.com/',
+          RAW_GITHUB_BASE_URL: 'https://' + 'raw.githubusercontent.com/',
+          BLOB_GITHUB_BASE_URL: 'https://' + 'github.com/',
           AUTHOR_REPO: 'SlavaFesenko/llm-copypaster/',
           WEB_GIT_PROMPT_NAME: 'Web Git Prompt',
         },

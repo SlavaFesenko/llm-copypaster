@@ -36,13 +36,15 @@ export function applyUserConfig(
   userConfig: LlmCopypasterUserConfig,
   buildBaseSettingsFn: () => ProfileSettingsConfig
 ): LlmCopypasterConfig {
+  const mergedProfilesById = mergeProfilesById(baseConfig.profilesById, userConfig, buildBaseSettingsFn);
+
   const nextConfig: LlmCopypasterConfig = {
     llmToIdeParsingAnchors: mergeLlmToIdeParsingAnchors(
       baseConfig.llmToIdeParsingAnchors,
       userConfig.llmToIdeParsingAnchors
     ),
     baseSettings: mergeProfileSettingsConfig(baseConfig.baseSettings, userConfig.baseSettings, buildBaseSettingsFn),
-    profilesById: mergeProfilesById(baseConfig.profilesById, userConfig, buildBaseSettingsFn),
+    ...(mergedProfilesById ? { profilesById: mergedProfilesById } : {}),
   };
 
   return nextConfig;
@@ -234,16 +236,17 @@ export function mapLlmToIdeSanitizationRulesById(
 }
 
 export function mergeProfilesById(
-  baseProfilesById: Record<string, ProfileConfig>,
+  baseProfilesById: Record<string, ProfileConfig> | undefined,
   userConfig: LlmCopypasterUserConfig,
   buildBaseSettingsFn: () => ProfileSettingsConfig
-): Record<string, ProfileConfig> {
+): Record<string, ProfileConfig> | undefined {
   const userProfilesById = userConfig.profilesById;
+
   if (!userProfilesById) return baseProfilesById;
 
   if (userConfig.onMergeIgnoreAll_profilesById) return mapProfilesById({}, userProfilesById, buildBaseSettingsFn);
 
-  return mapProfilesById(baseProfilesById, userProfilesById, buildBaseSettingsFn);
+  return mapProfilesById(baseProfilesById ?? {}, userProfilesById, buildBaseSettingsFn);
 }
 
 export function mapProfilesById(
