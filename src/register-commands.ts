@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { ConfigService } from './config-service';
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
@@ -33,6 +34,8 @@ export const commandIds = {
   closeAllIncludingPinned: 'llm-copypaster.closeAllIncludingPinned',
   closeAllButPinnedInActiveTabGroup: 'llm-copypaster.closeAllButPinnedInActiveTabGroup',
   closeAllIncludingPinnedInActiveTabGroup: 'llm-copypaster.closeAllIncludingPinnedInActiveTabGroup',
+
+  lsConfig: 'llm-copypaster.lsConfig',
 } as const;
 
 export type CommandId = (typeof commandIds)[keyof typeof commandIds];
@@ -42,6 +45,7 @@ export interface RegisterCommandsDeps {
   llmToEditorModule: LlmToIdeModule;
   guidedRetryStore: GuidedRetryStore;
   advancedCloseModule: AdvancedCloseModule;
+  configService: ConfigService;
   logger: OutputChannelLogger;
 }
 
@@ -134,6 +138,15 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
       await vscode.env.clipboard.writeText(retryPrompt);
       await vscode.window.showInformationMessage('Guided retry prompt copied to clipboard');
+    }),
+
+    vscode.commands.registerCommand(commandIds.lsConfig, async () => {
+      const config = await deps.configService.getConfig();
+      const configJson = JSON.stringify(config, null, 2);
+
+      await vscode.env.clipboard.writeText(configJson);
+      deps.logger.info('Config copied to clipboard');
+      await vscode.window.showInformationMessage('Config copied to clipboard');
     }),
 
     // #endregion

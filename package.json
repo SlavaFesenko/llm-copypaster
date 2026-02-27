@@ -87,6 +87,10 @@
       {
         "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
         "title": "Close Active Tab Group Files: Pinned & Unpinned"
+      },
+      {
+        "command": "llm-copypaster.lsConfig",
+        "title": "ls config"
       }
     ],
     "submenus": [
