@@ -17,13 +17,13 @@ export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
 
   if (!techPromptText.trim()) return listings;
 
-  const techPromptDelimiter = args.config.techPrompt.techPromptDelimiter;
+  const techPromptDelimiter = args.config.llmToIdeParsingAnchors.techPromptDelimiter;
 
   return `\n${techPromptDelimiter}\n${techPromptText}\n${techPromptDelimiter}\n${listings}`;
 }
 
 function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
-  const headerLine = `${config.codeListingHeaderStartFragmentWithSpace}${fileItem.path}`;
+  const headerLine = `${config.llmToIdeParsingAnchors.codeListingHeaderStartFragment} ${fileItem.path}`;
 
   const contentLines: string[] = [];
 
