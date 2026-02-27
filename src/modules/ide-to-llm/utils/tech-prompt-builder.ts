@@ -49,7 +49,7 @@ export class TechPromptBuilder {
     if (!promptInstructionsConfig) return null;
     if (promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(promptInstructionsConfig);
+    const promptText = await this._tryReadPromptText(promptInstructionsConfig, LLM_RESPONSE_RULES_PROMPT_ID);
     if (!promptText) return null;
 
     const webGitPromptConcatenationEnabled = this._tryResolveWebGitPromptConcatenationEnabled();
@@ -104,7 +104,7 @@ export class TechPromptBuilder {
     if (!promptInstructionsConfig) return null;
     if (promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(promptInstructionsConfig);
+    const promptText = await this._tryReadPromptText(promptInstructionsConfig, WEB_GIT_PROMPT_ID);
     if (!promptText) return null;
 
     let nextPromptText = promptText;
@@ -121,7 +121,7 @@ export class TechPromptBuilder {
     if (!promptInstructionsConfig) return null;
     if (promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(promptInstructionsConfig);
+    const promptText = await this._tryReadPromptText(promptInstructionsConfig, promptId);
     if (!promptText) return null;
 
     const nextPromptText = this._renderSharedVariables(promptText);
@@ -156,20 +156,48 @@ export class TechPromptBuilder {
     return foundPromptInstructionsConfig;
   }
 
-  private async _tryReadPromptText(promptInstructionsConfig: PromptInstructionsConfig): Promise<string | null> {
+  private async _tryReadPromptText(
+    promptInstructionsConfig: PromptInstructionsConfig,
+    promptId: string
+  ): Promise<string | null> {
     const promptUri = promptInstructionsConfig.isSystemBundledFile
       ? vscode.Uri.joinPath(this._extensionContext.extensionUri, promptInstructionsConfig.relativePathToSubInstruction)
       : this._tryBuildWorkspacePromptUri(promptInstructionsConfig.relativePathToSubInstruction);
 
-    if (!promptUri) return null;
+    if (!promptUri) {
+      this._showPromptReadWarning(promptInstructionsConfig, promptId, 'Workspace folder not found');
+      return null;
+    }
 
     try {
       const bytes = await vscode.workspace.fs.readFile(promptUri);
 
       return Buffer.from(bytes).toString('utf8');
-    } catch {
+    } catch (error: unknown) {
+      this._showPromptReadWarning(promptInstructionsConfig, promptId, error, promptUri);
       return null;
     }
+  }
+
+  private _showPromptReadWarning(
+    promptInstructionsConfig: PromptInstructionsConfig,
+    promptId: string,
+    errorOrMessage: unknown,
+    promptUri?: vscode.Uri
+  ): void {
+    const source = promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace';
+    const path = promptUri?.fsPath ?? promptInstructionsConfig.relativePathToSubInstruction;
+
+    let errorText = '';
+
+    if (typeof errorOrMessage === 'string') errorText = errorOrMessage;
+    else if (errorOrMessage instanceof Error) errorText = errorOrMessage.message || errorOrMessage.name;
+    else if (errorOrMessage) errorText = String(errorOrMessage);
+    else errorText = 'Unknown error';
+
+    vscode.window.showWarningMessage(
+      `Prompt file not found or unreadable: id="${promptId}", source="${source}", path="${path}", error="${errorText}"`
+    );
   }
 
   private _tryBuildWorkspacePromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
@@ -191,6 +219,6 @@ export class TechPromptBuilder {
   }
 
   private _escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[]\]/g, '\$&');
+    return text.replace(/[.*+?^${}()|[]]/g, '$&');
   }
 }
