@@ -7,10 +7,15 @@ export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
 
 export interface PromptInstructionsConfig {
   relativePathToSubInstruction: string;
+  skipSubInstruction: boolean;
+}
+
+export interface PromptInstructionsUserConfig {
+  relativePathToSubInstruction?: string;
   skipSubInstruction?: boolean;
 }
 
-export interface LlmToIdeParsingAnchors {
+export interface LlmToIdeParsingAnchorsConfig {
   techPromptDelimiter: string;
   codeListingHeaderStartFragment: string;
   codeListingHeaderStartFragmentWithSpace: string;
@@ -19,24 +24,52 @@ export interface LlmToIdeParsingAnchors {
   fileStatusPrefix: string;
 }
 
+export interface LlmToIdeParsingAnchorsUserConfig {
+  techPromptDelimiter?: string;
+  codeListingHeaderStartFragment?: string;
+  codeListingHeaderStartFragmentWithSpace?: string;
+  codeListingHeaderRegex?: string;
+  placeholderRegexPattern?: string;
+  fileStatusPrefix?: string;
+}
+
 export interface PromptInstructionConfig {
+  sharedVariablesById: Record<string, string>;
+  subInstructionsById: Record<string, PromptInstructionsConfig>;
+}
+
+export interface PromptInstructionUserConfig {
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_sharedVariablesById?: boolean;
-  sharedVariablesById: Record<string, string>;
+  sharedVariablesById?: Record<string, string>;
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_subInstructionsById?: boolean;
-  subInstructionsById: Record<string, PromptInstructionsConfig>;
+  subInstructionsById?: Record<string, PromptInstructionsUserConfig>;
 }
 
 export interface LlmToIdeSanitizationRuleConfig {
   pattern: string;
   replaceWith: string;
+  disabledForLanguages: string[];
+  disabledForPaths: string[];
+}
+
+export interface LlmToIdeSanitizationRuleUserConfig {
+  pattern?: string;
+  replaceWith?: string;
   disabledForLanguages?: string[];
   disabledForPaths?: string[];
 }
 
 export interface IdeToLlmContextConfig {
+  skipPromptSizeStatsInCopyNotification: boolean;
+  promptSizeApproxCharsPerToken: number;
+  maxLinesCountInContext: number;
+  maxTokensCountInContext: number;
+}
+
+export interface IdeToLlmContextUserConfig {
   skipPromptSizeStatsInCopyNotification?: boolean;
   promptSizeApproxCharsPerToken?: number;
   maxLinesCountInContext?: number;
@@ -49,37 +82,66 @@ export interface PostFilePatchActionsConfig {
   enableOpeningPatchedFilesInEditor: boolean;
 }
 
-export interface ProfileSettingsConfig {
-  skipTechPrompt?: boolean;
-  skipCodeListings?: boolean;
+export interface PostFilePatchActionsUserConfig {
+  enableSaveAfterFilePatch?: boolean;
+  enableLintingAfterFilePatch?: boolean;
+  enableOpeningPatchedFilesInEditor?: boolean;
+}
 
+export interface ProfileSettingsConfig {
+  skipTechPrompt: boolean;
+  skipCodeListings: boolean;
   ideToLlmContextConfig: IdeToLlmContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
-
   promptInstructionConfig: Partial<PromptInstructionConfig>;
-
-  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-  onMergeIgnoreAll_llmToIdeSanitizationRulesById?: boolean;
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
+export interface ProfileSettingsUserConfig {
+  skipTechPrompt?: boolean;
+  skipCodeListings?: boolean;
+
+  ideToLlmContextConfig?: IdeToLlmContextUserConfig;
+  postFilePatchActionsConfig?: PostFilePatchActionsUserConfig;
+
+  promptInstructionConfig?: PromptInstructionUserConfig;
+
+  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
+  onMergeIgnoreAll_llmToIdeSanitizationRulesById?: boolean;
+  llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
+}
+
 export interface ProfileConfig {
-  description?: string;
-  version?: string;
+  description: string;
+  version: string;
   profileSettingsConfig: Partial<ProfileSettingsConfig>;
 }
 
+export interface ProfileUserConfig {
+  description?: string;
+  version?: string;
+  profileSettingsConfig?: ProfileSettingsUserConfig;
+}
+
 export interface LlmCopypasterConfig {
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchors; // profile-agnostic settings as they have to be singleton
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
   baseSettings: ProfileSettingsConfig; // this settings may be overritten ONLY IN RUNTIME by some of profiles['name'].profileSettingsConfig
+  profilesById: Record<string, ProfileConfig>;
+}
+
+export interface LlmCopypasterUserConfig {
+  llmToIdeParsingAnchors?: LlmToIdeParsingAnchorsUserConfig;
+  baseSettings?: ProfileSettingsUserConfig;
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_profilesById?: boolean;
-  profilesById: Record<string, ProfileConfig>;
+  profilesById?: Record<string, ProfileUserConfig>;
 }
 
 export function buildBaseSettings(): ProfileSettingsConfig {
   return {
+    skipTechPrompt: false,
+    skipCodeListings: false,
     ideToLlmContextConfig: {
       skipPromptSizeStatsInCopyNotification: false,
       promptSizeApproxCharsPerToken: 3.5,
@@ -104,9 +166,11 @@ export function buildBaseSettings(): ProfileSettingsConfig {
       subInstructionsById: {
         [LLM_RESPONSE_RULES_PROMPT_ID]: {
           relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
+          skipSubInstruction: false,
         },
         [WEB_GIT_PROMPT_ID]: {
           relativePathToSubInstruction: 'prompts/web-git-prompt.md',
+          skipSubInstruction: false,
         },
       },
       sharedVariablesById: {
@@ -137,6 +201,7 @@ export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
     profilesById: {
       'Work Project XXX + Ollama': {
         description: 'Work project profile with Ollama defaults',
+        version: '1',
         profileSettingsConfig: {
           promptInstructionConfig: {
             subInstructionsById: {
@@ -153,6 +218,7 @@ export function buildLlmCopypasterConfig(): LlmCopypasterConfig {
       },
       'Gemini for pet-project': {
         description: 'Minimal overrides for pet-project with Gemini',
+        version: '1',
         profileSettingsConfig: {
           promptInstructionConfig: {
             subInstructionsById: {
@@ -188,17 +254,17 @@ export class ConfigService {
 
   private _mergeConfigs(
     defaultConfig: LlmCopypasterConfig,
-    settingsConfig: Partial<LlmCopypasterConfig>,
-    fileConfig: Partial<LlmCopypasterConfig> | null
+    settingsConfig: LlmCopypasterUserConfig,
+    fileConfig: LlmCopypasterUserConfig | null
   ): LlmCopypasterConfig {
     return defaultConfig; // for now it's fine, we don't work with configs yet
   }
 
-  private _readSettingsConfig(defaultConfig: LlmCopypasterConfig): Partial<LlmCopypasterConfig> {
+  private _readSettingsConfig(defaultConfig: LlmCopypasterConfig): LlmCopypasterUserConfig {
     return defaultConfig; // for now it's fine, we don't work with configs yet
   }
 
-  private async _readWorkspaceJsonConfigFile(logger: OutputChannelLogger): Promise<Partial<LlmCopypasterConfig> | null> {
+  private async _readWorkspaceJsonConfigFile(logger: OutputChannelLogger): Promise<LlmCopypasterUserConfig | null> {
     const workspaceConfigFileName = '.llm-copypaster.json';
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -212,7 +278,7 @@ export class ConfigService {
     try {
       const bytes = await vscode.workspace.fs.readFile(configUri);
       const jsonText = Buffer.from(bytes).toString('utf8');
-      const parsed = JSON.parse(jsonText) as Partial<LlmCopypasterConfig>;
+      const parsed = JSON.parse(jsonText) as LlmCopypasterUserConfig;
 
       return parsed;
     } catch (error) {
