@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
 
-import {
-  LLM_RESPONSE_RULES_PROMPT_ID,
-  WEB_GIT_PROMPT_ID,
-  type LlmCopypasterConfig,
-  type PromptInstructionsConfig,
-} from '../../../config';
+import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config';
 import { FilePayloadOperationType } from '../../../types/files-payload';
 import { MustacheRenderer } from './mustache-renderer';
+
+export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
+export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
 
 export class TechPromptBuilder {
   private readonly _mustacheRenderer: MustacheRenderer;

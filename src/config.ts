@@ -4,9 +4,6 @@ import { mergeConfigs } from './utils/config-helpers/config-mergers';
 import { readWorkspaceJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules';
-export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
-
 export interface PromptInstructionsConfig {
   relativePathToSubInstruction: string;
   skipSubInstruction: boolean;
@@ -164,11 +161,11 @@ export function buildBaseSettings(): ProfileSettingsConfig {
 
     promptInstructionConfig: {
       subInstructionsById: {
-        [LLM_RESPONSE_RULES_PROMPT_ID]: {
+        'llm-response-rules-prompt': {
           relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
           skipSubInstruction: false,
         },
-        [WEB_GIT_PROMPT_ID]: {
+        'web-git-prompt': {
           relativePathToSubInstruction: 'prompts/web-git-prompt.md',
           skipSubInstruction: false,
         },
