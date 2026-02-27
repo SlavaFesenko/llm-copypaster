@@ -20,8 +20,6 @@ export interface VitalVariablesConfig {
 }
 
 export interface PromptInstructionConfig {
-  vitalVariablesConfig: VitalVariablesConfig;
-
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
   onMergeIgnoreAll_sharedVariablesById?: boolean;
   sharedVariablesById: Record<string, string>;
@@ -57,6 +55,7 @@ export interface ProfileSettingsConfig {
 
   ideToLlmContextConfig: IdeToLlmContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
+  vitalVariablesConfig: VitalVariablesConfig;
   promptInstructionConfig: Partial<PromptInstructionConfig>;
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
@@ -99,15 +98,15 @@ export function buildBaseSettings(): ProfileSettingsConfig {
       enableLintingAfterFilePatch: false, // if settings have "editor.formatOnSave": true, no need to do it again
       enableOpeningPatchedFilesInEditor: true,
     },
+    vitalVariablesConfig: {
+      techPromptDelimiter: '--' + '-',
+      codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
+      codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
+      codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`,
+      placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
+      fileStatusPrefix: '#### FILE WAS ',
+    },
     promptInstructionConfig: {
-      vitalVariablesConfig: {
-        techPromptDelimiter: '--' + '-',
-        codeListingHeaderStartFragment: codeListingHeaderStartFragmentSymbols,
-        codeListingHeaderStartFragmentWithSpace: codeListingHeaderStartFragmentSymbols + ' ',
-        codeListingHeaderRegex: String.raw`^${codeListingHeaderStartFragmentSymbols}\s+(.+)\s*$`,
-        placeholderRegexPattern: String.raw`{{([a-zA-Z0-9*_]+)}}`, // {{placeholder}}
-        fileStatusPrefix: '#### FILE WAS ',
-      },
       subInstructionsById: {
         [LLM_RESPONSE_RULES_PROMPT_ID]: {
           relativePathToSubInstruction: 'prompts/llm-response-rules-prompt.md',
