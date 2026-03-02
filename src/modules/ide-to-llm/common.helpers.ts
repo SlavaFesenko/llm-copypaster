@@ -145,7 +145,6 @@ export async function showCopyResultNotification(
   const hasProfiles = await deps.configService.hasAvailableProfiles();
 
   const openPromptInEditor = 'Open Prompt in Editor';
-  const applyProfile = 'Apply Profile';
 
   let selectedProfileId = 'Default';
   let currentPromptText = args.promptText;
@@ -181,9 +180,11 @@ export async function showCopyResultNotification(
 
     const shouldWarn = shouldShowPromptSizeStats ? Boolean(promptStatsResult.isExceeded) : false;
 
+    const applyOrChangeProfileLabel = selectedProfileId === 'Default' ? 'Apply Profile' : 'Change Profile';
+
     const actionLabels = [
       openPromptInEditor,
-      ...(hasProfiles ? [applyProfile] : []),
+      ...(hasProfiles ? [applyOrChangeProfileLabel] : []),
       ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
     ];
 
@@ -201,7 +202,7 @@ export async function showCopyResultNotification(
 
     if (selectedAction === openPromptInEditor) {
       await openPromptTextInEditor(currentPromptText);
-      continue;
+      return;
     }
 
     if (selectedAction === closeUnavailableActionLabel) {
@@ -213,7 +214,7 @@ export async function showCopyResultNotification(
       continue;
     }
 
-    if (selectedAction === applyProfile) {
+    if (selectedAction === applyOrChangeProfileLabel) {
       const profilesById = await deps.configService.getProfilesById();
 
       const nextProfileId = await pickProfileId({ profilesById, selectedProfileId });
@@ -273,18 +274,18 @@ async function pickProfileId(args: {
     {
       profileId: 'Default',
       label: args.selectedProfileId === 'Default' ? 'Default (currently selected)' : 'Default',
-      description: 'Base settings',
+      detail: 'Base settings',
     },
   ];
 
   for (const profileId of Object.keys(args.profilesById)) {
     const profile = args.profilesById[profileId];
+    const descriptionSuffix = profile.description ? `: ${profile.description}` : '';
 
     items.push({
       profileId,
       label: args.selectedProfileId === profileId ? `${profileId} (currently selected)` : profileId,
-      description: profile.description,
-      detail: `v${profile.version}`,
+      detail: `v${profile.version}${descriptionSuffix}`,
     });
   }
 
