@@ -35,6 +35,12 @@ export interface IdeToLlmContextUserConfig {
   maxTokensCountInContext?: number;
 }
 
+export interface LlmToIdeContextUserConfig {
+  promptSizeApproxCharsPerToken?: number;
+  maxLinesCountInContext?: number;
+  maxTokensCountInContext?: number;
+}
+
 export interface PostFilePatchActionsUserConfig {
   enableSaveAfterFilePatch?: boolean;
   enableLintingAfterFilePatch?: boolean;
@@ -46,6 +52,7 @@ export interface ProfileSettingsUserConfig {
   skipCodeListings?: boolean;
 
   ideToLlmContextConfig?: IdeToLlmContextUserConfig;
+  llmToIdeContextConfig?: LlmToIdeContextUserConfig;
   postFilePatchActionsConfig?: PostFilePatchActionsUserConfig;
 
   promptInstructionConfig?: PromptInstructionUserConfig;

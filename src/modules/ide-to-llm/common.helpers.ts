@@ -153,7 +153,7 @@ export async function showCopyResultNotification(
 
     const promptStatsResult = buildTextSizeStats({
       promptText: currentPromptText,
-      config: effectiveConfig,
+      contextConfig: effectiveConfig.baseSettings.ideToLlmContextConfig,
     });
 
     const shouldShowPromptSizeStats =

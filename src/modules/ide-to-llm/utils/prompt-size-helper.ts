@@ -1,10 +1,10 @@
-import { LlmCopypasterConfig } from '../../../config-service';
+import { IdeToLlmContextConfig, LlmToIdeContextConfig } from '../../../config-service';
 
 import { formatCountInThousands } from './uncategorized-helpers';
 
 export interface TextSizeStatsInput {
   promptText: string;
-  config: LlmCopypasterConfig;
+  contextConfig: IdeToLlmContextConfig | LlmToIdeContextConfig;
 }
 
 export enum PromptSizeExceededBy {
@@ -30,9 +30,9 @@ export function buildTextSizeStats(input: TextSizeStatsInput): TextSizeStatsOutp
   const normalizedPromptText = input.promptText ?? '';
 
   const linesCount = countLines(normalizedPromptText);
-  const approxTokensCount = estimateTokensCount(normalizedPromptText, input.config);
+  const approxTokensCount = estimateTokensCount(normalizedPromptText, input.contextConfig);
 
-  const limits = normalizeLimits(input.config.baseSettings.ideToLlmContextConfig);
+  const limits = normalizeLimits(input.contextConfig);
 
   const exceededBy: PromptSizeExceededBy[] = [];
 
@@ -89,10 +89,10 @@ function countLines(text: string): number {
   return parts.length;
 }
 
-function estimateTokensCount(text: string, config: LlmCopypasterConfig): number {
+function estimateTokensCount(text: string, contextConfig: { promptSizeApproxCharsPerToken: number }): number {
   if (!text) return 0;
 
-  const configuredApproxCharsPerToken = Number(config.baseSettings.ideToLlmContextConfig.promptSizeApproxCharsPerToken);
+  const configuredApproxCharsPerToken = Number(contextConfig.promptSizeApproxCharsPerToken);
   const approxCharsPerToken = Number.isFinite(configuredApproxCharsPerToken) ? configuredApproxCharsPerToken : 4;
   const safeApproxCharsPerToken = Math.max(1, approxCharsPerToken);
 

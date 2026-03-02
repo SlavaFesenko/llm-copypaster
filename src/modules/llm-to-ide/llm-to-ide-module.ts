@@ -54,13 +54,17 @@ export class LlmToIdeModule {
       return;
     }
 
-    const promptStatsResult = buildTextSizeStats({ promptText: clipboardText, config });
+    const promptStatsResult = buildTextSizeStats({
+      promptText: clipboardText,
+      contextConfig: config.baseSettings.llmToIdeContextConfig,
+    });
     const promptSizeStatsSuffix = buildPromptSizeStatsSuffix(promptStatsResult);
     const message = promptSizeStatsSuffix
       ? `PASTED ${applyResult.appliedFilesCount} file(s) | ${promptSizeStatsSuffix}`
       : `PASTED ${applyResult.appliedFilesCount} file(s)`;
 
-    await vscode.window.showInformationMessage(message);
+    if (promptStatsResult.isExceeded) await vscode.window.showWarningMessage(message);
+    else await vscode.window.showInformationMessage(message);
   }
 
   public async validateClipboardPayload(): Promise<void> {

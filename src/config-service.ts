@@ -36,6 +36,12 @@ export interface IdeToLlmContextConfig {
   maxTokensCountInContext: number;
 }
 
+export interface LlmToIdeContextConfig {
+  promptSizeApproxCharsPerToken: number;
+  maxLinesCountInContext: number;
+  maxTokensCountInContext: number;
+}
+
 export interface PostFilePatchActionsConfig {
   enableSaveAfterFilePatch: boolean;
   enableLintingAfterFilePatch: boolean;
@@ -46,6 +52,7 @@ export interface ProfileSettingsConfig {
   skipTechPrompt: boolean;
   skipCodeListings: boolean;
   ideToLlmContextConfig: IdeToLlmContextConfig;
+  llmToIdeContextConfig: LlmToIdeContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
   promptInstructionConfig: Partial<PromptInstructionConfig>;
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
@@ -170,6 +177,17 @@ export class ConfigService {
           profileSettingsConfig.ideToLlmContextConfig?.maxTokensCountInContext ??
           baseSettings.ideToLlmContextConfig.maxTokensCountInContext,
       },
+      llmToIdeContextConfig: {
+        promptSizeApproxCharsPerToken:
+          profileSettingsConfig.llmToIdeContextConfig?.promptSizeApproxCharsPerToken ??
+          baseSettings.llmToIdeContextConfig.promptSizeApproxCharsPerToken,
+        maxLinesCountInContext:
+          profileSettingsConfig.llmToIdeContextConfig?.maxLinesCountInContext ??
+          baseSettings.llmToIdeContextConfig.maxLinesCountInContext,
+        maxTokensCountInContext:
+          profileSettingsConfig.llmToIdeContextConfig?.maxTokensCountInContext ??
+          baseSettings.llmToIdeContextConfig.maxTokensCountInContext,
+      },
       postFilePatchActionsConfig: {
         enableSaveAfterFilePatch:
           profileSettingsConfig.postFilePatchActionsConfig?.enableSaveAfterFilePatch ??
@@ -206,6 +224,11 @@ export class ConfigService {
       skipCodeListings: false,
       ideToLlmContextConfig: {
         skipPromptSizeStatsInCopyNotification: false,
+        promptSizeApproxCharsPerToken: 3.5,
+        maxLinesCountInContext: 1000,
+        maxTokensCountInContext: 12000,
+      },
+      llmToIdeContextConfig: {
         promptSizeApproxCharsPerToken: 3.5,
         maxLinesCountInContext: 1000,
         maxTokensCountInContext: 12000,

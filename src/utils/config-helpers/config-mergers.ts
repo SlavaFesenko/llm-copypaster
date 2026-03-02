@@ -1,6 +1,7 @@
 import {
   IdeToLlmContextConfig,
   LlmCopypasterConfig,
+  LlmToIdeContextConfig,
   LlmToIdeParsingAnchorsConfig,
   LlmToIdeSanitizationRuleConfig,
   PostFilePatchActionsConfig,
@@ -12,6 +13,7 @@ import {
 import {
   IdeToLlmContextUserConfig,
   LlmCopypasterUserConfig,
+  LlmToIdeContextUserConfig,
   LlmToIdeParsingAnchorsUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
   PostFilePatchActionsUserConfig,
@@ -79,6 +81,10 @@ export function mergeProfileSettingsConfig(
       baseSettings.ideToLlmContextConfig,
       userSettings.ideToLlmContextConfig
     ),
+    llmToIdeContextConfig: mergeLlmToIdeContextConfig(
+      baseSettings.llmToIdeContextConfig,
+      userSettings.llmToIdeContextConfig
+    ),
     postFilePatchActionsConfig: mergePostFilePatchActionsConfig(
       baseSettings.postFilePatchActionsConfig,
       userSettings.postFilePatchActionsConfig
@@ -105,6 +111,19 @@ export function mergeIdeToLlmContextConfig(
   return {
     skipPromptSizeStatsInCopyNotification:
       userConfig.skipPromptSizeStatsInCopyNotification ?? baseConfig.skipPromptSizeStatsInCopyNotification,
+    promptSizeApproxCharsPerToken: userConfig.promptSizeApproxCharsPerToken ?? baseConfig.promptSizeApproxCharsPerToken,
+    maxLinesCountInContext: userConfig.maxLinesCountInContext ?? baseConfig.maxLinesCountInContext,
+    maxTokensCountInContext: userConfig.maxTokensCountInContext ?? baseConfig.maxTokensCountInContext,
+  };
+}
+
+export function mergeLlmToIdeContextConfig(
+  baseConfig: LlmToIdeContextConfig,
+  userConfig: LlmToIdeContextUserConfig | undefined
+): LlmToIdeContextConfig {
+  if (!userConfig) return baseConfig;
+
+  return {
     promptSizeApproxCharsPerToken: userConfig.promptSizeApproxCharsPerToken ?? baseConfig.promptSizeApproxCharsPerToken,
     maxLinesCountInContext: userConfig.maxLinesCountInContext ?? baseConfig.maxLinesCountInContext,
     maxTokensCountInContext: userConfig.maxTokensCountInContext ?? baseConfig.maxTokensCountInContext,
