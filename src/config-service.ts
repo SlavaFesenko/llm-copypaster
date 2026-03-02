@@ -88,6 +88,95 @@ export class ConfigService {
     };
   }
 
+  public async getProfilesById(config?: LlmCopypasterConfig): Promise<Record<string, ProfileConfig>> {
+    const effectiveConfig = await this._getConfigOrUseOverride(config);
+    return effectiveConfig.profilesById ?? {};
+  }
+
+  public async hasAvailableProfiles(config?: LlmCopypasterConfig): Promise<boolean> {
+    const profilesById = await this.getProfilesById(config);
+    return Object.keys(profilesById).length > 0;
+  }
+
+  public async buildEffectiveConfigForProfileId(
+    profileId: string,
+    config?: LlmCopypasterConfig
+  ): Promise<LlmCopypasterConfig> {
+    const effectiveConfig = await this._getConfigOrUseOverride(config);
+
+    if (profileId === 'Default') return effectiveConfig;
+
+    const profilesById = effectiveConfig.profilesById ?? {};
+    const profile = profilesById[profileId];
+    if (!profile?.profileSettingsConfig) return effectiveConfig;
+
+    const effectiveBaseSettings = this._mergeProfileSettingsConfig(
+      effectiveConfig.baseSettings,
+      profile.profileSettingsConfig
+    );
+
+    return {
+      ...effectiveConfig,
+      baseSettings: effectiveBaseSettings,
+    };
+  }
+
+  private async _getConfigOrUseOverride(config?: LlmCopypasterConfig): Promise<LlmCopypasterConfig> {
+    if (config) return config;
+    return await this.getConfig();
+  }
+
+  private _mergeProfileSettingsConfig(
+    baseSettings: ProfileSettingsConfig,
+    profileSettingsConfig: Partial<ProfileSettingsConfig>
+  ): ProfileSettingsConfig {
+    return {
+      skipTechPrompt: profileSettingsConfig.skipTechPrompt ?? baseSettings.skipTechPrompt,
+      skipCodeListings: profileSettingsConfig.skipCodeListings ?? baseSettings.skipCodeListings,
+      ideToLlmContextConfig: {
+        skipPromptSizeStatsInCopyNotification:
+          profileSettingsConfig.ideToLlmContextConfig?.skipPromptSizeStatsInCopyNotification ??
+          baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification,
+        promptSizeApproxCharsPerToken:
+          profileSettingsConfig.ideToLlmContextConfig?.promptSizeApproxCharsPerToken ??
+          baseSettings.ideToLlmContextConfig.promptSizeApproxCharsPerToken,
+        maxLinesCountInContext:
+          profileSettingsConfig.ideToLlmContextConfig?.maxLinesCountInContext ??
+          baseSettings.ideToLlmContextConfig.maxLinesCountInContext,
+        maxTokensCountInContext:
+          profileSettingsConfig.ideToLlmContextConfig?.maxTokensCountInContext ??
+          baseSettings.ideToLlmContextConfig.maxTokensCountInContext,
+      },
+      postFilePatchActionsConfig: {
+        enableSaveAfterFilePatch:
+          profileSettingsConfig.postFilePatchActionsConfig?.enableSaveAfterFilePatch ??
+          baseSettings.postFilePatchActionsConfig.enableSaveAfterFilePatch,
+        enableLintingAfterFilePatch:
+          profileSettingsConfig.postFilePatchActionsConfig?.enableLintingAfterFilePatch ??
+          baseSettings.postFilePatchActionsConfig.enableLintingAfterFilePatch,
+        enableOpeningPatchedFilesInEditor:
+          profileSettingsConfig.postFilePatchActionsConfig?.enableOpeningPatchedFilesInEditor ??
+          baseSettings.postFilePatchActionsConfig.enableOpeningPatchedFilesInEditor,
+      },
+      promptInstructionConfig: {
+        ...(baseSettings.promptInstructionConfig ?? {}),
+        ...(profileSettingsConfig.promptInstructionConfig ?? {}),
+        sharedVariablesById: {
+          ...(baseSettings.promptInstructionConfig?.sharedVariablesById ?? {}),
+          ...(profileSettingsConfig.promptInstructionConfig?.sharedVariablesById ?? {}),
+        },
+        subInstructionsById: {
+          ...(baseSettings.promptInstructionConfig?.subInstructionsById ?? {}),
+          ...(profileSettingsConfig.promptInstructionConfig?.subInstructionsById ?? {}),
+        },
+      },
+      llmToIdeSanitizationRulesById: {
+        ...(baseSettings.llmToIdeSanitizationRulesById ?? {}),
+        ...(profileSettingsConfig.llmToIdeSanitizationRulesById ?? {}),
+      },
+    };
+  }
+
   private _buildBaseSettings(): ProfileSettingsConfig {
     return {
       skipTechPrompt: false,

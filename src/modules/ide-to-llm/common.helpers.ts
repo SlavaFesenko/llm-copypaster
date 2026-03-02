@@ -3,7 +3,9 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { PromptSizeExceededBy } from './utils/prompt-size-helper';
+import { buildLlmContextText } from './utils/llm-context-formatter';
+import { PromptSizeExceededBy, buildPromptWithSizeStats } from './utils/prompt-size-helper';
+import { TechPromptBuilder } from './utils/tech-prompt-builder';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
@@ -137,65 +139,161 @@ export async function showCopyResultNotification(
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
-  const baseMessage =
-    unavailableFilesCount === 0
-      ? `Copied ${args.copiedFilesCount} file(s)`
-      : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s)`;
-
-  const shouldShowPromptSizeStats = await tryGetShouldShowPromptSizeStats(deps, args.promptSizeStats);
-  const promptSizeStatsSuffix = shouldShowPromptSizeStats ? buildPromptSizeStatsSuffix(args.promptSizeStats ?? null) : '';
-
-  const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
-
-  const openPromptInEditor = 'Open Prompt in Editor';
-
   const closeUnavailableActionLabel =
     unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
-  const shouldWarn = shouldShowPromptSizeStats ? Boolean(args.promptSizeStats?.isExceeded) : false;
+  const hasProfiles = await deps.configService.hasAvailableProfiles();
 
-  const actionLabels = [openPromptInEditor, ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : [])];
+  const openPromptInEditor = 'Open Prompt in Editor';
+  const applyProfile = 'Apply Profile';
 
-  let selectedAction: string | undefined;
+  let selectedProfileId = 'Default';
+  let currentPromptText = args.promptText;
 
-  if (actionLabels.length > 0) {
-    if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message, ...actionLabels);
-    else selectedAction = await vscode.window.showInformationMessage(message, ...actionLabels);
-  } else {
-    if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message);
-    else selectedAction = await vscode.window.showInformationMessage(message);
-  }
+  while (true) {
+    const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileId(selectedProfileId);
 
-  if (!selectedAction) return;
-
-  if (selectedAction === openPromptInEditor) {
-    await openPromptTextInEditor(args.promptText);
-    return;
-  }
-
-  if (selectedAction === closeUnavailableActionLabel) {
-    await closeUnavailableTabs(deps, {
-      deletedFileUris: args.deletedFileUris,
-      unresolvedTabs: args.unresolvedTabs,
+    const promptStatsResult = buildPromptWithSizeStats({
+      promptText: currentPromptText,
+      config: effectiveConfig,
     });
 
-    return;
+    const shouldShowPromptSizeStats =
+      effectiveConfig.baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
+
+    const baseMessage =
+      unavailableFilesCount === 0
+        ? `Copied ${args.copiedFilesCount} file(s)`
+        : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s)`;
+
+    const promptSizeStatsSuffix = shouldShowPromptSizeStats
+      ? buildPromptSizeStatsSuffix({
+          linesCount: promptStatsResult.linesCount,
+          approxTokensCount: promptStatsResult.approxTokensCount,
+          maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
+          maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
+          isExceeded: promptStatsResult.isExceeded,
+          exceededBy: promptStatsResult.exceededBy,
+        })
+      : '';
+
+    const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
+
+    const shouldWarn = shouldShowPromptSizeStats ? Boolean(promptStatsResult.isExceeded) : false;
+
+    const actionLabels = [
+      openPromptInEditor,
+      ...(hasProfiles ? [applyProfile] : []),
+      ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
+    ];
+
+    let selectedAction: string | undefined;
+
+    if (actionLabels.length > 0) {
+      if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message, ...actionLabels);
+      else selectedAction = await vscode.window.showInformationMessage(message, ...actionLabels);
+    } else {
+      if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message);
+      else selectedAction = await vscode.window.showInformationMessage(message);
+    }
+
+    if (!selectedAction) return;
+
+    if (selectedAction === openPromptInEditor) {
+      await openPromptTextInEditor(currentPromptText);
+      continue;
+    }
+
+    if (selectedAction === closeUnavailableActionLabel) {
+      await closeUnavailableTabs(deps, {
+        deletedFileUris: args.deletedFileUris,
+        unresolvedTabs: args.unresolvedTabs,
+      });
+
+      continue;
+    }
+
+    if (selectedAction === applyProfile) {
+      const profilesById = await deps.configService.getProfilesById();
+
+      const nextProfileId = await pickProfileId({ profilesById, selectedProfileId });
+      if (!nextProfileId) return;
+
+      selectedProfileId = nextProfileId;
+
+      const rebuiltPrompt = await rebuildPromptTextForProfile(deps, {
+        profileId: selectedProfileId,
+        includeTechPromptFromCommand: args.includeTechPrompt,
+        fileItems: args.fileItems,
+      });
+
+      currentPromptText = rebuiltPrompt;
+
+      await vscode.env.clipboard.writeText(currentPromptText);
+      continue;
+    }
   }
 }
 
-async function tryGetShouldShowPromptSizeStats(
+async function rebuildPromptTextForProfile(
   deps: EditorToLlmModulePrivateHelpersDependencies,
-  promptSizeStats?: EditorToLlmPromptSizeStats
-): Promise<boolean> {
-  if (!promptSizeStats) return false;
-
-  try {
-    const config = await deps.configService.getConfig();
-    return config.baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
-  } catch (error) {
-    deps.logger.debug(`Failed reading config for prompt size stats notification: ${String(error)}`);
-    return true;
+  args: {
+    profileId: string;
+    includeTechPromptFromCommand: boolean;
+    fileItems: CollectedFileItem[];
   }
+): Promise<string> {
+  const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileId(args.profileId);
+
+  const shouldIncludeTechPrompt = args.includeTechPromptFromCommand && effectiveConfig.baseSettings.skipTechPrompt !== true;
+
+  const effectiveFileItems = effectiveConfig.baseSettings.skipCodeListings === true ? [] : args.fileItems;
+
+  const techPromptText = shouldIncludeTechPrompt
+    ? await new TechPromptBuilder(deps.extensionContext, effectiveConfig).build()
+    : '';
+
+  return buildLlmContextText({
+    fileItems: effectiveFileItems,
+    includeTechPrompt: shouldIncludeTechPrompt,
+    config: effectiveConfig,
+    techPromptText,
+  });
+}
+
+interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
+  profileId: string;
+}
+
+async function pickProfileId(args: {
+  profilesById: Record<string, { description: string; version: string }>;
+  selectedProfileId: string;
+}): Promise<string | null> {
+  const items: ApplyProfileQuickPickItem[] = [
+    {
+      profileId: 'Default',
+      label: args.selectedProfileId === 'Default' ? 'Default (currently selected)' : 'Default',
+      description: 'Base settings',
+    },
+  ];
+
+  for (const profileId of Object.keys(args.profilesById)) {
+    const profile = args.profilesById[profileId];
+
+    items.push({
+      profileId,
+      label: args.selectedProfileId === profileId ? `${profileId} (currently selected)` : profileId,
+      description: profile.description,
+      detail: `v${profile.version}`,
+    });
+  }
+
+  const selectedItem = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Select profile to apply to prompt',
+    canPickMany: false,
+  });
+
+  return selectedItem?.profileId ?? null;
 }
 
 function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats | null): string {
