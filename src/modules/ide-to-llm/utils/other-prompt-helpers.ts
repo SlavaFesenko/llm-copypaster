@@ -24,7 +24,7 @@ export async function buildLlmPromptTextForProfiles(args: {
 
   return buildLlmContextText({
     fileItems: effectiveFileItems,
-    includeTechPrompt: shouldIncludeTechPrompt,
+    ignorePromptInstructions: !shouldIncludeTechPrompt,
     config: effectiveConfig,
     techPromptText,
   });

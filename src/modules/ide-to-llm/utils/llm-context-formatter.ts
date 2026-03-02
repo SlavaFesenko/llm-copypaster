@@ -3,15 +3,15 @@ import { EditorToLlmFileItem } from './file-selection';
 
 export interface BuildLlmContextTextArgs {
   fileItems: EditorToLlmFileItem[];
-  includeTechPrompt: boolean;
   config: LlmCopypasterConfig;
+  ignorePromptInstructions?: boolean;
   techPromptText?: string;
 }
 
 export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
-  if (!args.includeTechPrompt) return listings;
+  if (args.ignorePromptInstructions) return listings;
 
   const techPromptText = args.techPromptText ?? '';
 

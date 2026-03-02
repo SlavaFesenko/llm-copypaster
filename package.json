@@ -37,32 +37,8 @@
         "title": "Copy All Files: Only Pinned"
       },
       {
-        "command": "llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt",
-        "title": "Copy This File (Without Prompt)"
-      },
-      {
-        "command": "llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt",
-        "title": "Copy Tab Group Files (Without Prompt)"
-      },
-      {
-        "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
-        "title": "Copy Tab Group Files: Only Pinned (Without Prompt)"
-      },
-      {
-        "command": "llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
-        "title": "Copy All Files (Without Prompt)"
-      },
-      {
-        "command": "llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
-        "title": "Copy All Files: Only Pinned (Without Prompt)"
-      },
-      {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
         "title": "LLM Copypaster: Copy File(s)"
-      },
-      {
-        "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
-        "title": "LLM Copypaster: Copy File(s) (Without Prompt)"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
@@ -112,11 +88,6 @@
           "group": "1-navigation@1"
         },
         {
-          "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "1-navigation@2"
-        },
-        {
           "command": "llm-copypaster.applyClipboardToFiles",
           "when": "resourceScheme == file",
           "group": "1-navigation@3"
@@ -159,31 +130,6 @@
           "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "navigation@11"
-        },
-        {
-          "command": "llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt",
-          "when": "resourceScheme == file",
-          "group": "navigation@20"
-        },
-        {
-          "command": "llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt",
-          "when": "resourceScheme == file",
-          "group": "navigation@21"
-        },
-        {
-          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt",
-          "when": "resourceScheme == file",
-          "group": "navigation@22"
-        },
-        {
-          "command": "llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt",
-          "when": "resourceScheme == file",
-          "group": "navigation@23"
-        },
-        {
-          "command": "llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt",
-          "when": "resourceScheme == file",
-          "group": "navigation@24"
         },
         {
           "submenu": "llm-copypaster.closeAdvanced",

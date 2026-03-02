@@ -18,10 +18,7 @@ export interface CopySelectedExplorerItemsArgs {
 export class ExplorerHelper {
   public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
 
-  public async copySelectedExplorerItemsAsContext(
-    args?: CopySelectedExplorerItemsArgs,
-    includeTechPrompt: boolean = true
-  ): Promise<void> {
+  public async copySelectedExplorerItemsAsContext(args?: CopySelectedExplorerItemsArgs): Promise<void> {
     const selectedUrisCopy = [...(args?.selectedUris ?? [])];
 
     const normalizedSelectedUris = uniqueByUriKeyKeepOrder(selectedUrisCopy);
@@ -31,10 +28,10 @@ export class ExplorerHelper {
       return;
     }
 
-    await this._copyExplorerUrisAsContext(normalizedSelectedUris, includeTechPrompt);
+    await this._copyExplorerUrisAsContext(normalizedSelectedUris);
   }
 
-  private async _copyExplorerUrisAsContext(inputUris: vscode.Uri[], includeTechPrompt: boolean): Promise<void> {
+  private async _copyExplorerUrisAsContext(inputUris: vscode.Uri[]): Promise<void> {
     const selection = await collectExplorerItemsFileItems(this._deps, inputUris);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
@@ -47,13 +44,10 @@ export class ExplorerHelper {
     if (selection.fileItems.length > 0) {
       const config = await this._deps.configService.getConfig();
 
-      const techPromptText = includeTechPrompt
-        ? await new TechPromptBuilder(this._deps.extensionContext, config).build()
-        : '';
+      const techPromptText = await new TechPromptBuilder(this._deps.extensionContext, config).build();
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
-        includeTechPrompt,
         config,
         techPromptText,
       });
@@ -67,7 +61,7 @@ export class ExplorerHelper {
 
       await showCopyResultNotification(this._deps, {
         commandName: 'Copy Explorer Items',
-        includeTechPrompt,
+        includeTechPrompt: true,
         copiedFilesCount: selection.fileItems.length,
         totalFilesCount,
         deletedFileUris: selection.deletedFileUris,

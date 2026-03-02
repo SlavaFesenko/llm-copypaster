@@ -17,15 +17,7 @@ export const commandIds = {
   copyAllOpenFilesAsLlmContext: 'llm-copypaster.copyAllOpenFilesAsLlmContext',
   copyAllPinnedFilesAsLlmContext: 'llm-copypaster.copyAllPinnedFilesAsLlmContext',
   copyPinnedFilesInActiveTabGroupAsLlmContext: 'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext',
-  copyThisFileAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyThisFileAsLlmContextWithoutTechPrompt',
-  copyThisTabGroupAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyThisTabGroupAsLlmContextWithoutTechPrompt',
-  copyAllOpenFilesAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyAllOpenFilesAsLlmContextWithoutTechPrompt',
-  copyAllPinnedFilesAsLlmContextWithoutTechPrompt: 'llm-copypaster.copyAllPinnedFilesAsLlmContextWithoutTechPrompt',
-  copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt:
-    'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
-  copySelectedExplorerItemsAsLlmContextWithoutTechPrompt:
-    'llm-copypaster.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
   validateClipboardPayload: 'llm-copypaster.validateClipboardPayload',
@@ -57,62 +49,29 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     // #region Editor 2 LLM
 
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyThisFileAsContext(true);
+      await deps.editorToLlmModule.copyThisFileAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyThisTabGroupAsContext(true);
+      await deps.editorToLlmModule.copyThisTabGroupAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyAllOpenFilesAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyAllOpenFilesAsContext(true);
+      await deps.editorToLlmModule.copyAllOpenFilesAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyAllPinnedFilesAsContext(true);
+      await deps.editorToLlmModule.copyAllPinnedFilesAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext(true);
-    }),
-
-    vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContextWithoutTechPrompt, async () => {
-      await deps.editorToLlmModule.copyThisFileAsContext(false);
-    }),
-
-    vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContextWithoutTechPrompt, async () => {
-      await deps.editorToLlmModule.copyThisTabGroupAsContext(false);
-    }),
-
-    vscode.commands.registerCommand(commandIds.copyAllOpenFilesAsLlmContextWithoutTechPrompt, async () => {
-      await deps.editorToLlmModule.copyAllOpenFilesAsContext(false);
-    }),
-
-    vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContextWithoutTechPrompt, async () => {
-      await deps.editorToLlmModule.copyAllPinnedFilesAsContext(false);
-    }),
-
-    vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContextWithoutTechPrompt, async () => {
-      await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext(false);
+      await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext();
     }),
 
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContext,
       async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(
-          { selectedUris } as CopySelectedExplorerItemsArgs,
-          true
-        );
-      }
-    ),
-
-    vscode.commands.registerCommand(
-      commandIds.copySelectedExplorerItemsAsLlmContextWithoutTechPrompt,
-      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext(
-          { selectedUris } as CopySelectedExplorerItemsArgs,
-          false
-        );
+        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext({ selectedUris } as CopySelectedExplorerItemsArgs);
       }
     ),
 

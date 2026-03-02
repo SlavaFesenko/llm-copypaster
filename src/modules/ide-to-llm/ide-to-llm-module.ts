@@ -25,30 +25,27 @@ export class IdeToLlmModule {
     this._explorerHelper = new ExplorerHelper(privateHelpersDeps);
   }
 
-  public async copyThisFileAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await this._editorHelper.copyThisFileAsContext(includeTechPrompt);
+  public async copyThisFileAsContext(): Promise<void> {
+    await this._editorHelper.copyThisFileAsContext();
   }
 
-  public async copyThisTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await this._editorHelper.copyThisTabGroupAsContext(includeTechPrompt);
+  public async copyThisTabGroupAsContext(): Promise<void> {
+    await this._editorHelper.copyThisTabGroupAsContext();
   }
 
-  public async copyAllOpenFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await this._editorHelper.copyAllOpenFilesAsContext(includeTechPrompt);
+  public async copyAllOpenFilesAsContext(): Promise<void> {
+    await this._editorHelper.copyAllOpenFilesAsContext();
   }
 
-  public async copyAllPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await this._editorHelper.copyAllPinnedFilesAsContext(includeTechPrompt);
+  public async copyAllPinnedFilesAsContext(): Promise<void> {
+    await this._editorHelper.copyAllPinnedFilesAsContext();
   }
 
-  public async copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
-    await this._editorHelper.copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt);
+  public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
+    await this._editorHelper.copyPinnedFilesInActiveTabGroupAsContext();
   }
 
-  public async copySelectedExplorerItemsAsContext(
-    args?: CopySelectedExplorerItemsArgs,
-    includeTechPrompt: boolean = true
-  ): Promise<void> {
-    await this._explorerHelper.copySelectedExplorerItemsAsContext(args, includeTechPrompt);
+  public async copySelectedExplorerItemsAsContext(args?: CopySelectedExplorerItemsArgs): Promise<void> {
+    await this._explorerHelper.copySelectedExplorerItemsAsContext(args);
   }
 }

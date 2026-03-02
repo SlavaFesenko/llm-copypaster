@@ -16,7 +16,7 @@ import { TechPromptBuilder } from './utils/tech-prompt-builder';
 export class EditorHelper {
   public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
 
-  public async copyThisFileAsContext(includeTechPrompt: boolean = true): Promise<void> {
+  public async copyThisFileAsContext(): Promise<void> {
     const selection = await collectActiveFileSelection(this._deps.logger);
     if (!selection) {
       await vscode.window.showWarningMessage('No active file to copy');
@@ -35,7 +35,6 @@ export class EditorHelper {
 
     await this._copyFileItemsSelectionAsContext({
       selectionFileItems: nonDeletedFileItems,
-      includeTechPrompt,
       warningWhenEmpty: 'No active file to copy',
       commandName: 'Copy File',
       totalFilesCount,
@@ -45,7 +44,7 @@ export class EditorHelper {
     });
   }
 
-  public async copyThisTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
+  public async copyThisTabGroupAsContext(): Promise<void> {
     const selection = await this._collectActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -57,14 +56,13 @@ export class EditorHelper {
 
     await this._copyTabBasedSelectionAsContext({
       selection,
-      includeTechPrompt,
       warningWhenEmpty: 'No tab group files to copy!',
       commandName: 'Copy Tab Group',
       totalFilesCount,
     });
   }
 
-  public async copyAllOpenFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
+  public async copyAllOpenFilesAsContext(): Promise<void> {
     const selection = await this._collectAllOpenTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -76,14 +74,13 @@ export class EditorHelper {
 
     await this._copyTabBasedSelectionAsContext({
       selection,
-      includeTechPrompt,
       warningWhenEmpty: 'No open files to copy',
       commandName: 'Copy All',
       totalFilesCount,
     });
   }
 
-  public async copyAllPinnedFilesAsContext(includeTechPrompt: boolean = true): Promise<void> {
+  public async copyAllPinnedFilesAsContext(): Promise<void> {
     const selection = await this._collectAllPinnedTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -95,14 +92,13 @@ export class EditorHelper {
 
     await this._copyTabBasedSelectionAsContext({
       selection,
-      includeTechPrompt,
       warningWhenEmpty: 'No pinned files to copy',
       commandName: 'Copy All Pinned',
       totalFilesCount,
     });
   }
 
-  public async copyPinnedFilesInActiveTabGroupAsContext(includeTechPrompt: boolean = true): Promise<void> {
+  public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
     const selection = await this._collectPinnedTabsInActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
@@ -114,7 +110,6 @@ export class EditorHelper {
 
     await this._copyTabBasedSelectionAsContext({
       selection,
-      includeTechPrompt,
       warningWhenEmpty: 'No pinned tab group files to copy',
       commandName: 'Copy Pinned Tab Group',
       totalFilesCount,
@@ -259,7 +254,6 @@ export class EditorHelper {
 
   private async _copyTabBasedSelectionAsContext(args: {
     selection: TabBasedFileItemsResult;
-    includeTechPrompt: boolean;
     warningWhenEmpty: string;
     commandName: string;
     totalFilesCount: number;
@@ -267,7 +261,6 @@ export class EditorHelper {
     if (args.selection.fileItems.length > 0) {
       await this._copyFileItemsSelectionAsContext({
         selectionFileItems: args.selection.fileItems,
-        includeTechPrompt: args.includeTechPrompt,
         warningWhenEmpty: args.warningWhenEmpty,
         commandName: args.commandName,
         totalFilesCount: args.totalFilesCount,
@@ -284,7 +277,6 @@ export class EditorHelper {
 
   private async _copyFileItemsSelectionAsContext(args: {
     selectionFileItems: Array<{ path: string; content: string | null; languageId?: string; readError?: string }>;
-    includeTechPrompt: boolean;
     warningWhenEmpty: string;
     commandName: string;
     totalFilesCount: number;
@@ -299,15 +291,12 @@ export class EditorHelper {
 
     const config = await this._deps.configService.getConfig();
 
-    const techPromptText = args.includeTechPrompt
-      ? await new TechPromptBuilder(this._deps.extensionContext, config).build()
-      : '';
+    const techPromptText = await new TechPromptBuilder(this._deps.extensionContext, config).build();
 
     const fileItems = args.selectionFileItems;
 
     const contextText = buildLlmContextText({
       fileItems,
-      includeTechPrompt: args.includeTechPrompt,
       config,
       techPromptText,
     });
@@ -321,7 +310,7 @@ export class EditorHelper {
 
     await showCopyResultNotification(this._deps, {
       commandName: args.commandName,
-      includeTechPrompt: args.includeTechPrompt,
+      includeTechPrompt: true,
       copiedFilesCount: args.copiedFilesCount,
       totalFilesCount: args.totalFilesCount,
       deletedFileUris: args.deletedFileUris,
