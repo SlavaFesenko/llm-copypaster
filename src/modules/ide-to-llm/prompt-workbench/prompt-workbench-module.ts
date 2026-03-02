@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../../config-service';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
-import { PromptWorkbenchBridge } from '../common.helpers';
 import { PromptWorkbenchView } from './prompt-workbench-view';
+import { PromptWorkbenchBridge } from './prompt-workbench.types';
 
 export async function tryOpenPromptWorkbench(): Promise<void> {
   try {

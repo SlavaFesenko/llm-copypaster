@@ -21,3 +21,10 @@ export interface FilesPayload {
   warnings: string[];
   errors: string[];
 }
+
+export interface CollectedFileItem {
+  path: string;
+  content: string | null;
+  languageId?: string;
+  readError?: string;
+}

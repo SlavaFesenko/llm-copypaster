@@ -1,18 +1,12 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config-service';
+import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { tryOpenPromptWorkbench } from './prompt-workbench/prompt-workbench-module';
+import { PromptWorkbenchBridge } from './prompt-workbench/prompt-workbench.types';
 import { PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
-
-export interface PromptWorkbenchBridge {
-  onNewCopiedContext(args: {
-    includeTechPrompt: boolean;
-    fileItems: EditorToLlmCollectedFileItem[];
-    commandName: string;
-  }): void;
-}
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
@@ -21,20 +15,13 @@ export interface EditorToLlmModulePrivateHelpersDependencies {
   promptWorkbenchBridge?: PromptWorkbenchBridge;
 }
 
-export interface EditorToLlmCollectedFileItem {
-  path: string;
-  content: string | null;
-  languageId?: string;
-  readError?: string;
-}
-
 export interface ReadUrisAsFileItemsResult {
-  fileItems: EditorToLlmCollectedFileItem[];
+  fileItems: CollectedFileItem[];
   deletedFileUris: vscode.Uri[];
 }
 
 export interface TabBasedFileItemsResult {
-  fileItems: EditorToLlmCollectedFileItem[];
+  fileItems: CollectedFileItem[];
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
 }
@@ -56,7 +43,7 @@ export interface ShowCopyResultNotificationArgs {
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
   promptText: string;
-  fileItems: EditorToLlmCollectedFileItem[];
+  fileItems: CollectedFileItem[];
   promptSizeStats?: EditorToLlmPromptSizeStats;
 }
 
@@ -94,7 +81,7 @@ export async function readUrisAsFileItems(
     if (!dedupedByPathMap.has(relativePath)) dedupedByPathMap.set(relativePath, uri);
   }
 
-  const fileItems: EditorToLlmCollectedFileItem[] = [];
+  const fileItems: CollectedFileItem[] = [];
   const deletedFileUris: vscode.Uri[] = [];
 
   for (const [relativePath, uri] of dedupedByPathMap.entries()) {

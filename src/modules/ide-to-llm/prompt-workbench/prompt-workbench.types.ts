@@ -1,3 +1,9 @@
+import { CollectedFileItem } from '../../../types/files-payload';
+
+export interface PromptWorkbenchBridge {
+  onNewCopiedContext(args: { includeTechPrompt: boolean; fileItems: CollectedFileItem[]; commandName: string }): void;
+}
+
 export interface PromptWorkbenchProfileItemModel {
   id: string | null;
   description: string;

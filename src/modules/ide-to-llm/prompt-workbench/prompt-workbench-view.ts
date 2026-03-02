@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../../config-service';
+import { CollectedFileItem } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
-import { EditorToLlmCollectedFileItem } from '../common.helpers';
 import { buildWorkbenchState, rebuildPromptAndState } from './prompt-workbench-prompt-builder';
 import { PromptWorkbenchInboundMessage, PromptWorkbenchOutboundMessage } from './prompt-workbench.types';
 
@@ -12,7 +12,7 @@ export class PromptWorkbenchView implements vscode.WebviewViewProvider {
   private _view: vscode.WebviewView | null = null;
   private _lastCopiedContext: {
     includeTechPrompt: boolean;
-    fileItems: EditorToLlmCollectedFileItem[];
+    fileItems: CollectedFileItem[];
     commandName: string;
   } | null = null;
 
@@ -28,7 +28,7 @@ export class PromptWorkbenchView implements vscode.WebviewViewProvider {
 
   public setLastCopiedContext(args: {
     includeTechPrompt: boolean;
-    fileItems: EditorToLlmCollectedFileItem[];
+    fileItems: CollectedFileItem[];
     commandName: string;
   }): void {
     this._lastCopiedContext = args;

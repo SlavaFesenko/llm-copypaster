@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { LlmCopypasterConfig, ProfileSettingsConfig } from '../../../config-service';
-import { EditorToLlmCollectedFileItem } from '../common.helpers';
+import { CollectedFileItem } from '../../../types/files-payload';
 import { buildLlmContextText } from '../utils/llm-context-formatter';
 import { buildPromptWithSizeStats } from '../utils/prompt-size-helper';
 import { LLM_RESPONSE_RULES_PROMPT_ID, TechPromptBuilder, WEB_GIT_PROMPT_ID } from '../utils/tech-prompt-builder';
@@ -14,7 +14,7 @@ import {
 export interface BuildWorkbenchStateArgs {
   extensionContext: vscode.ExtensionContext;
   config: LlmCopypasterConfig;
-  lastCopiedContext: { includeTechPrompt: boolean; fileItems: EditorToLlmCollectedFileItem[]; commandName: string } | null;
+  lastCopiedContext: { includeTechPrompt: boolean; fileItems: CollectedFileItem[]; commandName: string } | null;
   selectedProfileId: string | null;
   isInstructionsErased: boolean;
   isCodeListingsErased: boolean;
@@ -140,7 +140,7 @@ function buildProfiles(config: LlmCopypasterConfig): PromptWorkbenchProfileItemM
 async function buildPromptText(
   extensionContext: vscode.ExtensionContext,
   configForPrompt: LlmCopypasterConfig,
-  args: { includeTechPrompt: boolean; includeCodeListings: boolean; fileItems: EditorToLlmCollectedFileItem[] }
+  args: { includeTechPrompt: boolean; includeCodeListings: boolean; fileItems: CollectedFileItem[] }
 ): Promise<string> {
   const techPromptText = args.includeTechPrompt
     ? await new TechPromptBuilder(extensionContext, configForPrompt).build()
@@ -158,7 +158,7 @@ async function buildPromptText(
 
 function buildOutline(
   configForPrompt: LlmCopypasterConfig,
-  args: { includeTechPrompt: boolean; includeCodeListings: boolean; fileItems: EditorToLlmCollectedFileItem[] }
+  args: { includeTechPrompt: boolean; includeCodeListings: boolean; fileItems: CollectedFileItem[] }
 ): PromptWorkbenchOutlineModel {
   const instructionSections: string[] = [];
 
