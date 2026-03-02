@@ -53,7 +53,7 @@ export interface ProfileSettingsConfig {
 
 export interface ProfileConfig {
   description: string;
-  version: string;
+  version?: string;
   profileSettingsConfig: Partial<ProfileSettingsConfig>;
 }
 
@@ -85,6 +85,14 @@ export class ConfigService {
         placeholderEndFragment: '}}',
       },
       baseSettings: this._buildBaseSettings(),
+      profilesById: {
+        'Drop ALL Instructions': {
+          description: 'Runs without any prompt-instructions',
+          profileSettingsConfig: {
+            skipTechPrompt: true,
+          },
+        },
+      },
     };
   }
 

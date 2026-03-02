@@ -267,7 +267,7 @@ interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
 }
 
 async function pickProfileId(args: {
-  profilesById: Record<string, { description: string; version: string }>;
+  profilesById: Record<string, { description: string; version?: string }>;
   selectedProfileId: string;
 }): Promise<string | null> {
   const items: ApplyProfileQuickPickItem[] = [
@@ -281,11 +281,12 @@ async function pickProfileId(args: {
   for (const profileId of Object.keys(args.profilesById)) {
     const profile = args.profilesById[profileId];
     const descriptionSuffix = profile.description ? `: ${profile.description}` : '';
+    const version = profile.version ? `v${profile.version}` : '';
 
     items.push({
       profileId,
       label: args.selectedProfileId === profileId ? `${profileId} (currently selected)` : profileId,
-      detail: `v${profile.version}${descriptionSuffix}`,
+      detail: `${version}${descriptionSuffix}`,
     });
   }
 

@@ -265,7 +265,7 @@ export function mapProfilesById(
 
       nextProfilesById[profileId] = {
         description: userProfile.description,
-        version: userProfile.version,
+        version: userProfile.version ?? '',
         profileSettingsConfig: userProfile.profileSettingsConfig
           ? mergeProfileSettingsConfig(buildBaseSettingsFn(), userProfile.profileSettingsConfig, buildBaseSettingsFn)
           : {},
@@ -276,7 +276,7 @@ export function mapProfilesById(
 
     nextProfilesById[profileId] = {
       description: userProfile.description ?? baseProfile.description,
-      version: userProfile.version ?? baseProfile.version,
+      version: userProfile.version ?? baseProfile.version ?? '',
       profileSettingsConfig: userProfile.profileSettingsConfig
         ? mergeProfileSettingsConfig(
             { ...buildBaseSettingsFn(), ...baseProfile.profileSettingsConfig } as ProfileSettingsConfig,
