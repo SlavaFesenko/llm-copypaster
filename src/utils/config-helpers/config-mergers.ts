@@ -171,6 +171,9 @@ export function mapSubInstructionsById(
       continue;
     }
 
+    if (baseSubInstruction.isSystemBundledFile && isUserOverridingRelativePath && userSubInstruction.ignore === true)
+      continue;
+
     nextSubInstructionsById[subInstructionId] = {
       relativePathToSubInstruction:
         userSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
