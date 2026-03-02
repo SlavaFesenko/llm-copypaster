@@ -4,8 +4,8 @@ import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './utils/other-prompt-helpers';
-import { buildPromptWithSizeStats, PromptSizeExceededBy } from './utils/prompt-size-helper';
-import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
+import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
+import { closeUnavailableTabs } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
@@ -30,7 +30,7 @@ export interface EditorToLlmPromptSizeStats {
   maxLinesCountInContext: number;
   maxTokensCountInContext: number;
   isExceeded: boolean;
-  exceededBy: PromptSizeExceededBy[];
+  exceededBy: string[];
 }
 
 export interface ShowCopyResultNotificationArgs {
@@ -151,7 +151,7 @@ export async function showCopyResultNotification(
   while (true) {
     const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
 
-    const promptStatsResult = buildPromptWithSizeStats({
+    const promptStatsResult = buildTextSizeStats({
       promptText: currentPromptText,
       config: effectiveConfig,
     });
@@ -164,16 +164,7 @@ export async function showCopyResultNotification(
         ? `Copied ${args.copiedFilesCount} file(s)`
         : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s)`;
 
-    const promptSizeStatsSuffix = shouldShowPromptSizeStats
-      ? buildPromptSizeStatsSuffix({
-          linesCount: promptStatsResult.linesCount,
-          approxTokensCount: promptStatsResult.approxTokensCount,
-          maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
-          maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
-          isExceeded: promptStatsResult.isExceeded,
-          exceededBy: promptStatsResult.exceededBy,
-        })
-      : '';
+    const promptSizeStatsSuffix = shouldShowPromptSizeStats ? buildPromptSizeStatsSuffix(promptStatsResult) : '';
 
     const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
 
@@ -312,23 +303,6 @@ async function pickProfileIds(args: {
     .filter((profileId): profileId is string => Boolean(profileId));
 
   return { profileIds, shouldAdditionallyOpenMergedConfigInEditor };
-}
-
-function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats | null): string {
-  if (!promptSizeStats) return '';
-
-  const isLinesExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.LINES);
-  const isTokensExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.TOKENS);
-
-  const linesPart = `${isLinesExceeded ? 'Lines!:' : 'Lines:'} ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(
-    promptSizeStats.maxLinesCountInContext
-  )}`;
-
-  const tokensPart = `${isTokensExceeded ? 'Tokens!:' : 'Tokens:'} ~${formatCountInThousands(
-    promptSizeStats.approxTokensCount
-  )}/${formatCountInThousands(promptSizeStats.maxTokensCountInContext)}`;
-
-  return `${linesPart}; ${tokensPart};`;
 }
 
 async function openPromptTextInEditor(promptText: string): Promise<void> {

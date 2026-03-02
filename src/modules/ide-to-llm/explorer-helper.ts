@@ -8,7 +8,7 @@ import {
   showCopyResultNotification,
 } from './common.helpers';
 import { buildLlmContextText } from './utils/llm-context-formatter';
-import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
+import { buildTextSizeStats } from './utils/prompt-size-helper';
 import { TechPromptBuilder } from './utils/tech-prompt-builder';
 
 export interface CopySelectedExplorerItemsArgs {
@@ -52,7 +52,7 @@ export class ExplorerHelper {
         techPromptText,
       });
 
-      const promptStatsResult = buildPromptWithSizeStats({
+      const promptStatsResult = buildTextSizeStats({
         promptText: contextText,
         config,
       });

@@ -1,6 +1,8 @@
 import { LlmCopypasterConfig } from '../../../config-service';
 
-export interface BuildPromptWithSizeStatsArgs {
+import { formatCountInThousands } from './uncategorized-helpers';
+
+export interface TextSizeStatsInput {
   promptText: string;
   config: LlmCopypasterConfig;
 }
@@ -10,7 +12,7 @@ export enum PromptSizeExceededBy {
   TOKENS = 'TOKENS',
 }
 
-export interface BuildPromptWithSizeStatsResult {
+export interface TextSizeStatsOutput {
   linesCount: number;
   approxTokensCount: number;
   maxLinesCountInContext: number;
@@ -24,13 +26,13 @@ interface LlmContextLimits {
   maxTokensCountInContext: number;
 }
 
-export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): BuildPromptWithSizeStatsResult {
-  const normalizedPromptText = args.promptText ?? '';
+export function buildTextSizeStats(input: TextSizeStatsInput): TextSizeStatsOutput {
+  const normalizedPromptText = input.promptText ?? '';
 
   const linesCount = countLines(normalizedPromptText);
-  const approxTokensCount = estimateTokensCount(normalizedPromptText, args.config);
+  const approxTokensCount = estimateTokensCount(normalizedPromptText, input.config);
 
-  const limits = normalizeLimits(args.config.baseSettings.ideToLlmContextConfig);
+  const limits = normalizeLimits(input.config.baseSettings.ideToLlmContextConfig);
 
   const exceededBy: PromptSizeExceededBy[] = [];
 
@@ -50,6 +52,23 @@ export function buildPromptWithSizeStats(args: BuildPromptWithSizeStatsArgs): Bu
     isExceeded,
     exceededBy,
   };
+}
+
+export function buildPromptSizeStatsSuffix(promptSizeStats: TextSizeStatsOutput | null): string {
+  if (!promptSizeStats) return '';
+
+  const isLinesExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.LINES);
+  const isTokensExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.TOKENS);
+
+  const linesPart = `${isLinesExceeded ? 'Lines!:' : 'Lines:'} ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(
+    promptSizeStats.maxLinesCountInContext
+  )}`;
+
+  const tokensPart = `${isTokensExceeded ? 'Tokens!:' : 'Tokens:'} ~${formatCountInThousands(
+    promptSizeStats.approxTokensCount
+  )}/${formatCountInThousands(promptSizeStats.maxTokensCountInContext)}`;
+
+  return `${linesPart}; ${tokensPart};`;
 }
 
 function normalizeLimits(limits: { maxLinesCountInContext: number; maxTokensCountInContext: number }): LlmContextLimits {

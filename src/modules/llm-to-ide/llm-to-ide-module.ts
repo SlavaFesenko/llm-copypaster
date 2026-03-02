@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/utils/prompt-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
 import { GuidedRetryStore } from './guided-retry/guided-retry-store';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';
@@ -53,7 +54,13 @@ export class LlmToIdeModule {
       return;
     }
 
-    await vscode.window.showInformationMessage(`Applied files: ${applyResult.appliedFilesCount}`);
+    const promptStatsResult = buildTextSizeStats({ promptText: clipboardText, config });
+    const promptSizeStatsSuffix = buildPromptSizeStatsSuffix(promptStatsResult);
+    const message = promptSizeStatsSuffix
+      ? `PASTED ${applyResult.appliedFilesCount} file(s) | ${promptSizeStatsSuffix}`
+      : `PASTED ${applyResult.appliedFilesCount} file(s)`;
+
+    await vscode.window.showInformationMessage(message);
   }
 
   public async validateClipboardPayload(): Promise<void> {

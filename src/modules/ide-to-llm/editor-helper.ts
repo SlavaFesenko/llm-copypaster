@@ -10,7 +10,7 @@ import {
 import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-group-picker-helpers';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
-import { buildPromptWithSizeStats } from './utils/prompt-size-helper';
+import { buildTextSizeStats } from './utils/prompt-size-helper';
 import { TechPromptBuilder } from './utils/tech-prompt-builder';
 
 export class EditorHelper {
@@ -301,7 +301,7 @@ export class EditorHelper {
       techPromptText,
     });
 
-    const promptStatsResult = buildPromptWithSizeStats({
+    const promptStatsResult = buildTextSizeStats({
       promptText: contextText,
       config,
     });
