@@ -2,13 +2,23 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { tryOpenPromptWorkbench } from './prompt-workbench/prompt-workbench-module';
 import { PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
+
+export interface PromptWorkbenchBridge {
+  onNewCopiedContext(args: {
+    includeTechPrompt: boolean;
+    fileItems: EditorToLlmCollectedFileItem[];
+    commandName: string;
+  }): void;
+}
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
   configService: ConfigService;
   logger: OutputChannelLogger;
+  promptWorkbenchBridge?: PromptWorkbenchBridge;
 }
 
 export interface EditorToLlmCollectedFileItem {
@@ -45,6 +55,8 @@ export interface ShowCopyResultNotificationArgs {
   totalFilesCount: number;
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
+  promptText: string;
+  fileItems: EditorToLlmCollectedFileItem[];
   promptSizeStats?: EditorToLlmPromptSizeStats;
 }
 
@@ -139,6 +151,12 @@ export async function showCopyResultNotification(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   args: ShowCopyResultNotificationArgs
 ): Promise<void> {
+  deps.promptWorkbenchBridge?.onNewCopiedContext({
+    includeTechPrompt: args.includeTechPrompt,
+    fileItems: args.fileItems,
+    commandName: args.commandName,
+  });
+
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
   const baseMessage =
@@ -151,24 +169,50 @@ export async function showCopyResultNotification(
 
   const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
 
+  const openPromptWorkbenchActionLabel = 'Open in Workbench';
+  const openPromptInEditorActionLabel = 'Open in Editor';
+
   const closeUnavailableActionLabel =
     unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
   const shouldWarn = shouldShowPromptSizeStats ? Boolean(args.promptSizeStats?.isExceeded) : false;
 
+  const actionLabels = [
+    openPromptWorkbenchActionLabel,
+    openPromptInEditorActionLabel,
+    ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
+  ];
+
   let selectedAction: string | undefined;
 
-  if (closeUnavailableActionLabel)
-    selectedAction = await vscode.window.showWarningMessage(message, closeUnavailableActionLabel);
-  else if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message);
-  else selectedAction = await vscode.window.showInformationMessage(message);
+  if (actionLabels.length > 0) {
+    if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message, ...actionLabels);
+    else selectedAction = await vscode.window.showInformationMessage(message, ...actionLabels);
+  } else {
+    if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message);
+    else selectedAction = await vscode.window.showInformationMessage(message);
+  }
 
-  if (selectedAction !== closeUnavailableActionLabel) return;
+  if (!selectedAction) return;
 
-  await closeUnavailableTabs(deps, {
-    deletedFileUris: args.deletedFileUris,
-    unresolvedTabs: args.unresolvedTabs,
-  });
+  if (selectedAction === openPromptWorkbenchActionLabel) {
+    await tryOpenPromptWorkbench();
+    return;
+  }
+
+  if (selectedAction === openPromptInEditorActionLabel) {
+    await openPromptTextInEditor(args.promptText);
+    return;
+  }
+
+  if (selectedAction === closeUnavailableActionLabel) {
+    await closeUnavailableTabs(deps, {
+      deletedFileUris: args.deletedFileUris,
+      unresolvedTabs: args.unresolvedTabs,
+    });
+
+    return;
+  }
 }
 
 async function tryGetShouldShowPromptSizeStats(
@@ -201,4 +245,9 @@ function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats 
   )}/${formatCountInThousands(promptSizeStats.maxTokensCountInContext)}`;
 
   return `${linesPart}; ${tokensPart};`;
+}
+
+async function openPromptTextInEditor(promptText: string): Promise<void> {
+  const doc = await vscode.workspace.openTextDocument({ content: promptText, language: 'markdown' });
+  await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
 }

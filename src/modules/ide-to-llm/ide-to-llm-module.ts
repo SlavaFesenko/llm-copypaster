@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { EditorToLlmModulePrivateHelpersDependencies } from './common.helpers';
+import { EditorToLlmModulePrivateHelpersDependencies, PromptWorkbenchBridge } from './common.helpers';
 import { EditorHelper } from './editor-helper';
 import { CopySelectedExplorerItemsArgs, ExplorerHelper } from './explorer-helper';
 
@@ -13,12 +13,14 @@ export class IdeToLlmModule {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
-    private readonly _logger: OutputChannelLogger
+    private readonly _logger: OutputChannelLogger,
+    private readonly _promptWorkbenchBridge?: PromptWorkbenchBridge
   ) {
     const privateHelpersDeps: EditorToLlmModulePrivateHelpersDependencies = {
       extensionContext: this._extensionContext,
       configService: this._configService,
       logger: this._logger,
+      promptWorkbenchBridge: this._promptWorkbenchBridge,
     };
 
     this._editorHelper = new EditorHelper(privateHelpersDeps);

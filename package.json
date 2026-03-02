@@ -205,6 +205,14 @@
         }
       ]
     },
+    "views": {
+      "explorer": [
+        {
+          "id": "llmCopypaster.promptWorkbench",
+          "name": "Prompt Workbench"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "llm-copypaster.applyClipboardToFiles",

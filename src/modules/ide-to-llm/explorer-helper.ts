@@ -72,6 +72,8 @@ export class ExplorerHelper {
         totalFilesCount,
         deletedFileUris: selection.deletedFileUris,
         unresolvedTabs: [],
+        promptText: contextText,
+        fileItems: selection.fileItems,
         promptSizeStats: {
           linesCount: promptStatsResult.linesCount,
           approxTokensCount: promptStatsResult.approxTokensCount,

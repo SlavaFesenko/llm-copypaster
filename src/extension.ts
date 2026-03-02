@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { ConfigService } from './config-service';
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
+import { PromptWorkbenchModule } from './modules/ide-to-llm/prompt-workbench/prompt-workbench-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
 import { registerCommands } from './register-commands';
@@ -14,7 +15,10 @@ export function activate(context: vscode.ExtensionContext) {
   const configService = new ConfigService(logger);
   const guidedRetryStore = new GuidedRetryStore(context, logger);
 
-  const editorToLlmModule = new IdeToLlmModule(context, configService, logger);
+  const promptWorkbenchModule = new PromptWorkbenchModule(context, configService, logger);
+  promptWorkbenchModule.register();
+
+  const editorToLlmModule = new IdeToLlmModule(context, configService, logger, promptWorkbenchModule.promptWorkbenchBridge);
   const llmToEditorModule = new LlmToIdeModule(configService, guidedRetryStore, logger);
   const advancedCloseModule = new AdvancedCloseModule(logger);
 

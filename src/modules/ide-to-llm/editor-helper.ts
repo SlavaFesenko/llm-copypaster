@@ -326,6 +326,8 @@ export class EditorHelper {
       totalFilesCount: args.totalFilesCount,
       deletedFileUris: args.deletedFileUris,
       unresolvedTabs: args.unresolvedTabs,
+      promptText: contextText,
+      fileItems: args.selectionFileItems,
       promptSizeStats: {
         linesCount: promptStatsResult.linesCount,
         approxTokensCount: promptStatsResult.approxTokensCount,
