@@ -303,7 +303,7 @@ export class EditorHelper {
 
     const promptStatsResult = buildTextSizeStats({
       promptText: contextText,
-      config,
+      contextConfig: config.baseSettings.ideToLlmContextConfig,
     });
 
     await vscode.env.clipboard.writeText(contextText);
