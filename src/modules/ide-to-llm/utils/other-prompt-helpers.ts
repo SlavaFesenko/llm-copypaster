@@ -53,28 +53,28 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += `Merged Config = ${mergeChainText}\n\n`;
 
   reportText += '## Diff (json-diff-ts changeset JSON, not llm-copypaster config)\n\n';
-  reportText += '```json\n';
+  reportText += '`' + '``json\n';
   reportText += `${JSON.stringify(renamedChangeset, null, 2)}\n`;
-  reportText += '```\n\n';
+  reportText += '`' + '``\n\n';
 
   reportText += '## Merged Config (All Settings)\n\n';
-  reportText += '```json\n';
+  reportText += '`' + '``json\n';
   reportText += `${JSON.stringify(args.mergedSettingsConfig, null, 2)}\n`;
-  reportText += '```\n\n';
+  reportText += '`' + '``\n\n';
 
   reportText += '## Base Config (All Settings)\n\n';
-  reportText += '```json\n';
+  reportText += '`' + '``json\n';
   reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n`;
-  reportText += '```\n\n';
+  reportText += '`' + '``\n\n';
 
   for (const profileId of Object.keys(args.profilesById ?? {})) {
     const profile = args.profilesById[profileId];
     const profileOnlyConfiguredSettings = profile?.profileSettingsConfig ?? {};
 
     reportText += `## ${profileId} (Only Configured Settings)\n\n`;
-    reportText += '```json\n';
+    reportText += '`' + '``json\n';
     reportText += `${JSON.stringify(profileOnlyConfiguredSettings, null, 2)}\n`;
-    reportText += '```\n\n';
+    reportText += '`' + '``\n\n';
   }
 
   return reportText.trimEnd();
