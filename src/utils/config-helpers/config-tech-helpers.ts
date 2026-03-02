@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { OutputChannelLogger } from '../output-channel-logger';
 
 export async function readWorkspaceJsonConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
-  const workspaceConfigFileName = 'llm-copypaster.config.jsonc';
+  const workspaceConfigFileName = 'llm-copypaster.jsonc';
 
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
