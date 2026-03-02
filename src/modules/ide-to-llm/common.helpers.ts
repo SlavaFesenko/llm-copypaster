@@ -3,8 +3,6 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { tryOpenPromptWorkbench } from '../prompt-workbench/prompt-workbench-module';
-import { PromptWorkbenchBridge } from '../prompt-workbench/prompt-workbench.types';
 import { PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
 
@@ -12,7 +10,6 @@ export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
   configService: ConfigService;
   logger: OutputChannelLogger;
-  promptWorkbenchBridge?: PromptWorkbenchBridge;
 }
 
 export interface ReadUrisAsFileItemsResult {
@@ -138,12 +135,6 @@ export async function showCopyResultNotification(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   args: ShowCopyResultNotificationArgs
 ): Promise<void> {
-  deps.promptWorkbenchBridge?.onNewCopiedContext({
-    includeTechPrompt: args.includeTechPrompt,
-    fileItems: args.fileItems,
-    commandName: args.commandName,
-  });
-
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
   const baseMessage =
@@ -156,19 +147,14 @@ export async function showCopyResultNotification(
 
   const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
 
-  const openPromptWorkbenchActionLabel = 'Open in Workbench';
-  const openPromptInEditorActionLabel = 'Open in Editor';
+  const openPromptInEditor = 'Open Prompt in Editor';
 
   const closeUnavailableActionLabel =
     unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
   const shouldWarn = shouldShowPromptSizeStats ? Boolean(args.promptSizeStats?.isExceeded) : false;
 
-  const actionLabels = [
-    openPromptWorkbenchActionLabel,
-    openPromptInEditorActionLabel,
-    ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
-  ];
+  const actionLabels = [openPromptInEditor, ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : [])];
 
   let selectedAction: string | undefined;
 
@@ -182,12 +168,7 @@ export async function showCopyResultNotification(
 
   if (!selectedAction) return;
 
-  if (selectedAction === openPromptWorkbenchActionLabel) {
-    await tryOpenPromptWorkbench();
-    return;
-  }
-
-  if (selectedAction === openPromptInEditorActionLabel) {
+  if (selectedAction === openPromptInEditor) {
     await openPromptTextInEditor(args.promptText);
     return;
   }
