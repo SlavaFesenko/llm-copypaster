@@ -235,8 +235,21 @@ export async function showCopyResultNotification(
       await vscode.env.clipboard.writeText(currentPromptText);
 
       if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-        const effectiveConfigForProfiles = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
-        await openMergedConfigInEditor(effectiveConfigForProfiles);
+        const baseConfig = await deps.configService.getConfig();
+
+        const mergedConfigForSelectedProfiles = await deps.configService.buildEffectiveConfigForProfileIds(
+          selectedProfileIds,
+          baseConfig
+        );
+
+        const mergedConfigReportText = buildMergedConfigReportText({
+          baseSettingsConfig: baseConfig.baseSettings,
+          mergedSettingsConfig: mergedConfigForSelectedProfiles.baseSettings,
+          profilesById: baseConfig.profilesById ?? {},
+          selectedProfileIds,
+        });
+
+        await openMergedConfigInEditor(mergedConfigReportText);
       }
 
       continue;
@@ -350,8 +363,45 @@ async function openPromptTextInEditor(promptText: string): Promise<void> {
   await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
 }
 
-async function openMergedConfigInEditor(config: unknown): Promise<void> {
-  const configText = JSON.stringify(config, null, 2);
-  const doc = await vscode.workspace.openTextDocument({ content: configText, language: 'json' });
+function buildMergedConfigReportText(args: {
+  baseSettingsConfig: unknown;
+  mergedSettingsConfig: unknown;
+  profilesById: Record<string, { profileSettingsConfig?: unknown }>;
+  selectedProfileIds: string[];
+}): string {
+  const normalizedSelectedProfileIds = (args.selectedProfileIds ?? [])
+    .filter(Boolean)
+    .filter(profileId => profileId !== 'Default');
+
+  const mergeChainText =
+    normalizedSelectedProfileIds.length > 0 ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')}` : 'Base Config';
+
+  let reportText = '';
+
+  reportText += '---\n';
+  reportText += `Merged Config = ${mergeChainText}\n`;
+  reportText += '---\n\n';
+
+  reportText += 'Merged Config (All Settings):\n';
+  reportText += `${JSON.stringify(args.mergedSettingsConfig, null, 2)}\n\n`;
+
+  reportText += '---\n';
+  reportText += 'Base Config (All Settings):\n';
+  reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n\n`;
+
+  for (const profileId of Object.keys(args.profilesById ?? {})) {
+    const profile = args.profilesById[profileId];
+    const profileOnlyConfiguredSettings = profile?.profileSettingsConfig ?? {};
+
+    reportText += '---\n';
+    reportText += `${profileId} (Only Configured Settings):\n`;
+    reportText += `${JSON.stringify(profileOnlyConfiguredSettings, null, 2)}\n\n`;
+  }
+
+  return reportText.trimEnd();
+}
+
+async function openMergedConfigInEditor(mergedConfigReportText: string): Promise<void> {
+  const doc = await vscode.workspace.openTextDocument({ content: mergedConfigReportText, language: 'markdown' });
   await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
 }
