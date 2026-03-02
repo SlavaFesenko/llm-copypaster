@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../../config-service';
-import { OutputChannelLogger } from '../../../utils/output-channel-logger';
+import { ConfigService } from '../../config-service';
+import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { PromptWorkbenchView } from './prompt-workbench-view';
 import { PromptWorkbenchBridge } from './prompt-workbench.types';
 

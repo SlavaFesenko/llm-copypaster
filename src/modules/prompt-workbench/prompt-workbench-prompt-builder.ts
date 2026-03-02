@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfig, ProfileSettingsConfig } from '../../../config-service';
-import { CollectedFileItem } from '../../../types/files-payload';
-import { buildLlmContextText } from '../utils/llm-context-formatter';
-import { buildPromptWithSizeStats } from '../utils/prompt-size-helper';
-import { LLM_RESPONSE_RULES_PROMPT_ID, TechPromptBuilder, WEB_GIT_PROMPT_ID } from '../utils/tech-prompt-builder';
+import { LlmCopypasterConfig, ProfileSettingsConfig } from '../../config-service';
+import { CollectedFileItem } from '../../types/files-payload';
+import { buildLlmContextText } from '../ide-to-llm/utils/llm-context-formatter';
+import { buildPromptWithSizeStats } from '../ide-to-llm/utils/prompt-size-helper';
+import { LLM_RESPONSE_RULES_PROMPT_ID, TechPromptBuilder, WEB_GIT_PROMPT_ID } from '../ide-to-llm/utils/tech-prompt-builder';
 import {
   PromptWorkbenchOutlineModel,
   PromptWorkbenchProfileItemModel,

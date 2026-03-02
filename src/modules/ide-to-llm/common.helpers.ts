@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { tryOpenPromptWorkbench } from './prompt-workbench/prompt-workbench-module';
-import { PromptWorkbenchBridge } from './prompt-workbench/prompt-workbench.types';
+import { tryOpenPromptWorkbench } from '../prompt-workbench/prompt-workbench-module';
+import { PromptWorkbenchBridge } from '../prompt-workbench/prompt-workbench.types';
 import { PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
 

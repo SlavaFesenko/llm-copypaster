@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { PromptWorkbenchBridge } from '../prompt-workbench/prompt-workbench.types';
 import { EditorToLlmModulePrivateHelpersDependencies } from './common.helpers';
 import { EditorHelper } from './editor-helper';
 import { CopySelectedExplorerItemsArgs, ExplorerHelper } from './explorer-helper';
-import { PromptWorkbenchBridge } from './prompt-workbench/prompt-workbench.types';
 
 export class IdeToLlmModule {
   private readonly _editorHelper: EditorHelper;

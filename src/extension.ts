@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import { ConfigService } from './config-service';
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
-import { PromptWorkbenchModule } from './modules/ide-to-llm/prompt-workbench/prompt-workbench-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
+import { PromptWorkbenchModule } from './modules/prompt-workbench/prompt-workbench-module';
 import { registerCommands } from './register-commands';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 

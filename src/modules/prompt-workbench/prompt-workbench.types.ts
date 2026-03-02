@@ -1,4 +1,4 @@
-import { CollectedFileItem } from '../../../types/files-payload';
+import { CollectedFileItem } from '../../types/files-payload';
 
 export interface PromptWorkbenchBridge {
   onNewCopiedContext(args: { includeTechPrompt: boolean; fileItems: CollectedFileItem[]; commandName: string }): void;
