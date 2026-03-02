@@ -45,15 +45,16 @@ export async function buildMergedConfigMarkdownReportText(args: {
 
   const { diff } = await import('json-diff-ts'); // json-diff-ts is ESM-only, dynamic import avoids CommonJS require
   const changeset = diff(args.baseSettingsConfig, args.mergedSettingsConfig);
+  const renamedChangeset = renameJsonDiffValueKeys(changeset);
 
   let reportText = '';
 
   reportText += '# Merged Config Report\n\n';
   reportText += `Merged Config = ${mergeChainText}\n\n`;
 
-  reportText += '## Diff (Merged vs Base)\n\n';
+  reportText += '## Diff (json-diff-ts changeset JSON, not llm-copypaster config)\n\n';
   reportText += '```json\n';
-  reportText += `${JSON.stringify(changeset, null, 2)}\n`;
+  reportText += `${JSON.stringify(renamedChangeset, null, 2)}\n`;
   reportText += '```\n\n';
 
   reportText += '## Merged Config (All Settings)\n\n';
@@ -77,4 +78,21 @@ export async function buildMergedConfigMarkdownReportText(args: {
   }
 
   return reportText.trimEnd();
+}
+
+function renameJsonDiffValueKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(item => renameJsonDiffValueKeys(item));
+
+  if (!value || typeof value !== 'object') return value;
+
+  const anyObject = value as Record<string, unknown>;
+  const nextObject: Record<string, unknown> = {};
+
+  for (const [key, childValue] of Object.entries(anyObject)) {
+    const nextKey = key === 'oldValue' ? 'baseConfigValue' : key === 'newValue' ? 'mergedConfigValue' : key;
+
+    nextObject[nextKey] = renameJsonDiffValueKeys(childValue);
+  }
+
+  return nextObject;
 }

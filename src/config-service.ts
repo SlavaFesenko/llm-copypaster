@@ -212,10 +212,8 @@ export class ConfigService {
       },
       llmToIdeSanitizationRulesById: {
         'strip-codefence': {
-          // Strip code fences only at start-of-line (or after newline), allowing only leading spaces/tabs before ```
-          pattern: '(^|\r?\n)[ \t]`{3}[^\r\n]',
-          // Preserve the matched start/newline via capture group 1 (^|\r?\n) so removing the fence doesn't join lines
-          replaceWith: '$1',
+          pattern: '`{3}[^\r\n]*',
+          replaceWith: '',
           disabledForLanguages: ['markdown'],
           disabledForPaths: ['docs/'],
         },
