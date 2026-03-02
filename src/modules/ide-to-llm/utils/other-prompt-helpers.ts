@@ -60,12 +60,12 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += `${JSON.stringify(humanReadableChangeset, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
-  reportText += '## Merged Config (All Settings)\n\n';
+  reportText += '## Merged Config\n\n';
   reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(args.mergedSettingsConfig, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
-  reportText += '## Base Config (All Settings)\n\n';
+  reportText += '## Base Config\n\n';
   reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n`;
   reportText += tripleTicksThen2N;
@@ -74,7 +74,7 @@ export async function buildMergedConfigMarkdownReportText(args: {
     const profile = args.profilesById[profileId];
     const profileOnlyConfiguredSettings = profile?.profileSettingsConfig ?? {};
 
-    reportText += `## ${profileId} (Only Configured Settings)\n\n`;
+    reportText += `## ${profileId}\n\n`;
     reportText += tripleTicksWithJson;
     reportText += `${JSON.stringify(profileOnlyConfiguredSettings, null, 2)}\n`;
     reportText += tripleTicksThen2N;

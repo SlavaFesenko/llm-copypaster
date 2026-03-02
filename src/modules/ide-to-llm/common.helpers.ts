@@ -272,14 +272,12 @@ async function pickProfileIds(args: {
   profilesById: Record<string, { description: string; version?: string }>;
   selectedProfileIds: string[];
 }): Promise<PickProfileIdsResult | null> {
-  const openMergedConfigInEditorOptionLabel = 'Open merged config in Editor';
-
   const selectedProfileIdsSet = new Set(args.selectedProfileIds);
 
   const items: ApplyProfileQuickPickItem[] = [
     {
       isAdditionallyOpenMergedConfigInEditorOption: true,
-      label: openMergedConfigInEditorOptionLabel,
+      label: '[DEBUG OPTION] Afterwards open merged config in Editor',
       detail: 'Profiles are merged into base settings (order matters: last wins)',
       picked: true,
     },
