@@ -6,7 +6,7 @@
     "promptInstructionConfig": {
       "subInstructionsById": {
         "web-git-prompt": {
-          "relativePathToSubInstruction": "prompts/web-git-prompt.md",
+          "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\LLM Copypaster Prompts\\web-git-prompt.md",
           "ignore": false,
         },
       },

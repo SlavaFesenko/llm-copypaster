@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config-service';
@@ -160,9 +161,7 @@ export class TechPromptBuilder {
     promptInstructionsConfig: PromptInstructionsConfig,
     promptId: string
   ): Promise<string | null> {
-    const promptUri = promptInstructionsConfig.isSystemBundledFile
-      ? vscode.Uri.joinPath(this._extensionContext.extensionUri, promptInstructionsConfig.relativePathToSubInstruction)
-      : this._tryBuildWorkspacePromptUri(promptInstructionsConfig.relativePathToSubInstruction);
+    const promptUri = this._tryBuildPromptUri(promptInstructionsConfig);
 
     if (!promptUri) {
       this._showPromptReadWarning(promptInstructionsConfig, promptId, 'Workspace folder not found');
@@ -177,6 +176,17 @@ export class TechPromptBuilder {
       this._showPromptReadWarning(promptInstructionsConfig, promptId, error, promptUri);
       return null;
     }
+  }
+
+  private _tryBuildPromptUri(promptInstructionsConfig: PromptInstructionsConfig): vscode.Uri | null {
+    const rawPath = promptInstructionsConfig.relativePathToSubInstruction;
+
+    if (rawPath.startsWith('file:')) return vscode.Uri.parse(rawPath); // support file:// URI values (not raw OS paths)
+    if (path.isAbsolute(rawPath)) return vscode.Uri.file(rawPath);
+
+    return promptInstructionsConfig.isSystemBundledFile
+      ? vscode.Uri.joinPath(this._extensionContext.extensionUri, rawPath)
+      : this._tryBuildWorkspacePromptUri(rawPath);
   }
 
   private _showPromptReadWarning(
@@ -218,6 +228,6 @@ export class TechPromptBuilder {
   }
 
   private _escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[]\]/g, '\$&');
+    return text.replace(/[.*+?^${}()|[]]/g, '$&');
   }
 }
