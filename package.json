@@ -46,17 +46,11 @@
       },
       {
         "command": "llm-copypaster.closeFilesInThisTabGroup",
-        "title": "Hard Close Tab Group Files"
+        "title": "Close Files in this Tab Group"
       },
       {
         "command": "llm-copypaster.lsConfig",
         "title": "ls config"
-      }
-    ],
-    "submenus": [
-      {
-        "id": "llm-copypaster.closeAdvanced",
-        "label": "Close Advanced"
       }
     ],
     "menus": {
@@ -99,15 +93,9 @@
           "group": "0-navigation@6"
         },
         {
-          "submenu": "llm-copypaster.closeAdvanced",
+          "command": "llm-copypaster.closeFilesInThisTabGroup",
           "when": "resourceScheme == file",
           "group": "0-navigation@7"
-        }
-      ],
-      "llm-copypaster.closeAdvanced": [
-        {
-          "command": "llm-copypaster.closeFilesInThisTabGroup",
-          "group": "navigation@11"
         }
       ]
     },
