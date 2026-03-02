@@ -17,6 +17,24 @@ export function buildStripCodefenceCases(): SanitizationTestCase[] {
       expectedText: 'a\n\nb\n\nc\n\nd\n\n',
     },
     {
+      name: 'strip-codefence removes indented fences (only spaces before fence)',
+      fileMeta: { path: 'src/a.ts' },
+      inputText: `a\n  ${fence}ts\nb\n\t${fence}\n`,
+      expectedText: 'a\n\nb\n\n',
+    },
+    {
+      name: 'strip-codefence does not remove fences when they are not at the start of line',
+      fileMeta: { path: 'src/a.ts' },
+      inputText: `a ${fence}ts\nb\n${fence}\n`,
+      expectedText: `a ${fence}ts\nb\n\n`,
+    },
+    {
+      name: 'strip-codefence does not remove backticks inside code (markdown generator case)',
+      fileMeta: { path: 'src/a.ts' },
+      inputText: `const markdownFence = "${fence}ts";\nconst a = 1;\n`,
+      expectedText: `const markdownFence = "${fence}ts";\nconst a = 1;\n`,
+    },
+    {
       name: 'does not apply a rule when disabledForLanguages matches file languageId',
       fileMeta: { path: 'README.md', languageId: 'markdown' },
       inputText: `${fence}md\nhello\n${fence}\n`,
