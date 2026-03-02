@@ -239,6 +239,9 @@
     "lint": "eslint src",
     "test": "vscode-test"
   },
+  "dependencies": {
+    "json-diff-ts": "^4.9.1"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",

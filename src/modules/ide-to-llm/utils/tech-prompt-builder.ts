@@ -218,6 +218,6 @@ export class TechPromptBuilder {
   }
 
   private _escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[]]/g, '$&');
+    return text.replace(/[.*+?^${}()|[]\]/g, '\$&');
   }
 }

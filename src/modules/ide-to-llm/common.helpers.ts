@@ -3,9 +3,8 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { buildLlmContextText } from './utils/llm-context-formatter';
-import { PromptSizeExceededBy, buildPromptWithSizeStats } from './utils/prompt-size-helper';
-import { TechPromptBuilder } from './utils/tech-prompt-builder';
+import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './utils/other-prompt-helpers';
+import { buildPromptWithSizeStats, PromptSizeExceededBy } from './utils/prompt-size-helper';
 import { closeUnavailableTabs, formatCountInThousands } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
@@ -224,7 +223,9 @@ export async function showCopyResultNotification(
 
       selectedProfileIds = nextPickResult.profileIds;
 
-      const rebuiltPrompt = await rebuildPromptTextForProfiles(deps, {
+      const rebuiltPrompt = await buildLlmPromptTextForProfiles({
+        extensionContext: deps.extensionContext,
+        configService: deps.configService,
         profileIds: selectedProfileIds,
         includeTechPromptFromCommand: args.includeTechPrompt,
         fileItems: args.fileItems,
@@ -242,7 +243,7 @@ export async function showCopyResultNotification(
           baseConfig
         );
 
-        const mergedConfigReportText = buildMergedConfigReportText({
+        const mergedConfigReportText = await buildMergedConfigMarkdownReportText({
           baseSettingsConfig: baseConfig.baseSettings,
           mergedSettingsConfig: mergedConfigForSelectedProfiles.baseSettings,
           profilesById: baseConfig.profilesById ?? {},
@@ -255,32 +256,6 @@ export async function showCopyResultNotification(
       continue;
     }
   }
-}
-
-async function rebuildPromptTextForProfiles(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: {
-    profileIds: string[];
-    includeTechPromptFromCommand: boolean;
-    fileItems: CollectedFileItem[];
-  }
-): Promise<string> {
-  const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(args.profileIds);
-
-  const shouldIncludeTechPrompt = args.includeTechPromptFromCommand && effectiveConfig.baseSettings.skipTechPrompt !== true;
-
-  const effectiveFileItems = effectiveConfig.baseSettings.skipCodeListings === true ? [] : args.fileItems;
-
-  const techPromptText = shouldIncludeTechPrompt
-    ? await new TechPromptBuilder(deps.extensionContext, effectiveConfig).build()
-    : '';
-
-  return buildLlmContextText({
-    fileItems: effectiveFileItems,
-    includeTechPrompt: shouldIncludeTechPrompt,
-    config: effectiveConfig,
-    techPromptText,
-  });
 }
 
 interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
@@ -361,44 +336,6 @@ function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats 
 async function openPromptTextInEditor(promptText: string): Promise<void> {
   const doc = await vscode.workspace.openTextDocument({ content: promptText, language: 'markdown' });
   await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
-}
-
-function buildMergedConfigReportText(args: {
-  baseSettingsConfig: unknown;
-  mergedSettingsConfig: unknown;
-  profilesById: Record<string, { profileSettingsConfig?: unknown }>;
-  selectedProfileIds: string[];
-}): string {
-  const normalizedSelectedProfileIds = (args.selectedProfileIds ?? [])
-    .filter(Boolean)
-    .filter(profileId => profileId !== 'Default');
-
-  const mergeChainText =
-    normalizedSelectedProfileIds.length > 0 ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')}` : 'Base Config';
-
-  let reportText = '';
-
-  reportText += '---\n';
-  reportText += `Merged Config = ${mergeChainText}\n`;
-  reportText += '---\n\n';
-
-  reportText += 'Merged Config (All Settings):\n';
-  reportText += `${JSON.stringify(args.mergedSettingsConfig, null, 2)}\n\n`;
-
-  reportText += '---\n';
-  reportText += 'Base Config (All Settings):\n';
-  reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n\n`;
-
-  for (const profileId of Object.keys(args.profilesById ?? {})) {
-    const profile = args.profilesById[profileId];
-    const profileOnlyConfiguredSettings = profile?.profileSettingsConfig ?? {};
-
-    reportText += '---\n';
-    reportText += `${profileId} (Only Configured Settings):\n`;
-    reportText += `${JSON.stringify(profileOnlyConfiguredSettings, null, 2)}\n\n`;
-  }
-
-  return reportText.trimEnd();
 }
 
 async function openMergedConfigInEditor(mergedConfigReportText: string): Promise<void> {
