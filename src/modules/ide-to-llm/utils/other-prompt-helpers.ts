@@ -57,7 +57,7 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += '# Merged Config Report\n\n';
   reportText += `Merged Config = ${mergeChainText}\n\n`;
 
-  reportText += '## Diff (json-diff-ts changeset JSON format, not llm-copypaster config)\n\n';
+  reportText += '## Diff: Merged vs Base (json-diff-ts changeset JSON format, NOT Llm-Copypaster config)\n\n';
   reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(humanReadableChangeset, null, 2)}\n`;
   reportText += tripleTicksThen2N;
