@@ -14,12 +14,19 @@
           "ignore": false,
         },
       },
+      "sharedVariablesById": {
+        "WEB_GIT_PROMPT_NAME": "Web Git Prompt",
+        "BRANCH_NAME": "master",
+        "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
+        "BLOB_GITHUB_BASE_URL": "https://github.com/",
+        "AUTHOR_REPO": "SlavaFesenko/llm-copypaster/",
+      },
     },
   },
 
   "profilesById": {
-    "Work Project XXX + Ollama": {
-      "description": "Work project profile with Ollama defaults",
+    "Disable web-git-prompt": {
+      "description": "Disable web-git-prompt",
       "version": "1",
       "profileSettingsConfig": {
         "promptInstructionConfig": {
@@ -28,9 +35,6 @@
               "relativePathToSubInstruction": "prompts/web-git-prompt.md",
               "ignore": true,
             },
-          },
-          "sharedVariablesById": {
-            "BRANCH_NAME": "master",
           },
         },
       },
