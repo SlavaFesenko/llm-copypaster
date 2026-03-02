@@ -41,7 +41,9 @@ export async function buildMergedConfigMarkdownReportText(args: {
     .filter(profileId => profileId !== 'Default');
 
   const mergeChainText =
-    normalizedSelectedProfileIds.length > 0 ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')}` : 'Base Config';
+    normalizedSelectedProfileIds.length > 0
+      ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')} Profile Config(s)`
+      : 'Base Config';
 
   const { diff } = await import('json-diff-ts'); // json-diff-ts is ESM-only, dynamic import avoids CommonJS require
   const changeset = diff(args.baseSettingsConfig, args.mergedSettingsConfig);
