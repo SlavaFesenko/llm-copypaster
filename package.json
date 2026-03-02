@@ -45,16 +45,8 @@
         "title": "LLM Copypaster: Paste Clipboard to Files"
       },
       {
-        "command": "llm-copypaster.closeAllIncludingPinned",
-        "title": "Close All Files: Pinned & Unpinned"
-      },
-      {
-        "command": "llm-copypaster.closeAllButPinnedInActiveTabGroup",
-        "title": "Close Active Tab Group Files: Just Unpinned"
-      },
-      {
-        "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
-        "title": "Close Active Tab Group Files: Pinned & Unpinned"
+        "command": "llm-copypaster.closeFilesInThisTabGroup",
+        "title": "Hard Close Tab Group Files"
       },
       {
         "command": "llm-copypaster.lsConfig",
@@ -114,16 +106,8 @@
       ],
       "llm-copypaster.closeAdvanced": [
         {
-          "command": "llm-copypaster.closeAllIncludingPinnedInActiveTabGroup",
-          "group": "navigation@10"
-        },
-        {
-          "command": "llm-copypaster.closeAllButPinnedInActiveTabGroup",
+          "command": "llm-copypaster.closeFilesInThisTabGroup",
           "group": "navigation@11"
-        },
-        {
-          "command": "llm-copypaster.closeAllIncludingPinned",
-          "group": "navigation@12"
         }
       ]
     },
