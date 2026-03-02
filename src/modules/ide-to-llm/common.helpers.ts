@@ -219,10 +219,10 @@ export async function showCopyResultNotification(
     if (selectedAction === applyOrChangeProfilesLabel) {
       const profilesById = await deps.configService.getProfilesById();
 
-      const nextProfileIds = await pickProfileIds({ profilesById, selectedProfileIds });
-      if (!nextProfileIds) return;
+      const nextPickResult = await pickProfileIds({ profilesById, selectedProfileIds });
+      if (!nextPickResult) return;
 
-      selectedProfileIds = nextProfileIds;
+      selectedProfileIds = nextPickResult.profileIds;
 
       const rebuiltPrompt = await rebuildPromptTextForProfiles(deps, {
         profileIds: selectedProfileIds,
@@ -233,6 +233,12 @@ export async function showCopyResultNotification(
       currentPromptText = rebuiltPrompt;
 
       await vscode.env.clipboard.writeText(currentPromptText);
+
+      if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
+        const effectiveConfigForProfiles = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
+        await openMergedConfigInEditor(effectiveConfigForProfiles);
+      }
+
       continue;
     }
   }
@@ -265,20 +271,29 @@ async function rebuildPromptTextForProfiles(
 }
 
 interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
-  profileId: string;
+  profileId?: string;
+  isAdditionallyOpenMergedConfigInEditorOption?: boolean;
+}
+
+interface PickProfileIdsResult {
+  profileIds: string[];
+  shouldAdditionallyOpenMergedConfigInEditor: boolean;
 }
 
 async function pickProfileIds(args: {
   profilesById: Record<string, { description: string; version?: string }>;
   selectedProfileIds: string[];
-}): Promise<string[] | null> {
+}): Promise<PickProfileIdsResult | null> {
+  const openMergedConfigInEditorOptionLabel = 'Open merged config in Editor';
+
   const selectedProfileIdsSet = new Set(args.selectedProfileIds);
 
   const items: ApplyProfileQuickPickItem[] = [
     {
-      profileId: '',
-      label: 'Profiles are merged into base settings (order matters: last wins)',
-      kind: vscode.QuickPickItemKind.Separator,
+      isAdditionallyOpenMergedConfigInEditorOption: true,
+      label: openMergedConfigInEditorOptionLabel,
+      detail: 'Profiles are merged into base settings (order matters: last wins)',
+      picked: false,
     },
   ];
 
@@ -302,7 +317,15 @@ async function pickProfileIds(args: {
 
   if (!selectedItems) return null;
 
-  return selectedItems.map(selectedItem => selectedItem.profileId).filter(Boolean);
+  const shouldAdditionallyOpenMergedConfigInEditor = selectedItems.some(
+    selectedItem => selectedItem.isAdditionallyOpenMergedConfigInEditorOption === true
+  );
+
+  const profileIds = selectedItems
+    .map(selectedItem => selectedItem.profileId)
+    .filter((profileId): profileId is string => Boolean(profileId));
+
+  return { profileIds, shouldAdditionallyOpenMergedConfigInEditor };
 }
 
 function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats | null): string {
@@ -324,5 +347,11 @@ function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats 
 
 async function openPromptTextInEditor(promptText: string): Promise<void> {
   const doc = await vscode.workspace.openTextDocument({ content: promptText, language: 'markdown' });
+  await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
+}
+
+async function openMergedConfigInEditor(config: unknown): Promise<void> {
+  const configText = JSON.stringify(config, null, 2);
+  const doc = await vscode.workspace.openTextDocument({ content: configText, language: 'json' });
   await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
 }
