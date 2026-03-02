@@ -281,7 +281,7 @@ async function pickProfileIds(args: {
       isAdditionallyOpenMergedConfigInEditorOption: true,
       label: openMergedConfigInEditorOptionLabel,
       detail: 'Profiles are merged into base settings (order matters: last wins)',
-      picked: false,
+      picked: true,
     },
   ];
 

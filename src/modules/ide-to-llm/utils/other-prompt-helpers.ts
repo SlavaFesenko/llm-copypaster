@@ -45,7 +45,7 @@ export async function buildMergedConfigMarkdownReportText(args: {
 
   const { diff } = await import('json-diff-ts'); // json-diff-ts is ESM-only, dynamic import avoids CommonJS require
   const changeset = diff(args.baseSettingsConfig, args.mergedSettingsConfig);
-  const renamedChangeset = renameJsonDiffValueKeys(changeset);
+  const humanReadableChangeset = buildHumanReadableJsonDiffChangeset(changeset);
 
   let reportText = '';
   const tripleTicks = '`' + '``';
@@ -55,9 +55,9 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += '# Merged Config Report\n\n';
   reportText += `Merged Config = ${mergeChainText}\n\n`;
 
-  reportText += '## Diff (json-diff-ts changeset JSON, not llm-copypaster config)\n\n';
+  reportText += '## Diff (json-diff-ts changeset JSON format, not llm-copypaster config)\n\n';
   reportText += tripleTicksWithJson;
-  reportText += `${JSON.stringify(renamedChangeset, null, 2)}\n`;
+  reportText += `${JSON.stringify(humanReadableChangeset, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
   reportText += '## Merged Config (All Settings)\n\n';
@@ -75,16 +75,16 @@ export async function buildMergedConfigMarkdownReportText(args: {
     const profileOnlyConfiguredSettings = profile?.profileSettingsConfig ?? {};
 
     reportText += `## ${profileId} (Only Configured Settings)\n\n`;
-    reportText += '`' + '``json\n';
+    reportText += tripleTicksWithJson;
     reportText += `${JSON.stringify(profileOnlyConfiguredSettings, null, 2)}\n`;
-    reportText += '`' + '``\n\n';
+    reportText += tripleTicksThen2N;
   }
 
   return reportText.trimEnd();
 }
 
-function renameJsonDiffValueKeys(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(item => renameJsonDiffValueKeys(item));
+function buildHumanReadableJsonDiffChangeset(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(item => buildHumanReadableJsonDiffChangeset(item));
 
   if (!value || typeof value !== 'object') return value;
 
@@ -92,9 +92,34 @@ function renameJsonDiffValueKeys(value: unknown): unknown {
   const nextObject: Record<string, unknown> = {};
 
   for (const [key, childValue] of Object.entries(anyObject)) {
-    const nextKey = key === 'oldValue' ? 'baseConfigValue' : key === 'newValue' ? 'mergedConfigValue' : key;
+    if (key === 'type') continue; // Drop json-diff-ts change type (it's always UPDATE in our use-case)
 
-    nextObject[nextKey] = renameJsonDiffValueKeys(childValue);
+    let nextKey = key;
+
+    switch (key) {
+      case 'key':
+        nextKey = 'fieldOrSectionName'; // key -> fieldOrSectionName
+        break;
+
+      case 'changes':
+        nextKey = 'diff'; // changes -> diff
+        break;
+
+      case 'value':
+      case 'newValue':
+        nextKey = 'mergedConfigValue'; // value/newValue -> mergedConfigValue
+        break;
+
+      case 'oldValue':
+        nextKey = 'baseConfigValue'; // oldValue -> baseConfigValue
+        break;
+
+      default:
+        nextKey = key; // Keep other keys as-is
+        break;
+    }
+
+    nextObject[nextKey] = buildHumanReadableJsonDiffChangeset(childValue);
   }
 
   return nextObject;
