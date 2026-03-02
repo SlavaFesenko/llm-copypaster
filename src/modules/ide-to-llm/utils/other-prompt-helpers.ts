@@ -48,24 +48,27 @@ export async function buildMergedConfigMarkdownReportText(args: {
   const renamedChangeset = renameJsonDiffValueKeys(changeset);
 
   let reportText = '';
+  const tripleTicks = '`' + '``';
+  const tripleTicksThen2N = `${tripleTicks}\n\n`;
+  const tripleTicksWithJson = `${tripleTicks}json\n`;
 
   reportText += '# Merged Config Report\n\n';
   reportText += `Merged Config = ${mergeChainText}\n\n`;
 
   reportText += '## Diff (json-diff-ts changeset JSON, not llm-copypaster config)\n\n';
-  reportText += '`' + '``json\n';
+  reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(renamedChangeset, null, 2)}\n`;
-  reportText += '`' + '``\n\n';
+  reportText += tripleTicksThen2N;
 
   reportText += '## Merged Config (All Settings)\n\n';
-  reportText += '`' + '``json\n';
+  reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(args.mergedSettingsConfig, null, 2)}\n`;
-  reportText += '`' + '``\n\n';
+  reportText += tripleTicksThen2N;
 
   reportText += '## Base Config (All Settings)\n\n';
-  reportText += '`' + '``json\n';
+  reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n`;
-  reportText += '`' + '``\n\n';
+  reportText += tripleTicksThen2N;
 
   for (const profileId of Object.keys(args.profilesById ?? {})) {
     const profile = args.profilesById[profileId];
