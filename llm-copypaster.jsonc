@@ -5,6 +5,10 @@
   "baseSettings": {
     "promptInstructionConfig": {
       "subInstructionsById": {
+        "llm-response-rules-prompt": {
+          "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\LLM Copypaster Prompts\\llm-response-rules-prompt.md",
+          "ignore": false,
+        },
         "web-git-prompt": {
           "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\LLM Copypaster Prompts\\web-git-prompt.md",
           "ignore": false,
@@ -29,21 +33,6 @@
           },
           "sharedVariablesById": {
             "BRANCH_NAME": "master",
-          },
-        },
-      },
-    },
-
-    "Gemini for pet-project": {
-      "description": "Minimal overrides for pet-project with Gemini",
-      "version": "1",
-      "profileSettingsConfig": {
-        "promptInstructionConfig": {
-          "subInstructionsById": {
-            "web-git-prompt": {
-              "relativePathToSubInstruction": "prompts/web-git-prompt.md",
-              "ignore": true,
-            },
           },
         },
       },
