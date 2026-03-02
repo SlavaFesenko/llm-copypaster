@@ -71,10 +71,6 @@
     ],
     "submenus": [
       {
-        "id": "llm-copypaster.editor",
-        "label": "LLM Copypaster: Advanced"
-      },
-      {
         "id": "llm-copypaster.closeAdvanced",
         "label": "Close Advanced"
       }
@@ -110,30 +106,24 @@
           "group": "0-navigation@3"
         },
         {
-          "command": "llm-copypaster.applyClipboardToFiles",
+          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
           "when": "resourceScheme == file",
           "group": "0-navigation@4"
         },
         {
-          "submenu": "llm-copypaster.editor",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@5"
-        }
-      ],
-      "llm-copypaster.editor": [
-        {
-          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
-          "when": "resourceScheme == file",
-          "group": "navigation@10"
-        },
-        {
           "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
           "when": "resourceScheme == file",
-          "group": "navigation@11"
+          "group": "0-navigation@5"
         },
         {
           "submenu": "llm-copypaster.closeAdvanced",
-          "group": "navigation@30"
+          "when": "resourceScheme == file",
+          "group": "0-navigation@6"
+        },
+        {
+          "command": "llm-copypaster.applyClipboardToFiles",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@7"
         }
       ],
       "llm-copypaster.closeAdvanced": [
