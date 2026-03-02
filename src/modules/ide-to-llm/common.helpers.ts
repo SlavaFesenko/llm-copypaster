@@ -146,11 +146,11 @@ export async function showCopyResultNotification(
 
   const openPromptInEditor = 'Open Prompt in Editor';
 
-  let selectedProfileId = 'Default';
+  let selectedProfileIds: string[] = [];
   let currentPromptText = args.promptText;
 
   while (true) {
-    const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileId(selectedProfileId);
+    const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
 
     const promptStatsResult = buildPromptWithSizeStats({
       promptText: currentPromptText,
@@ -180,11 +180,13 @@ export async function showCopyResultNotification(
 
     const shouldWarn = shouldShowPromptSizeStats ? Boolean(promptStatsResult.isExceeded) : false;
 
-    const applyOrChangeProfileLabel = selectedProfileId === 'Default' ? 'Apply Profile' : 'Change Profile';
+    const hasNoSelectedProfiles = selectedProfileIds.length === 0;
+
+    const applyOrChangeProfilesLabel = hasNoSelectedProfiles ? 'Apply Profiles' : 'Change Profiles';
 
     const actionLabels = [
       openPromptInEditor,
-      ...(hasProfiles ? [applyOrChangeProfileLabel] : []),
+      ...(hasProfiles ? [applyOrChangeProfilesLabel] : []),
       ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
     ];
 
@@ -214,16 +216,16 @@ export async function showCopyResultNotification(
       continue;
     }
 
-    if (selectedAction === applyOrChangeProfileLabel) {
+    if (selectedAction === applyOrChangeProfilesLabel) {
       const profilesById = await deps.configService.getProfilesById();
 
-      const nextProfileId = await pickProfileId({ profilesById, selectedProfileId });
-      if (!nextProfileId) return;
+      const nextProfileIds = await pickProfileIds({ profilesById, selectedProfileIds });
+      if (!nextProfileIds) return;
 
-      selectedProfileId = nextProfileId;
+      selectedProfileIds = nextProfileIds;
 
-      const rebuiltPrompt = await rebuildPromptTextForProfile(deps, {
-        profileId: selectedProfileId,
+      const rebuiltPrompt = await rebuildPromptTextForProfiles(deps, {
+        profileIds: selectedProfileIds,
         includeTechPromptFromCommand: args.includeTechPrompt,
         fileItems: args.fileItems,
       });
@@ -236,15 +238,15 @@ export async function showCopyResultNotification(
   }
 }
 
-async function rebuildPromptTextForProfile(
+async function rebuildPromptTextForProfiles(
   deps: EditorToLlmModulePrivateHelpersDependencies,
   args: {
-    profileId: string;
+    profileIds: string[];
     includeTechPromptFromCommand: boolean;
     fileItems: CollectedFileItem[];
   }
 ): Promise<string> {
-  const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileId(args.profileId);
+  const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(args.profileIds);
 
   const shouldIncludeTechPrompt = args.includeTechPromptFromCommand && effectiveConfig.baseSettings.skipTechPrompt !== true;
 
@@ -266,15 +268,17 @@ interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
   profileId: string;
 }
 
-async function pickProfileId(args: {
+async function pickProfileIds(args: {
   profilesById: Record<string, { description: string; version?: string }>;
-  selectedProfileId: string;
-}): Promise<string | null> {
+  selectedProfileIds: string[];
+}): Promise<string[] | null> {
+  const selectedProfileIdsSet = new Set(args.selectedProfileIds);
+
   const items: ApplyProfileQuickPickItem[] = [
     {
-      profileId: 'Default',
-      label: args.selectedProfileId === 'Default' ? 'Default (currently selected)' : 'Default',
-      detail: 'Base settings',
+      profileId: '',
+      label: 'Profiles are merged into base settings (order matters: last wins)',
+      kind: vscode.QuickPickItemKind.Separator,
     },
   ];
 
@@ -285,17 +289,20 @@ async function pickProfileId(args: {
 
     items.push({
       profileId,
-      label: args.selectedProfileId === profileId ? `${profileId} (currently selected)` : profileId,
+      label: profileId,
       detail: `${version}${descriptionSuffix}`,
+      picked: selectedProfileIdsSet.has(profileId),
     });
   }
 
-  const selectedItem = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Select profile to apply to prompt',
-    canPickMany: false,
+  const selectedItems = await vscode.window.showQuickPick(items, {
+    placeHolder: 'Select profiles to merge and apply to prompt (empty selection = base only)',
+    canPickMany: true,
   });
 
-  return selectedItem?.profileId ?? null;
+  if (!selectedItems) return null;
+
+  return selectedItems.map(selectedItem => selectedItem.profileId).filter(Boolean);
 }
 
 function buildPromptSizeStatsSuffix(promptSizeStats: EditorToLlmPromptSizeStats | null): string {

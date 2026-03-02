@@ -110,18 +110,33 @@ export class ConfigService {
     profileId: string,
     config?: LlmCopypasterConfig
   ): Promise<LlmCopypasterConfig> {
+    return await this.buildEffectiveConfigForProfileIds([profileId], config);
+  }
+
+  public async buildEffectiveConfigForProfileIds(
+    profileIds: string[],
+    config?: LlmCopypasterConfig
+  ): Promise<LlmCopypasterConfig> {
     const effectiveConfig = await this._getConfigOrUseOverride(config);
 
-    if (profileId === 'Default') return effectiveConfig;
+    const normalizedProfileIds = (profileIds ?? []).filter(Boolean);
+
+    const hasAnyNonDefaultProfile = normalizedProfileIds.some(profileId => profileId !== 'Default');
+
+    if (!hasAnyNonDefaultProfile) return effectiveConfig;
 
     const profilesById = effectiveConfig.profilesById ?? {};
-    const profile = profilesById[profileId];
-    if (!profile?.profileSettingsConfig) return effectiveConfig;
 
-    const effectiveBaseSettings = this._mergeProfileSettingsConfig(
-      effectiveConfig.baseSettings,
-      profile.profileSettingsConfig
-    );
+    let effectiveBaseSettings = effectiveConfig.baseSettings;
+
+    for (const profileId of normalizedProfileIds) {
+      if (profileId === 'Default') continue;
+
+      const profile = profilesById[profileId];
+      if (!profile?.profileSettingsConfig) continue;
+
+      effectiveBaseSettings = this._mergeProfileSettingsConfig(effectiveBaseSettings, profile.profileSettingsConfig);
+    }
 
     return {
       ...effectiveConfig,
