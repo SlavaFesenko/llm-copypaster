@@ -22,11 +22,11 @@
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy Tab Group Files"
+        "title": "LLM Copypaster: Copy This Tab Group Files"
       },
       {
         "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
-        "title": "Copy Tab Group Files: Only Pinned"
+        "title": "LLM Copypaster: Copy This Tab Group Pinned Files"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
@@ -34,7 +34,7 @@
       },
       {
         "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
-        "title": "Copy All Files: Only Pinned"
+        "title": "LLM Copypaster: Copy All Pinned Files"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
@@ -43,14 +43,6 @@
       {
         "command": "llm-copypaster.applyClipboardToFiles",
         "title": "LLM Copypaster: Paste Clipboard to Files"
-      },
-      {
-        "command": "llm-copypaster.validateClipboardPayload",
-        "title": "LLM Copypaster: Validate Clipboard Payload"
-      },
-      {
-        "command": "llm-copypaster.sanitizeClipboardPayload",
-        "title": "LLM Copypaster: Sanitize Clipboard Payload"
       },
       {
         "command": "llm-copypaster.closeAllIncludingPinned",
@@ -76,20 +68,14 @@
       }
     ],
     "menus": {
-      "editor/context": [],
       "explorer/context": [
         {
           "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
           "group": "1-navigation@1"
-        },
-        {
-          "command": "llm-copypaster.applyClipboardToFiles",
-          "when": "resourceScheme == file",
-          "group": "1-navigation@3"
         }
       ],
-      "editor/title/context": [
+      "editor/context": [
         {
           "command": "llm-copypaster.copyThisFileAsLlmContext",
           "when": "resourceScheme == file",
@@ -101,12 +87,12 @@
           "group": "0-navigation@2"
         },
         {
-          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
           "when": "resourceScheme == file",
           "group": "0-navigation@3"
         },
         {
-          "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
+          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "0-navigation@4"
         },
@@ -116,12 +102,12 @@
           "group": "0-navigation@5"
         },
         {
-          "submenu": "llm-copypaster.closeAdvanced",
+          "command": "llm-copypaster.applyClipboardToFiles",
           "when": "resourceScheme == file",
           "group": "0-navigation@6"
         },
         {
-          "command": "llm-copypaster.applyClipboardToFiles",
+          "submenu": "llm-copypaster.closeAdvanced",
           "when": "resourceScheme == file",
           "group": "0-navigation@7"
         }

@@ -20,9 +20,6 @@ export const commandIds = {
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
-  validateClipboardPayload: 'llm-copypaster.validateClipboardPayload',
-  sanitizeClipboardPayload: 'llm-copypaster.sanitizeClipboardPayload',
-  copyGuidedRetryPromptLastError: 'llm-copypaster.copyGuidedRetryPromptLastError',
 
   closeAllIncludingPinned: 'llm-copypaster.closeAllIncludingPinned',
   closeAllButPinnedInActiveTabGroup: 'llm-copypaster.closeAllButPinnedInActiveTabGroup',
@@ -81,25 +78,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     vscode.commands.registerCommand(commandIds.applyClipboardToFiles, async () => {
       await deps.llmToEditorModule.applyClipboardToFiles();
-    }),
-
-    vscode.commands.registerCommand(commandIds.validateClipboardPayload, async () => {
-      await deps.llmToEditorModule.validateClipboardPayload();
-    }),
-
-    vscode.commands.registerCommand(commandIds.sanitizeClipboardPayload, async () => {
-      await deps.llmToEditorModule.sanitizeClipboardPayload();
-    }),
-
-    vscode.commands.registerCommand(commandIds.copyGuidedRetryPromptLastError, async () => {
-      const retryPrompt = deps.guidedRetryStore.buildRetryPromptForLastError();
-      if (!retryPrompt) {
-        await vscode.window.showWarningMessage('No guided retry data yet');
-        return;
-      }
-
-      await vscode.env.clipboard.writeText(retryPrompt);
-      await vscode.window.showInformationMessage('Guided retry prompt copied to clipboard');
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
