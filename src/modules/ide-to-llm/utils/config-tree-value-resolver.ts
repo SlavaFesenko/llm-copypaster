@@ -9,10 +9,14 @@ export class ConfigTreeValueResolver {
   }
 
   public tryResolveIfFlagValue(flagName: string, predefinedValuesById: Record<string, string>): boolean {
-    const rawValue = this._tryResolveRawValue(flagName, predefinedValuesById);
-    if (rawValue === undefined) return false;
+    const parsedFlagName = this._parseNegatableFlagName(flagName);
 
-    return this._toBoolean(rawValue);
+    const rawValue = this._tryResolveRawValue(parsedFlagName.normalizedFlagName, predefinedValuesById);
+    if (rawValue === undefined) return parsedFlagName.isNegated;
+
+    const resolvedValue = this._toBoolean(rawValue);
+
+    return parsedFlagName.isNegated ? !resolvedValue : resolvedValue;
   }
 
   public tryResolveValueByPath(rawPath: string): unknown | undefined {
@@ -34,6 +38,21 @@ export class ConfigTreeValueResolver {
     }
 
     return undefined;
+  }
+
+  private _parseNegatableFlagName(rawFlagName: string): { normalizedFlagName: string; isNegated: boolean } {
+    const trimmed = (rawFlagName ?? '').trim();
+    if (!trimmed) return { normalizedFlagName: '', isNegated: false };
+
+    let nextFlagName = trimmed;
+    let isNegated = false;
+
+    while (nextFlagName.startsWith('!')) {
+      isNegated = !isNegated;
+      nextFlagName = nextFlagName.slice(1).trim();
+    }
+
+    return { normalizedFlagName: nextFlagName, isNegated };
   }
 
   private _tryResolveRawValue(key: string, predefinedValuesById: Record<string, string>): unknown | undefined {
