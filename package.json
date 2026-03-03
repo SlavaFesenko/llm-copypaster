@@ -46,7 +46,7 @@
       },
       {
         "command": "llm-copypaster.openSelectedFilesInNewTabGroup",
-        "title": "Open Selected Files In New Tab Group"
+        "title": "Open Selected Files In NEW Tab Group"
       },
       {
         "command": "llm-copypaster.openSelectedFilesInActiveTabGroup",
@@ -54,7 +54,7 @@
       },
       {
         "command": "llm-copypaster.openSelectedFilesInTabGroup",
-        "title": "Open Selected Files In Tab Group"
+        "title": "Open Selected Files In <SELECT> Tab Group"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
