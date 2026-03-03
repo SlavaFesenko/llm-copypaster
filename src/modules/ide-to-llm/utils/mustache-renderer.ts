@@ -12,6 +12,7 @@
 // ' - renderConstant(promptText, key, value)',
 // ' - renderIf(promptText, flagName, isEnabled)',
 // ' - renderIfElse(promptText, flagName, isEnabled)',
+// ' - renderIfBlocks(promptText, flagsById)',
 // '',
 // 'Notes:',
 // ' - Unknown/mismatched tags are kept unchanged',
@@ -47,6 +48,34 @@ export class MustacheRenderer {
     return this._renderIfInternal(promptText, flagName, isEnabled, true);
   }
 
+  public renderIfBlocks(promptText: string, flagsById: Record<string, boolean>): string {
+    let nextPromptText = promptText;
+    let searchStartIndex = 0;
+
+    while (searchStartIndex < nextPromptText.length) {
+      const ifStartTagIndex = this._findNextIfStartTagIndex(nextPromptText, searchStartIndex);
+      if (ifStartTagIndex === -1) break;
+
+      const parsedIfBlock = this._tryParseIfBlockDynamic(nextPromptText, ifStartTagIndex);
+      if (!parsedIfBlock) {
+        searchStartIndex = ifStartTagIndex + 2;
+        continue;
+      }
+
+      const isEnabled = flagsById?.[parsedIfBlock.flagName] === true;
+      const selectedText = this._selectIfBlockText(parsedIfBlock, isEnabled, flagsById);
+
+      nextPromptText =
+        nextPromptText.slice(0, parsedIfBlock.blockStartIndex) +
+        selectedText +
+        nextPromptText.slice(parsedIfBlock.blockEndIndexExclusive);
+
+      searchStartIndex = parsedIfBlock.blockStartIndex + selectedText.length;
+    }
+
+    return nextPromptText;
+  }
+
   private _renderIfInternal(promptText: string, flagName: string, isEnabled: boolean, allowElseBranches: boolean): string {
     let nextPromptText = promptText;
     let searchStartIndex = 0;
@@ -61,7 +90,7 @@ export class MustacheRenderer {
         continue;
       }
 
-      const selectedText = this._selectIfBlockText(parsedIfBlock, isEnabled);
+      const selectedText = this._selectIfBlockText(parsedIfBlock, isEnabled, {});
 
       nextPromptText =
         nextPromptText.slice(0, parsedIfBlock.blockStartIndex) +
@@ -79,16 +108,48 @@ export class MustacheRenderer {
     return promptText.indexOf(exactStartTag, searchStartIndex);
   }
 
-  private _selectIfBlockText(parsedIfBlock: ParsedIfBlock, isEnabled: boolean): string {
+  private _findNextIfStartTagIndex(promptText: string, searchStartIndex: number): number {
+    return promptText.indexOf('{{#if ', searchStartIndex);
+  }
+
+  private _selectIfBlockText(parsedIfBlock: ParsedIfBlock, isEnabled: boolean, flagsById: Record<string, boolean>): string {
     if (isEnabled) return parsedIfBlock.ifBranchText;
-    if (parsedIfBlock.elseBranchText !== null) return parsedIfBlock.elseBranchText;
 
     for (const elseIfBranch of parsedIfBlock.elseIfBranches) {
-      if (!elseIfBranch.isConditionMet) continue;
+      if (flagsById?.[elseIfBranch.conditionFlagName] !== true) continue;
       return elseIfBranch.branchText;
     }
 
+    if (parsedIfBlock.elseBranchText !== null) return parsedIfBlock.elseBranchText;
+
     return '';
+  }
+
+  private _tryParseIfBlockDynamic(promptText: string, ifStartTagIndex: number): ParsedIfBlock | null {
+    const tagEndIndex = promptText.indexOf('}}', ifStartTagIndex + 2);
+    if (tagEndIndex === -1) return null;
+
+    const tagContent = promptText.slice(ifStartTagIndex + 2, tagEndIndex).trim();
+
+    if (!tagContent.startsWith('#if ')) return null;
+
+    const flagName = tagContent.replace(/^#if\s+/, '').trim();
+    if (!flagName) return null;
+
+    const blockStartIndex = ifStartTagIndex;
+    const ifContentStartIndex = tagEndIndex + 2;
+
+    const readResult = this._readUntilIfBlockEnd(promptText, ifContentStartIndex, true);
+    if (!readResult) return null;
+
+    return {
+      flagName,
+      blockStartIndex,
+      blockEndIndexExclusive: readResult.blockEndIndexExclusive,
+      ifBranchText: readResult.ifBranchText,
+      elseIfBranches: readResult.elseIfBranches,
+      elseBranchText: readResult.elseBranchText,
+    };
   }
 
   private _tryParseIfBlock(
@@ -105,6 +166,7 @@ export class MustacheRenderer {
     if (!readResult) return null;
 
     return {
+      flagName,
       blockStartIndex,
       blockEndIndexExclusive: readResult.blockEndIndexExclusive,
       ifBranchText: readResult.ifBranchText,
@@ -190,7 +252,6 @@ export class MustacheRenderer {
         currentSection = 'elseIf';
         currentElseIfBranch = {
           conditionFlagName: elseIfFlagName,
-          isConditionMet: false,
           branchText: '',
         };
 
@@ -208,11 +269,11 @@ export class MustacheRenderer {
 
 interface ElseIfBranch {
   conditionFlagName: string;
-  isConditionMet: boolean;
   branchText: string;
 }
 
 interface ParsedIfBlock {
+  flagName: string;
   blockStartIndex: number;
   blockEndIndexExclusive: number;
   ifBranchText: string;

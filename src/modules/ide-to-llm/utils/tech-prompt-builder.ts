@@ -5,9 +5,6 @@ import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../.
 import { FilePayloadOperationType } from '../../../types/files-payload';
 import { MustacheRenderer } from './mustache-renderer';
 
-export const LLM_RESPONSE_RULES_PROMPT_ID = 'llm-response-rules-prompt';
-export const WEB_GIT_PROMPT_ID = 'web-git-prompt';
-
 export class TechPromptBuilder {
   private readonly _mustacheRenderer: MustacheRenderer;
 
@@ -21,21 +18,26 @@ export class TechPromptBuilder {
   public async build(): Promise<string> {
     const promptInstructionConfig = this._config.baseSettings.promptInstructionConfig;
     const subInstructionsById = promptInstructionConfig.subInstructionsById ?? {};
+    const promptIdsInConfig = Object.keys(subInstructionsById);
+
+    if (promptIdsInConfig.length === 0) return '';
+
     const builtPrompts: string[] = [];
+    const renderConstantsById = this._buildRenderConstantsById();
 
-    const llmResponseRulesPrompt = await this._buildLlmResponseRulesPrompt();
-    if (llmResponseRulesPrompt) builtPrompts.push(llmResponseRulesPrompt);
+    for (const promptId of promptIdsInConfig) {
+      const promptInstructionsConfig = subInstructionsById[promptId];
+      if (!promptInstructionsConfig) continue;
 
-    const webGitPrompt = await this._buildWebGitPrompt();
-    if (webGitPrompt) builtPrompts.push(webGitPrompt);
+      const builtPromptText = await this._tryBuildPromptText({
+        promptId,
+        promptInstructionsConfig,
+        renderConstantsById,
+      });
 
-    const otherPromptIds = Object.keys(subInstructionsById).filter(
-      promptId => promptId !== LLM_RESPONSE_RULES_PROMPT_ID && promptId !== WEB_GIT_PROMPT_ID
-    );
+      if (!builtPromptText) continue;
 
-    for (const promptId of otherPromptIds) {
-      const otherPromptText = await this._buildGenericPrompt(promptId);
-      if (otherPromptText) builtPrompts.push(otherPromptText);
+      builtPrompts.push(builtPromptText);
     }
 
     if (builtPrompts.length === 0) return '';
@@ -45,116 +47,56 @@ export class TechPromptBuilder {
     return builtPrompts.join(delimiterLine);
   }
 
-  private async _buildLlmResponseRulesPrompt(): Promise<string | null> {
-    const promptInstructionsConfig = this._tryFindPromptInstructionsConfigById(LLM_RESPONSE_RULES_PROMPT_ID);
-    if (!promptInstructionsConfig) return null;
-    if (promptInstructionsConfig.ignore) return null;
+  private async _tryBuildPromptText(args: {
+    promptId: string;
+    promptInstructionsConfig: PromptInstructionsConfig;
+    renderConstantsById: Record<string, string>;
+  }): Promise<string | null> {
+    if (args.promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(promptInstructionsConfig, LLM_RESPONSE_RULES_PROMPT_ID);
+    const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId);
     if (!promptText) return null;
-
-    const webGitPromptConcatenationEnabled = this._tryResolveWebGitPromptConcatenationEnabled();
 
     let nextPromptText = promptText;
 
-    nextPromptText = this._renderSharedVariables(nextPromptText);
+    nextPromptText = this._renderConstants(nextPromptText, args.renderConstantsById);
 
-    nextPromptText = this._mustacheRenderer.renderConstant(
-      nextPromptText,
-      'codeListingHeaderStartFragment',
-      this._getCodeListingHeaderStartFragmentWithSpace()
-    );
-
-    nextPromptText = this._mustacheRenderer.renderConstant(
-      nextPromptText,
-      'fileStatusPrefix',
-      this._config.llmToIdeParsingAnchors.fileStatusPrefix
-    );
-
-    nextPromptText = this._mustacheRenderer.renderConstant(
-      nextPromptText,
-      'filePayloadOperationTypeEditedFull',
-      FilePayloadOperationType.EditedFull
-    );
-
-    nextPromptText = this._mustacheRenderer.renderConstant(
-      nextPromptText,
-      'filePayloadOperationTypeCreated',
-      FilePayloadOperationType.Created
-    );
-
-    nextPromptText = this._mustacheRenderer.renderConstant(
-      nextPromptText,
-      'filePayloadOperationTypeDeleted',
-      FilePayloadOperationType.Deleted
-    );
-
-    nextPromptText = this._mustacheRenderer.renderIf(
-      nextPromptText,
-      'webGitPromptConcatenationEnabled',
-      webGitPromptConcatenationEnabled
-    );
+    // Expressions are not evaluated; we render conditionals by explicit boolean map from builder-context
+    nextPromptText = this._mustacheRenderer.renderIfBlocks(nextPromptText, {});
 
     if (!nextPromptText.trim()) return null;
 
     return nextPromptText;
   }
 
-  private async _buildWebGitPrompt(): Promise<string | null> {
-    const promptInstructionsConfig = this._tryFindPromptInstructionsConfigById(WEB_GIT_PROMPT_ID);
-    if (!promptInstructionsConfig) return null;
-    if (promptInstructionsConfig.ignore) return null;
-
-    const promptText = await this._tryReadPromptText(promptInstructionsConfig, WEB_GIT_PROMPT_ID);
-    if (!promptText) return null;
-
+  private _renderConstants(promptText: string, constantsById: Record<string, string>): string {
     let nextPromptText = promptText;
 
-    nextPromptText = this._renderSharedVariables(nextPromptText);
-
-    if (!nextPromptText.trim()) return null;
-
-    return nextPromptText;
-  }
-
-  private async _buildGenericPrompt(promptId: string): Promise<string | null> {
-    const promptInstructionsConfig = this._tryFindPromptInstructionsConfigById(promptId);
-    if (!promptInstructionsConfig) return null;
-    if (promptInstructionsConfig.ignore) return null;
-
-    const promptText = await this._tryReadPromptText(promptInstructionsConfig, promptId);
-    if (!promptText) return null;
-
-    const nextPromptText = this._renderSharedVariables(promptText);
-
-    if (!nextPromptText.trim()) return null;
-
-    return nextPromptText;
-  }
-
-  private _renderSharedVariables(promptText: string): string {
-    const sharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
-    let nextPromptText = promptText;
-
-    for (const [placeholderKey, placeholderValue] of Object.entries(sharedVariablesById)) {
+    for (const [placeholderKey, placeholderValue] of Object.entries(constantsById ?? {})) {
       nextPromptText = this._mustacheRenderer.renderConstant(nextPromptText, placeholderKey, placeholderValue);
     }
 
     return nextPromptText;
   }
 
-  private _tryResolveWebGitPromptConcatenationEnabled(): boolean {
-    const webGitPromptInstructionsConfig = this._tryFindPromptInstructionsConfigById(WEB_GIT_PROMPT_ID);
-    return !webGitPromptInstructionsConfig?.ignore;
-  }
+  private _buildRenderConstantsById(): Record<string, string> {
+    const sharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
 
-  private _tryFindPromptInstructionsConfigById(promptInstructionsConfigId: string): PromptInstructionsConfig | null {
-    const subInstructionsById = this._config.baseSettings.promptInstructionConfig.subInstructionsById ?? {};
-    const foundPromptInstructionsConfig = subInstructionsById[promptInstructionsConfigId];
+    return {
+      ...sharedVariablesById,
 
-    if (!foundPromptInstructionsConfig) return null;
+      // LLM-to-IDE parsing anchors (commonly needed by prompt-instructions)
+      techPromptDelimiter: this._config.llmToIdeParsingAnchors.techPromptDelimiter,
+      codeListingHeaderStartFragment: this._getCodeListingHeaderStartFragmentWithSpace(),
+      fileStatusPrefix: this._config.llmToIdeParsingAnchors.fileStatusPrefix,
+      placeholderStartFragment: this._config.llmToIdeParsingAnchors.placeholderStartFragment,
+      placeholderEndFragment: this._config.llmToIdeParsingAnchors.placeholderEndFragment,
 
-    return foundPromptInstructionsConfig;
+      // File payload operation types
+      filePayloadOperationTypeEditedFull: FilePayloadOperationType.EditedFull,
+      filePayloadOperationTypeCreated: FilePayloadOperationType.Created,
+      filePayloadOperationTypeDeleted: FilePayloadOperationType.Deleted,
+    };
   }
 
   private async _tryReadPromptText(

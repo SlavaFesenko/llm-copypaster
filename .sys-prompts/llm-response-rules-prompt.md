@@ -1,4 +1,4 @@
-# OUTPUT INSTRUCTIONS (strict)
+# OUTPUT INSTRUCTIONS (system)
 
 - The prohibitions below apply to the MODEL OUTPUT (output), not to the text of these instructions
 - First comes the `EXPLANATIONS BLOCK`
