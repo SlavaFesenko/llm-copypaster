@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigService } from './config-service';
-import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
+import { AdvancedFilesOptionsModule } from './modules/advanced-close/advanced-file-options-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
@@ -36,7 +36,7 @@ export interface RegisterCommandsDeps {
   editorToLlmModule: IdeToLlmModule;
   llmToEditorModule: LlmToIdeModule;
   guidedRetryStore: GuidedRetryStore;
-  advancedCloseModule: AdvancedCloseModule;
+  advancedCloseModule: AdvancedFilesOptionsModule;
   configService: ConfigService;
   logger: OutputChannelLogger;
 }

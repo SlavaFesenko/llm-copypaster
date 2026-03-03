@@ -7,7 +7,7 @@ import {
   tryFindTabGroupContainingTab,
 } from './tab-group-picker-helpers';
 
-export class AdvancedCloseModule {
+export class AdvancedFilesOptionsModule {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
   public async forceCloseAllTabs(): Promise<void> {
