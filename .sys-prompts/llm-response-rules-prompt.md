@@ -1,4 +1,4 @@
-# OUTPUT INSTRUCTIONS (system)
+# OUTPUT INSTRUCTIONS (strict)
 
 - The prohibitions below apply to the MODEL OUTPUT (output), not to the text of these instructions
 - First comes the `EXPLANATIONS BLOCK`
@@ -9,23 +9,21 @@
 
 - Conceptual solution to the task (including the answer to the user’s question): 1–5 short sentences
 - If there are edited/added/deleted files: for each — `only_filename.ext + what was edited and why` (very briefly)
-  {{#if webGitPromptConcatenationEnabled}}- If `Web Git Prompt` is provided in the same request, include its required web access log in this `EXPLANATIONS BLOCK` (use the format defined by `Web Git Prompt`){{/if}}
 - Markdown is allowed inside the `EXPLANATIONS BLOCK` (including markdown links) if it improves readability
 - Emojis are allowed inside the `EXPLANATIONS BLOCK` only, and only from this fixed set:
-  - File status: ✏️ edited, ➕ created, ➖ deleted
-    {{#if webGitPromptConcatenationEnabled}}- Web access status: 🌐 opened, ❌ failed, ⛔ blocked{{/if}}
+- File status: ✏️ edited, ➕ created, ➖ deleted
 
 ## `FILE LISTING` FORMAT (for each edited/added file):
 
-- First line strictly: `{{codeListingHeaderStartFragment}}relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
-- Second line strictly one of: {{fileStatusPrefix}}{{filePayloadOperationTypeEditedFull}}, {{fileStatusPrefix}}{{filePayloadOperationTypeCreated}}, {{fileStatusPrefix}}{{filePayloadOperationTypeDeleted}}
+- First line strictly: `{{CODE_LISTING_HEADER_START_FRAGMENT}} relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
+- Second line strictly one of: {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}, {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}, {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
 - Immediately after — the full file content as raw text, or in case of a deleted file — do not output any content at all (immediately the next header or end of output)
 
 ## WHICH FILES TO OUTPUT:
 
-- Edited (even if user sent an empty file - it's treated as edited): {{filePayloadOperationTypeEditedFull}}
-- Created (file treated as created only if user didn't sent it in request): {{filePayloadOperationTypeCreated}}
-- Deleted: {{filePayloadOperationTypeDeleted}}
+- Edited (even if user sent an empty file - it's treated as edited): {{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}
+- Created (file treated as created only if user didn't sent it in request): {{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}
+- Deleted: {{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
 
 ## IT IS FORBIDDEN TO OUTPUT unchanged files!
 
@@ -44,19 +42,15 @@ Files changed:
 ➖ `dont-need-anymore.ts` — deleted because it’s no longer used;
 ➕ `created-file` — created to provide an additional greeting output.
 
-{{#if webGitPromptConcatenationEnabled}}Web access log:
-🌐 Opened: [package.json](https://full-url/package.json) — confirm existing commands
-❌ Failed: [missing.ts](https://full-url/missing.ts) — 404 Not Found, needed to confirm referenced import{{/if}}
-
-{{codeListingHeaderStartFragment}}src/index.ts
-{{fileStatusPrefix}}{{filePayloadOperationTypeEditedFull}}
+{{CODE_LISTING_HEADER_START_FRAGMENT}} src/index.ts
+{{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}
 
 console.log('Hello world!');
 
-{{codeListingHeaderStartFragment}}src/dont-need-anymore.ts
-{{fileStatusPrefix}}{{filePayloadOperationTypeDeleted}}
+{{CODE_LISTING_HEADER_START_FRAGMENT}} src/dont-need-anymore.ts
+{{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
 
-{{codeListingHeaderStartFragment}}src/subnode/created-file
-{{fileStatusPrefix}}{{filePayloadOperationTypeCreated}}
+{{CODE_LISTING_HEADER_START_FRAGMENT}} src/subnode/created-file
+{{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}
 
 console.log('Hello world from new file!');
