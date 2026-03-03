@@ -5,11 +5,11 @@
     "promptInstructionConfig": {
       "subInstructionsById": {
         "llm-response-rules-prompt": {
-          "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\LLM Copypaster Prompts\\llm-response-rules-prompt.md",
+          "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\llm-response-rules-prompt.md",
           "ignore": false,
         },
         "web-git-prompt": {
-          "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\LLM Copypaster Prompts\\web-git-prompt.md",
+          "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\web-git-prompt.md",
           "ignore": false,
         },
       },
