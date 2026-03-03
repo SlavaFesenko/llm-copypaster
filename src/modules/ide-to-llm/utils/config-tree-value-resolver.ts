@@ -66,6 +66,14 @@ export class ConfigTreeValueResolver {
   }
 
   private _tryResolveConfigVariableValue(placeholderOrFlagName: string): unknown | undefined {
+    const llmCppConfigPrefix = 'LLM_CPP_CFG.';
+    if (placeholderOrFlagName.startsWith(llmCppConfigPrefix)) {
+      const rawPath = placeholderOrFlagName.slice(llmCppConfigPrefix.length).trim();
+      if (!rawPath) return undefined;
+
+      return this.tryResolveValueByPath(rawPath);
+    }
+
     const configPrefix = 'cfg.';
     if (!placeholderOrFlagName.startsWith(configPrefix)) return undefined;
 

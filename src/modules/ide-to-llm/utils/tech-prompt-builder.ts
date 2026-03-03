@@ -46,7 +46,12 @@ export class TechPromptBuilder {
     if (promptIdsInConfig.length === 0) return '';
 
     const builtPrompts: string[] = [];
-    const resolvedSharedVariablesById = this._buildResolvedSharedVariablesById();
+
+    const sharedVariablesBuildResult = this._buildResolvedSharedVariablesById();
+    const resolvedSharedVariablesById = sharedVariablesBuildResult.resolvedSharedVariablesById;
+
+    const unresolvedPromptSharedVariables = new Set<string>();
+    const unresolvedPromptIfFlags = new Set<string>();
 
     for (const promptId of promptIdsInConfig) {
       const promptInstructionsConfig = subInstructionsById[promptId];
@@ -56,12 +61,21 @@ export class TechPromptBuilder {
         promptId,
         promptInstructionsConfig,
         resolvedSharedVariablesById,
+        unresolvedPromptSharedVariables,
+        unresolvedPromptIfFlags,
       });
 
       if (!builtPromptText) continue;
 
       builtPrompts.push(builtPromptText);
     }
+
+    this._showUnresolvedVariablesWarningIfNeeded({
+      unresolvedConfigVariables: sharedVariablesBuildResult.unresolvedConfigVariableKeys,
+      unresolvedSharedVariablesInSharedVariables: sharedVariablesBuildResult.unresolvedSharedVariableKeys,
+      unresolvedPromptSharedVariables,
+      unresolvedPromptIfFlags,
+    });
 
     if (builtPrompts.length === 0) return '';
 
@@ -74,6 +88,8 @@ export class TechPromptBuilder {
     promptId: string;
     promptInstructionsConfig: PromptInstructionsConfig;
     resolvedSharedVariablesById: Record<string, string>;
+    unresolvedPromptSharedVariables: Set<string>;
+    unresolvedPromptIfFlags: Set<string>;
   }): Promise<string | null> {
     if (args.promptInstructionsConfig.ignore) return null;
 
@@ -82,9 +98,13 @@ export class TechPromptBuilder {
 
     let nextPromptText = promptText;
 
-    nextPromptText = this._renderPlaceholdersFromSharedVariablesOnly(nextPromptText, args.resolvedSharedVariablesById);
+    nextPromptText = this._renderPlaceholdersFromSharedVariablesOnly(
+      nextPromptText,
+      args.resolvedSharedVariablesById,
+      args.unresolvedPromptSharedVariables
+    );
 
-    const flagsById = this._buildIfFlagsById(nextPromptText, args.resolvedSharedVariablesById);
+    const flagsById = this._buildIfFlagsById(nextPromptText, args.resolvedSharedVariablesById, args.unresolvedPromptIfFlags);
     nextPromptText = this._mustacheRenderer.renderIfBlocks(nextPromptText, flagsById);
 
     if (!nextPromptText.trim()) return null;
@@ -94,25 +114,59 @@ export class TechPromptBuilder {
 
   private _renderPlaceholdersFromSharedVariablesOnly(
     promptText: string,
-    sharedVariablesById: Record<string, string>
+    sharedVariablesById: Record<string, string>,
+    unresolvedPromptSharedVariables: Set<string>
   ): string {
     return this._mustacheRenderer.renderPlaceholders(promptText, placeholderKey => {
       const resolvedValue = sharedVariablesById?.[placeholderKey];
-      if (resolvedValue === undefined) return null;
+      if (resolvedValue === undefined) {
+        unresolvedPromptSharedVariables.add(placeholderKey);
+        return null;
+      }
 
       return resolvedValue;
     });
   }
 
-  private _buildIfFlagsById(promptText: string, sharedVariablesById: Record<string, string>): Record<string, boolean> {
+  private _buildIfFlagsById(
+    promptText: string,
+    sharedVariablesById: Record<string, string>,
+    unresolvedPromptIfFlags: Set<string>
+  ): Record<string, boolean> {
     const flagsById: Record<string, boolean> = {};
     const ifFlagNames = this._extractIfFlagNames(promptText);
 
     for (const ifFlagName of ifFlagNames) {
+      const didResolveFlagName = this._tryRegisterUnresolvedIfFlagName(
+        ifFlagName,
+        sharedVariablesById,
+        unresolvedPromptIfFlags
+      );
       flagsById[ifFlagName] = this._tryResolveIfFlagValueFromSharedVariablesOnly(ifFlagName, sharedVariablesById);
+
+      if (!didResolveFlagName) continue;
     }
 
     return flagsById;
+  }
+
+  private _tryRegisterUnresolvedIfFlagName(
+    flagExpression: string,
+    sharedVariablesById: Record<string, string>,
+    unresolvedPromptIfFlags: Set<string>
+  ): boolean {
+    const rawExpression = (flagExpression ?? '').trim();
+    if (!rawExpression) return false;
+
+    const match = /^(!+)?(.*)$/.exec(rawExpression);
+    const rawFlagName = (match?.[2] ?? '').trim();
+    if (!rawFlagName) return false;
+
+    const rawValue = sharedVariablesById?.[rawFlagName];
+    if (rawValue !== undefined) return true;
+
+    unresolvedPromptIfFlags.add(rawFlagName);
+    return false;
   }
 
   private _tryResolveIfFlagValueFromSharedVariablesOnly(
@@ -183,9 +237,16 @@ export class TechPromptBuilder {
     return foundFlagNames;
   }
 
-  private _buildResolvedSharedVariablesById(): Record<string, string> {
+  private _buildResolvedSharedVariablesById(): {
+    resolvedSharedVariablesById: Record<string, string>;
+    unresolvedConfigVariableKeys: Set<string>;
+    unresolvedSharedVariableKeys: Set<string>;
+  } {
     const rawSharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
     const sharedVariableTemplatesById = { ...rawSharedVariablesById };
+
+    const attemptedConfigVariableKeys = new Set<string>();
+    const attemptedSharedVariableKeys = new Set<string>();
 
     let resolvedSharedVariablesById = { ...rawSharedVariablesById };
 
@@ -195,7 +256,18 @@ export class TechPromptBuilder {
       for (const sharedVariableId of Object.keys(sharedVariableTemplatesById)) {
         const rawTemplate = sharedVariableTemplatesById[sharedVariableId] ?? '';
 
-        const resolvedValue = this._mustacheRenderer.renderPlaceholders(rawTemplate, placeholderKey => {
+        const directResolvedValue = this._tryResolveDirectLlmCppConfigTemplate(
+          rawTemplate,
+          resolvedSharedVariablesById,
+          attemptedConfigVariableKeys
+        );
+        const normalizedTemplate = directResolvedValue !== null ? directResolvedValue : rawTemplate;
+
+        const resolvedValue = this._mustacheRenderer.renderPlaceholders(normalizedTemplate, placeholderKey => {
+          if (placeholderKey.startsWith('LLM_CPP_CFG.') || placeholderKey.startsWith('cfg.'))
+            attemptedConfigVariableKeys.add(placeholderKey);
+          else attemptedSharedVariableKeys.add(placeholderKey);
+
           return this._configTreeValueResolver.tryResolvePlaceholderValue(placeholderKey, resolvedSharedVariablesById);
         });
 
@@ -214,7 +286,81 @@ export class TechPromptBuilder {
       if (!didAnyValueChange) break;
     }
 
-    return resolvedSharedVariablesById;
+    const unresolvedConfigVariableKeys = new Set<string>();
+    const unresolvedSharedVariableKeys = new Set<string>();
+
+    for (const attemptedConfigVariableKey of attemptedConfigVariableKeys) {
+      const resolved = this._configTreeValueResolver.tryResolvePlaceholderValue(
+        attemptedConfigVariableKey,
+        resolvedSharedVariablesById
+      );
+      if (resolved === null) unresolvedConfigVariableKeys.add(attemptedConfigVariableKey);
+    }
+
+    for (const attemptedSharedVariableKey of attemptedSharedVariableKeys) {
+      const resolved = this._configTreeValueResolver.tryResolvePlaceholderValue(
+        attemptedSharedVariableKey,
+        resolvedSharedVariablesById
+      );
+      if (resolved === null) unresolvedSharedVariableKeys.add(attemptedSharedVariableKey);
+    }
+
+    return { resolvedSharedVariablesById, unresolvedConfigVariableKeys, unresolvedSharedVariableKeys };
+  }
+
+  private _tryResolveDirectLlmCppConfigTemplate(
+    rawTemplate: string,
+    resolvedSharedVariablesById: Record<string, string>,
+    attemptedConfigVariableKeys: Set<string>
+  ): string | null {
+    const normalized = (rawTemplate ?? '').trim();
+    if (!normalized.startsWith('LLM_CPP_CFG.')) return null;
+
+    attemptedConfigVariableKeys.add(normalized);
+
+    const resolved = this._configTreeValueResolver.tryResolvePlaceholderValue(normalized, resolvedSharedVariablesById);
+    if (resolved === null) return rawTemplate;
+
+    return resolved;
+  }
+
+  private _showUnresolvedVariablesWarningIfNeeded(args: {
+    unresolvedConfigVariables: Set<string>;
+    unresolvedSharedVariablesInSharedVariables: Set<string>;
+    unresolvedPromptSharedVariables: Set<string>;
+    unresolvedPromptIfFlags: Set<string>;
+  }): void {
+    const unresolvedConfigVariablesArray = Array.from(args.unresolvedConfigVariables ?? []).sort();
+    const unresolvedSharedVariablesInSharedVariablesArray = Array.from(
+      args.unresolvedSharedVariablesInSharedVariables ?? []
+    ).sort();
+    const unresolvedPromptSharedVariablesArray = Array.from(args.unresolvedPromptSharedVariables ?? []).sort();
+    const unresolvedPromptIfFlagsArray = Array.from(args.unresolvedPromptIfFlags ?? []).sort();
+
+    if (
+      unresolvedConfigVariablesArray.length === 0 &&
+      unresolvedSharedVariablesInSharedVariablesArray.length === 0 &&
+      unresolvedPromptSharedVariablesArray.length === 0 &&
+      unresolvedPromptIfFlagsArray.length === 0
+    )
+      return;
+
+    const parts: string[] = [];
+
+    if (unresolvedConfigVariablesArray.length > 0)
+      parts.push(`Unresolved config variables: ${unresolvedConfigVariablesArray.join(', ')}`);
+    if (unresolvedSharedVariablesInSharedVariablesArray.length > 0) {
+      parts.push(
+        `Unresolved shared variables (used inside sharedVariablesById): ${unresolvedSharedVariablesInSharedVariablesArray.join(', ')}`
+      );
+    }
+    if (unresolvedPromptSharedVariablesArray.length > 0) {
+      parts.push(`Unresolved shared variables (used in prompt files): ${unresolvedPromptSharedVariablesArray.join(', ')}`);
+    }
+    if (unresolvedPromptIfFlagsArray.length > 0)
+      parts.push(`Unresolved if-flags (used in prompt files): ${unresolvedPromptIfFlagsArray.join(', ')}`);
+
+    vscode.window.showWarningMessage(parts.join(' | '));
   }
 
   private async _tryReadPromptText(

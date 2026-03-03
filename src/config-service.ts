@@ -261,13 +261,12 @@ export class ConfigService {
           },
         },
         sharedVariablesById: {
-          CODE_LISTING_HEADER_START_FRAGMENT: '{{LLM_CPP_CFG.llmToIdeParsingAnchors.codeListingHeaderStartFragment}}',
-          FILE_STATUS_PREFIX: '{{LLM_CPP_CFG.llmToIdeParsingAnchors.fileStatusPrefix}}',
-          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL:
-            '{{LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull}}',
-          FILE_PAYLOAD_OPERATION_TYPE_CREATED: '{{LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeCreated}}',
-          FILE_PAYLOAD_OPERATION_TYPE_DELETED: '{{LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeDeleted}}',
-          WEB_GIT_PROMPT_IGNORE: '{{LLM_CPP_CFG.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore}}',
+          CODE_LISTING_HEADER_START_FRAGMENT: 'LLM_CPP_CFG.llmToIdeParsingAnchors.codeListingHeaderStartFragment',
+          FILE_STATUS_PREFIX: 'LLM_CPP_CFG.llmToIdeParsingAnchors.fileStatusPrefix',
+          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull',
+          FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeCreated',
+          FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeDeleted',
+          WEB_GIT_PROMPT_IGNORE: 'LLM_CPP_CFG.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore',
         },
       },
     };
