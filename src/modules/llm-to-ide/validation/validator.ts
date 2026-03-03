@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../config-service';
+import { LlmCopypasterConfig, LlmToIdeParsingAnchorsConfig } from '../../../config-service';
 import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
@@ -14,11 +14,7 @@ export function validateClipboardTextToFilesPayload(
     'gm'
   );
 
-  const parsed = parseConcatenatedFileListings(
-    rawClipboardText,
-    headerRegex,
-    config.llmToIdeParsingAnchors.fileStatusPrefix
-  );
+  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex, config.llmToIdeParsingAnchors);
 
   if (!parsed.ok) return parsed;
 
@@ -30,7 +26,7 @@ export function validateClipboardTextToFilesPayload(
 function parseConcatenatedFileListings(
   rawText: string,
   headerRegex: RegExp,
-  fileStatusPrefix: string
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
 ): ParseResult<FilesPayload> {
   const matches = [...rawText.matchAll(headerRegex)];
 
@@ -51,7 +47,7 @@ function parseConcatenatedFileListings(
     const sectionEndIndex = next?.index ?? rawText.length;
 
     const sectionRawText = rawText.slice(sectionStartIndex, sectionEndIndex).replace(/^\r?\n/, '');
-    const parsedSection = parseFileSection(sectionRawText, fileStatusPrefix);
+    const parsedSection = parseFileSection(sectionRawText, llmToIdeParsingAnchors.fileStatusPrefix, llmToIdeParsingAnchors);
 
     if (!parsedSection.ok) return { ok: false, errorMessage: `${path}: ${parsedSection.errorMessage}` };
 
@@ -68,17 +64,19 @@ function parseConcatenatedFileListings(
 
 function parseFileSection(
   rawSectionText: string,
-  fileStatusPrefix: string
+  fileStatusPrefix: string,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
 ): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
   const { firstLine, restText } = splitFirstLine(rawSectionText);
 
   if (!firstLine) return { ok: true, value: { content: rawSectionText } };
 
-  const operation = tryParseOperationLine(firstLine, fileStatusPrefix);
+  const operation = tryParseOperationLine(firstLine, fileStatusPrefix, llmToIdeParsingAnchors);
 
   if (!operation) return { ok: true, value: { content: rawSectionText } };
 
-  if (operation === FilePayloadOperationType.Deleted) return { ok: true, value: { content: '', operation } };
+  if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted)
+    return { ok: true, value: { content: '', operation } };
 
   const normalizedContent = restText.replace(/^\r?\n/, '');
 
@@ -99,17 +97,24 @@ function splitFirstLine(text: string): { firstLine: string; restText: string } {
   return { firstLine, restText };
 }
 
-function tryParseOperationLine(line: string, fileStatusPrefix: string): FilePayloadOperationType | undefined {
+function tryParseOperationLine(
+  line: string,
+  fileStatusPrefix: string,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+): FilePayloadOperationType | undefined {
   const trimmedLine = line.trim();
   const trimmedPrefix = fileStatusPrefix.trim();
 
   const prefix = trimmedPrefix ? `${trimmedPrefix} ` : '';
 
-  if (trimmedLine === `${prefix}${FilePayloadOperationType.EditedFull}`) return FilePayloadOperationType.EditedFull;
+  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull}`)
+    return llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
 
-  if (trimmedLine === `${prefix}${FilePayloadOperationType.Created}`) return FilePayloadOperationType.Created;
+  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.filePayloadOperationTypeCreated}`)
+    return llmToIdeParsingAnchors.filePayloadOperationTypeCreated;
 
-  if (trimmedLine === `${prefix}${FilePayloadOperationType.Deleted}`) return FilePayloadOperationType.Deleted;
+  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.filePayloadOperationTypeDeleted}`)
+    return llmToIdeParsingAnchors.filePayloadOperationTypeDeleted;
 
   return undefined;
 }

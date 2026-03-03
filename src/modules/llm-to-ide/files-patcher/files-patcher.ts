@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { PostFilePatchActionsConfig } from '../../../config-service';
-import { FilePayloadOperationType, FilesPayload } from '../../../types/files-payload';
+import { LlmToIdeParsingAnchorsConfig, PostFilePatchActionsConfig } from '../../../config-service';
+import { FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
 
@@ -20,6 +20,7 @@ export type ApplyResult = ApplyOk | ApplyFail;
 export async function applyFilesPayloadToWorkspace(
   payload: FilesPayload,
   postFilesPatchActions: PostFilePatchActionsConfig,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<ApplyResult> {
   try {
@@ -32,9 +33,9 @@ export async function applyFilesPayloadToWorkspace(
 
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
 
-      const operation = file.operation ?? FilePayloadOperationType.EditedFull;
+      const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
 
-      if (operation === FilePayloadOperationType.Deleted) {
+      if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
         workspaceEdit.deleteFile(targetUri, { ignoreIfNotExists: true });
         appliedFilesCount++;
         continue;
@@ -63,11 +64,14 @@ export async function applyFilesPayloadToWorkspace(
     const applied = await vscode.workspace.applyEdit(workspaceEdit);
     if (!applied) return { ok: false, errorMessage: 'VS Code refused to apply WorkspaceEdit' };
 
-    if (postFilesPatchActions.enableLintingAfterFilePatch) await tryFormatAppliedDocuments(payload, logger);
+    if (postFilesPatchActions.enableLintingAfterFilePatch)
+      await tryFormatAppliedDocuments(payload, llmToIdeParsingAnchors, logger);
 
-    if (postFilesPatchActions.enableSaveAfterFilePatch) await trySaveAppliedDocuments(payload, logger);
+    if (postFilesPatchActions.enableSaveAfterFilePatch)
+      await trySaveAppliedDocuments(payload, llmToIdeParsingAnchors, logger);
 
-    if (postFilesPatchActions.enableOpeningPatchedFilesInEditor) await tryOpenAppliedDocumentsInEditor(payload, logger);
+    if (postFilesPatchActions.enableOpeningPatchedFilesInEditor)
+      await tryOpenAppliedDocumentsInEditor(payload, llmToIdeParsingAnchors, logger);
 
     return { ok: true, appliedFilesCount };
   } catch (error) {
@@ -84,24 +88,50 @@ async function fileExists(uri: vscode.Uri): Promise<boolean> {
   }
 }
 
-async function tryFormatAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
-  await tryApplyToFilesPayloadDocuments(payload, logger, 'Format', toWorkspaceUri, async document => {
-    await vscode.window.showTextDocument(document, { preview: true, preserveFocus: true });
+async function tryFormatAppliedDocuments(
+  payload: FilesPayload,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  logger: OutputChannelLogger
+): Promise<void> {
+  await tryApplyToFilesPayloadDocuments(
+    payload,
+    llmToIdeParsingAnchors,
+    logger,
+    'Format',
+    toWorkspaceUri,
+    async document => {
+      await vscode.window.showTextDocument(document, { preview: true, preserveFocus: true });
 
-    await vscode.commands.executeCommand('editor.action.formatDocument');
-  });
+      await vscode.commands.executeCommand('editor.action.formatDocument');
+    }
+  );
 }
 
-async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
-  await tryApplyToFilesPayloadDocuments(payload, logger, 'Save', toWorkspaceUri, async document => {
+async function trySaveAppliedDocuments(
+  payload: FilesPayload,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  logger: OutputChannelLogger
+): Promise<void> {
+  await tryApplyToFilesPayloadDocuments(payload, llmToIdeParsingAnchors, logger, 'Save', toWorkspaceUri, async document => {
     await document.save();
   });
 }
 
-async function tryOpenAppliedDocumentsInEditor(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
-  await tryApplyToFilesPayloadDocuments(payload, logger, 'Open in editor', toWorkspaceUri, async document => {
-    await vscode.window.showTextDocument(document, { preview: false, preserveFocus: true });
-  });
+async function tryOpenAppliedDocumentsInEditor(
+  payload: FilesPayload,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  logger: OutputChannelLogger
+): Promise<void> {
+  await tryApplyToFilesPayloadDocuments(
+    payload,
+    llmToIdeParsingAnchors,
+    logger,
+    'Open in editor',
+    toWorkspaceUri,
+    async document => {
+      await vscode.window.showTextDocument(document, { preview: false, preserveFocus: true });
+    }
+  );
 }
 
 export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, logger?: OutputChannelLogger): Promise<void> {
@@ -116,14 +146,15 @@ export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, log
 
 export async function tryApplyToFilesPayloadDocuments(
   payload: FilesPayload,
+  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
   logger: OutputChannelLogger,
   actionName: string,
   resolveTargetUri: (filePath: string) => vscode.Uri | null,
   action: (document: vscode.TextDocument, targetUri: vscode.Uri) => Promise<void>
 ): Promise<void> {
   for (const file of payload.files) {
-    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
-    if (operation === FilePayloadOperationType.Deleted) continue;
+    const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
+    if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) continue;
 
     const targetUri = resolveTargetUri(file.path);
     if (!targetUri) continue;

@@ -1,8 +1,4 @@
-export enum FilePayloadOperationType {
-  EditedFull = 'EDITED_FULL',
-  Created = 'CREATED',
-  Deleted = 'DELETED',
-}
+export type FilePayloadOperationType = string;
 
 export interface FilesPayloadSourceRange {
   start: number;

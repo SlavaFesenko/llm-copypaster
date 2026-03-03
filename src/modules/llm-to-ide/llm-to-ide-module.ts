@@ -38,6 +38,7 @@ export class LlmToIdeModule {
     const applyResult = await applyFilesPayloadToWorkspace(
       sanitizedPayload,
       config.baseSettings.postFilePatchActionsConfig,
+      config.llmToIdeParsingAnchors,
       this._logger
     );
 
