@@ -144,7 +144,6 @@ export class ConfigService {
           FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull',
           FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeCreated',
           FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeDeleted',
-          WEB_GIT_PROMPT_IGNORE: 'LLM_CPP_CFG.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore',
         },
       },
     };

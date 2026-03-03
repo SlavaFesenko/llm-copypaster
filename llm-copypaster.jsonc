@@ -14,6 +14,7 @@
         },
       },
       "sharedVariablesById": {
+        "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore",
         "WEB_GIT_PROMPT_NAME": "Web Git Prompt",
         "BRANCH_NAME": "master",
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
