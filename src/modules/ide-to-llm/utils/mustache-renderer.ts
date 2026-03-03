@@ -1,23 +1,3 @@
-// 'Supported Mustache-like syntax:',
-// '',
-// '1) Placeholder replacement (one-by-one):',
-// '   - {{someKey}}',
-// '',
-// '2) Conditional blocks (explicit evaluation is passed by caller):',
-// '   - {{#if someFlag}} ... {{/if}}',
-// '   - {{#if someFlag}} ... {{else}} ... {{/if}}',
-// '   - {{#if someFlag}} ... {{else if otherFlag}} ... {{else}} ... {{/if}}',
-// '',
-// 'Public API:',
-// ' - renderConstant(promptText, key, value)',
-// ' - renderIf(promptText, flagName, isEnabled)',
-// ' - renderIfElse(promptText, flagName, isEnabled)',
-// ' - renderIfBlocks(promptText, flagsById)',
-// '',
-// 'Notes:',
-// ' - Unknown/mismatched tags are kept unchanged',
-// ' - renderIf/renderIfElse supports nested {{#if ...}} blocks',
-// ' - Expressions are not evaluated by MustacheParser; the caller decides booleans',
 export class MustacheRenderer {
   private readonly _placeholderRegexPattern: string;
 
@@ -37,6 +17,23 @@ export class MustacheRenderer {
     return promptText.replace(placeholderRegex, (fullMatch, foundPlaceholderKey: string) => {
       if (foundPlaceholderKey !== placeholderKey) return fullMatch;
       return placeholderValue;
+    });
+  }
+
+  public renderPlaceholders(promptText: string, resolvePlaceholderValue: (placeholderKey: string) => string | null): string {
+    let placeholderRegex: RegExp;
+
+    try {
+      placeholderRegex = new RegExp(this._placeholderRegexPattern, 'g');
+    } catch {
+      return promptText;
+    }
+
+    return promptText.replace(placeholderRegex, (fullMatch, foundPlaceholderKey: string) => {
+      const resolvedValue = resolvePlaceholderValue(foundPlaceholderKey);
+      if (resolvedValue === null) return fullMatch;
+
+      return resolvedValue;
     });
   }
 

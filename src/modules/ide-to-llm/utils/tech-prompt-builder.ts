@@ -3,16 +3,35 @@ import * as vscode from 'vscode';
 
 import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config-service';
 import { FilePayloadOperationType } from '../../../types/files-payload';
+import { ConfigTreeValueResolver } from './config-tree-value-resolver';
 import { MustacheRenderer } from './mustache-renderer';
 
+// 'Supported Mustache-like syntax:',
+// '',
+// '1) Placeholder replacement:',
+// '   - {{someKey}}',
+// '   - {{cfg.some.path}}',
+// '   - Placeholder keys are resolved by caller (e.g., sharedVariablesById by default; cfg.* can be resolved from config tree)',
+// '',
+// '2) Conditional blocks (evaluation is passed by caller):',
+// '   - {{#if someFlag}} ... {{/if}}',
+// '   - {{#if cfg.some.path.to-boolean}} ... {{/if}}',
+// '   - {{#if someFlag}} ... {{else}} ... {{/if}}',
+// '   - {{#if someFlag}} ... {{else if otherFlag}} ... {{else}} ... {{/if}}',
+// '',
+// 'Notes:',
+// ' - Unknown/mismatched tags are kept unchanged',
+// ' - renderIf/renderIfElse supports nested {{#if ...}} blocks',
 export class TechPromptBuilder {
   private readonly _mustacheRenderer: MustacheRenderer;
+  private readonly _configTreeValueResolver: ConfigTreeValueResolver;
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
   ) {
     this._mustacheRenderer = new MustacheRenderer(this._buildPlaceholderRegexPattern());
+    this._configTreeValueResolver = new ConfigTreeValueResolver(this._config);
   }
 
   public async build(): Promise<string> {
@@ -59,24 +78,56 @@ export class TechPromptBuilder {
 
     let nextPromptText = promptText;
 
-    nextPromptText = this._renderConstants(nextPromptText, args.renderConstantsById);
+    nextPromptText = this._renderPlaceholders(nextPromptText, args.renderConstantsById);
 
-    // Expressions are not evaluated; we render conditionals by explicit boolean map from builder-context
-    nextPromptText = this._mustacheRenderer.renderIfBlocks(nextPromptText, {});
+    const flagsById = this._buildIfFlagsById(nextPromptText, args.renderConstantsById);
+    nextPromptText = this._mustacheRenderer.renderIfBlocks(nextPromptText, flagsById);
 
     if (!nextPromptText.trim()) return null;
 
     return nextPromptText;
   }
 
-  private _renderConstants(promptText: string, constantsById: Record<string, string>): string {
-    let nextPromptText = promptText;
+  private _renderPlaceholders(promptText: string, constantsById: Record<string, string>): string {
+    return this._mustacheRenderer.renderPlaceholders(promptText, placeholderKey =>
+      this._configTreeValueResolver.tryResolvePlaceholderValue(placeholderKey, constantsById)
+    );
+  }
 
-    for (const [placeholderKey, placeholderValue] of Object.entries(constantsById ?? {})) {
-      nextPromptText = this._mustacheRenderer.renderConstant(nextPromptText, placeholderKey, placeholderValue);
+  private _buildIfFlagsById(promptText: string, constantsById: Record<string, string>): Record<string, boolean> {
+    const flagsById: Record<string, boolean> = {};
+    const ifFlagNames = this._extractIfFlagNames(promptText);
+
+    for (const ifFlagName of ifFlagNames) {
+      flagsById[ifFlagName] = this._configTreeValueResolver.tryResolveIfFlagValue(ifFlagName, constantsById);
     }
 
-    return nextPromptText;
+    return flagsById;
+  }
+
+  private _extractIfFlagNames(promptText: string): string[] {
+    const foundFlagNames: string[] = [];
+
+    const ifStartTagRegex = /{{#if\s+([^}]+)}}/g;
+    const elseIfTagRegex = /{{else\s+if\s+([^}]+)}}/g;
+
+    let match: RegExpExecArray | null;
+
+    while ((match = ifStartTagRegex.exec(promptText)) !== null) {
+      const rawFlagName = (match[1] ?? '').trim();
+      if (!rawFlagName) continue;
+
+      foundFlagNames.push(rawFlagName);
+    }
+
+    while ((match = elseIfTagRegex.exec(promptText)) !== null) {
+      const rawFlagName = (match[1] ?? '').trim();
+      if (!rawFlagName) continue;
+
+      foundFlagNames.push(rawFlagName);
+    }
+
+    return foundFlagNames;
   }
 
   private _buildRenderConstantsById(): Record<string, string> {
@@ -166,10 +217,10 @@ export class TechPromptBuilder {
     const placeholderStartFragment = this._escapeRegExp(this._config.llmToIdeParsingAnchors.placeholderStartFragment);
     const placeholderEndFragment = this._escapeRegExp(this._config.llmToIdeParsingAnchors.placeholderEndFragment);
 
-    return String.raw`${placeholderStartFragment}([a-zA-Z0-9*_]+)${placeholderEndFragment}`;
+    return String.raw`${placeholderStartFragment}([a-zA-Z0-9*_.-]+)${placeholderEndFragment}`;
   }
 
   private _escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[]]/g, '$&');
+    return text.replace(/[.*+?^${}()|[]\]/g, '$&');
   }
 }
