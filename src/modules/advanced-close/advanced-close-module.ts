@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { tryGetUriFromTab } from '../ide-to-llm/common.helpers';
-import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-group-picker-helpers';
+import {
+  buildTabGroupQuickPickItems,
+  findTabGroupsContainingUri,
+  tryFindTabGroupContainingTab,
+} from './tab-group-picker-helpers';
 
 export class AdvancedCloseModule {
   public constructor(private readonly _logger: OutputChannelLogger) {}
@@ -20,8 +24,8 @@ export class AdvancedCloseModule {
     await this._tryCloseTabs(tabsToClose);
   }
 
-  public async forceCloseTabsInTabGroup(): Promise<void> {
-    const tabGroup = await this._pickTabGroupForTabGroupAction();
+  public async forceCloseTabsInTabGroup(clickedContext?: unknown): Promise<void> {
+    const tabGroup = await this._pickTabGroupForTabGroupAction(clickedContext);
     if (!tabGroup) return;
 
     const tabsToClose = [...tabGroup.tabs];
@@ -37,8 +41,8 @@ export class AdvancedCloseModule {
     }
   }
 
-  public async pinTabsInTabGroup(): Promise<void> {
-    const tabGroup = await this._pickTabGroupForTabGroupAction();
+  public async pinTabsInTabGroup(clickedContext?: unknown): Promise<void> {
+    const tabGroup = await this._pickTabGroupForTabGroupAction(clickedContext);
     if (!tabGroup) return;
 
     await this._tryPinTabsInTabGroup(tabGroup);
@@ -50,21 +54,34 @@ export class AdvancedCloseModule {
     }
   }
 
-  public async unpinTabsInTabGroup(): Promise<void> {
-    const tabGroup = await this._pickTabGroupForTabGroupAction();
+  public async unpinTabsInTabGroup(clickedContext?: unknown): Promise<void> {
+    const tabGroup = await this._pickTabGroupForTabGroupAction(clickedContext);
     if (!tabGroup) return;
 
     await this._tryUnpinTabsInTabGroup(tabGroup);
   }
 
-  private async _pickTabGroupForTabGroupAction(): Promise<vscode.TabGroup | null> {
+  private async _pickTabGroupForTabGroupAction(clickedContext?: unknown): Promise<vscode.TabGroup | null> {
+    const allTabGroups = vscode.window.tabGroups.all;
+
+    const clickedTabGroup = this._tryGetTabGroupFromClickedContext(clickedContext, allTabGroups);
+    if (clickedTabGroup) return clickedTabGroup;
+
+    const clickedFileUri = this._tryGetFileUriFromClickedContext(clickedContext);
+    if (clickedFileUri && clickedFileUri.scheme === 'file') {
+      const matchingTabGroups = findTabGroupsContainingUri({ uri: clickedFileUri, tabGroups: allTabGroups });
+
+      if (matchingTabGroups.length === 1) return matchingTabGroups[0];
+
+      if (matchingTabGroups.length > 1)
+        return await this._pickFromMultipleMatchingTabGroups(matchingTabGroups, allTabGroups);
+    }
+
     const activeEditor = vscode.window.activeTextEditor;
     if (!activeEditor) return vscode.window.tabGroups.activeTabGroup;
 
     const activeDocumentUri = activeEditor.document.uri;
     if (activeDocumentUri.scheme !== 'file') return vscode.window.tabGroups.activeTabGroup;
-
-    const allTabGroups = vscode.window.tabGroups.all;
 
     const matchingTabGroups = findTabGroupsContainingUri({ uri: activeDocumentUri, tabGroups: allTabGroups });
 
@@ -72,6 +89,37 @@ export class AdvancedCloseModule {
 
     if (matchingTabGroups.length === 1) return matchingTabGroups[0];
 
+    return await this._pickFromMultipleMatchingTabGroups(matchingTabGroups, allTabGroups);
+  }
+
+  private _tryGetTabGroupFromClickedContext(
+    clickedContext: unknown,
+    allTabGroups: readonly vscode.TabGroup[]
+  ): vscode.TabGroup | null {
+    const anyTab = clickedContext as vscode.Tab | null;
+
+    if (!anyTab || typeof anyTab !== 'object') return null;
+
+    const hasTabLikeShape = 'input' in anyTab;
+    if (!hasTabLikeShape) return null;
+
+    return tryFindTabGroupContainingTab({ tab: anyTab, tabGroups: allTabGroups });
+  }
+
+  private _tryGetFileUriFromClickedContext(clickedContext: unknown): vscode.Uri | null {
+    if (clickedContext instanceof vscode.Uri) return clickedContext;
+
+    const anyTab = clickedContext as vscode.Tab | null;
+
+    if (anyTab && typeof anyTab === 'object' && 'input' in anyTab) return tryGetUriFromTab(anyTab);
+
+    return null;
+  }
+
+  private async _pickFromMultipleMatchingTabGroups(
+    matchingTabGroups: vscode.TabGroup[],
+    allTabGroups: readonly vscode.TabGroup[]
+  ): Promise<vscode.TabGroup | null> {
     const quickPickItems = buildTabGroupQuickPickItems({ tabGroups: matchingTabGroups, allTabGroups });
 
     const selectedItem = await vscode.window.showQuickPick(quickPickItems, {

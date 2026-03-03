@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-
 import { ConfigService } from './config-service';
 import { AdvancedCloseModule } from './modules/advanced-close/advanced-close-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
@@ -47,7 +46,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
   const commandDisposables: vscode.Disposable[] = [
     // #region Editor 2 LLM
-
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContext, async () => {
       await deps.editorToLlmModule.copyThisFileAsContext();
     }),
@@ -97,25 +95,21 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     vscode.commands.registerCommand(commandIds.forceCloseAllTabs, async () => {
       await deps.advancedCloseModule.forceCloseAllTabs();
     }),
-
-    vscode.commands.registerCommand(commandIds.forceCloseTabsInTabGroup, async () => {
-      await deps.advancedCloseModule.forceCloseTabsInTabGroup();
+    vscode.commands.registerCommand(commandIds.forceCloseTabsInTabGroup, async (clickedContext?: unknown) => {
+      await deps.advancedCloseModule.forceCloseTabsInTabGroup(clickedContext);
     }),
 
     vscode.commands.registerCommand(commandIds.pinAllTabs, async () => {
       await deps.advancedCloseModule.pinAllTabs();
     }),
-
-    vscode.commands.registerCommand(commandIds.pinTabsInTabGroup, async () => {
-      await deps.advancedCloseModule.pinTabsInTabGroup();
+    vscode.commands.registerCommand(commandIds.pinTabsInTabGroup, async (clickedContext?: unknown) => {
+      await deps.advancedCloseModule.pinTabsInTabGroup(clickedContext);
     }),
-
     vscode.commands.registerCommand(commandIds.unpinAllTabs, async () => {
       await deps.advancedCloseModule.unpinAllTabs();
     }),
-
-    vscode.commands.registerCommand(commandIds.unpinTabsInTabGroup, async () => {
-      await deps.advancedCloseModule.unpinTabsInTabGroup();
+    vscode.commands.registerCommand(commandIds.unpinTabsInTabGroup, async (clickedContext?: unknown) => {
+      await deps.advancedCloseModule.unpinTabsInTabGroup(clickedContext);
     }),
 
     // #endregion

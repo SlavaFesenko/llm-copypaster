@@ -95,6 +95,17 @@ function tryGetTabLabel(tab: vscode.Tab): string | null {
   return label ? label : null;
 }
 
+export function tryFindTabGroupContainingTab(args: {
+  tab: vscode.Tab;
+  tabGroups: readonly vscode.TabGroup[];
+}): vscode.TabGroup | null {
+  for (const tabGroup of args.tabGroups) {
+    if (tabGroup.tabs.includes(args.tab)) return tabGroup;
+  }
+
+  return null;
+}
+
 function getFileNameFromUri(uri: vscode.Uri): string {
   const uriPath = uri.path ?? '';
   const parts = uriPath.split('/').filter(part => part.trim());
