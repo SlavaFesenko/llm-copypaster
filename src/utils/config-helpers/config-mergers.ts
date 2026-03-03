@@ -70,6 +70,7 @@ export function mergeLlmToIdeParsingAnchors(
       userAnchors.filePayloadOperationTypeCreated ?? baseAnchors.filePayloadOperationTypeCreated,
     filePayloadOperationTypeDeleted:
       userAnchors.filePayloadOperationTypeDeleted ?? baseAnchors.filePayloadOperationTypeDeleted,
+    configVariablePrefix: userAnchors.configVariablePrefix ?? baseAnchors.configVariablePrefix,
   };
 }
 

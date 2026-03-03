@@ -18,6 +18,7 @@ export interface LlmToIdeParsingAnchorsConfig {
   filePayloadOperationTypeEditedFull: string;
   filePayloadOperationTypeCreated: string;
   filePayloadOperationTypeDeleted: string;
+  configVariablePrefix: string;
 }
 
 export interface PromptInstructionConfig {
@@ -87,6 +88,7 @@ export class ConfigService {
         filePayloadOperationTypeEditedFull: 'EDITED_FULL',
         filePayloadOperationTypeCreated: 'CREATED',
         filePayloadOperationTypeDeleted: 'DELETED',
+        configVariablePrefix: 'LLM_CPP_CFG.', // this exact anchor will be parsed by regex (including dot at the end)
       },
       baseSettings: this._buildBaseSettings(),
       profilesById: {

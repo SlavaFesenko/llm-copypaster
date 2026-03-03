@@ -12,6 +12,7 @@ export interface LlmToIdeParsingAnchorsUserConfig {
   filePayloadOperationTypeEditedFull?: string;
   filePayloadOperationTypeCreated?: string;
   filePayloadOperationTypeDeleted?: string;
+  configVariablePrefix: string;
 }
 
 export interface PromptInstructionUserConfig {

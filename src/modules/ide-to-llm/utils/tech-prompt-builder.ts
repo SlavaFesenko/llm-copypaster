@@ -256,7 +256,7 @@ export class TechPromptBuilder {
       for (const sharedVariableId of Object.keys(sharedVariableTemplatesById)) {
         const rawTemplate = sharedVariableTemplatesById[sharedVariableId] ?? '';
 
-        const directResolvedValue = this._tryResolveDirectLlmCppConfigTemplate(
+        const directResolvedValue = this._tryResolveDirectConfigTemplate(
           rawTemplate,
           resolvedSharedVariablesById,
           attemptedConfigVariableKeys
@@ -264,7 +264,8 @@ export class TechPromptBuilder {
         const normalizedTemplate = directResolvedValue !== null ? directResolvedValue : rawTemplate;
 
         const resolvedValue = this._mustacheRenderer.renderPlaceholders(normalizedTemplate, placeholderKey => {
-          if (placeholderKey.startsWith('LLM_CPP_CFG.') || placeholderKey.startsWith('cfg.'))
+          const configVariablePrefix = this._getConfigVariablePrefix();
+          if (configVariablePrefix && placeholderKey.startsWith(configVariablePrefix))
             attemptedConfigVariableKeys.add(placeholderKey);
           else attemptedSharedVariableKeys.add(placeholderKey);
 
@@ -308,13 +309,16 @@ export class TechPromptBuilder {
     return { resolvedSharedVariablesById, unresolvedConfigVariableKeys, unresolvedSharedVariableKeys };
   }
 
-  private _tryResolveDirectLlmCppConfigTemplate(
+  private _tryResolveDirectConfigTemplate(
     rawTemplate: string,
     resolvedSharedVariablesById: Record<string, string>,
     attemptedConfigVariableKeys: Set<string>
   ): string | null {
+    const configVariablePrefix = this._getConfigVariablePrefix();
+
     const normalized = (rawTemplate ?? '').trim();
-    if (!normalized.startsWith('LLM_CPP_CFG.')) return null;
+    if (!configVariablePrefix) return null;
+    if (!normalized.startsWith(configVariablePrefix)) return null;
 
     attemptedConfigVariableKeys.add(normalized);
 
@@ -322,6 +326,10 @@ export class TechPromptBuilder {
     if (resolved === null) return rawTemplate;
 
     return resolved;
+  }
+
+  private _getConfigVariablePrefix(): string {
+    return this._config.llmToIdeParsingAnchors.configVariablePrefix;
   }
 
   private _showUnresolvedVariablesWarningIfNeeded(args: {

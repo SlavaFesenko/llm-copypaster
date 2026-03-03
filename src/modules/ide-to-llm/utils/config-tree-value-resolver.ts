@@ -66,21 +66,27 @@ export class ConfigTreeValueResolver {
   }
 
   private _tryResolveConfigVariableValue(placeholderOrFlagName: string): unknown | undefined {
-    const llmCppConfigPrefix = 'LLM_CPP_CFG.';
-    if (placeholderOrFlagName.startsWith(llmCppConfigPrefix)) {
-      const rawPath = placeholderOrFlagName.slice(llmCppConfigPrefix.length).trim();
-      if (!rawPath) return undefined;
+    const configVariablePrefix = this._tryGetConfigVariablePrefix();
+    if (!configVariablePrefix) return undefined;
 
-      return this.tryResolveValueByPath(rawPath);
-    }
+    if (!placeholderOrFlagName.startsWith(configVariablePrefix)) return undefined;
 
-    const configPrefix = 'cfg.';
-    if (!placeholderOrFlagName.startsWith(configPrefix)) return undefined;
-
-    const rawPath = placeholderOrFlagName.slice(configPrefix.length).trim();
+    const rawPath = placeholderOrFlagName.slice(configVariablePrefix.length).trim();
     if (!rawPath) return undefined;
 
     return this.tryResolveValueByPath(rawPath);
+  }
+
+  private _tryGetConfigVariablePrefix(): string {
+    if (!this._isRecord(this._rootConfig)) return '';
+
+    const llmToIdeParsingAnchors = (this._rootConfig as Record<string, unknown>)['llmToIdeParsingAnchors'];
+    if (!this._isRecord(llmToIdeParsingAnchors)) return '';
+
+    const configVariablePrefix = (llmToIdeParsingAnchors as Record<string, unknown>)['configVariablePrefix'];
+    if (typeof configVariablePrefix !== 'string') return '';
+
+    return configVariablePrefix;
   }
 
   private _stringifyPlaceholderValue(value: unknown): string {
