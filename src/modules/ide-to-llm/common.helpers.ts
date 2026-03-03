@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { ensureReadonlyVirtualMarkdownDocOpened } from './utils/editor-virtual-doc-helpers';
 import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './utils/other-prompt-helpers';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
 import { closeUnavailableTabs } from './utils/uncategorized-helpers';
@@ -200,7 +201,7 @@ export async function showCopyResultNotification(
     if (!selectedAction) return;
 
     if (selectedAction === openPromptInEditor) {
-      await openPromptTextInEditor(currentPromptText);
+      await openPromptTextInEditor(deps.extensionContext, currentPromptText);
       return;
     }
 
@@ -268,7 +269,7 @@ export async function showCopyResultNotification(
           selectedProfileIds,
         });
 
-        await openMergedConfigInEditor(mergedConfigReportText);
+        await openMergedConfigInEditor(deps.extensionContext, mergedConfigReportText);
       }
 
       continue;
@@ -332,12 +333,17 @@ async function pickProfileIds(args: {
   return { profileIds, shouldAdditionallyOpenMergedConfigInEditor };
 }
 
-async function openPromptTextInEditor(promptText: string): Promise<void> {
-  const doc = await vscode.workspace.openTextDocument({ content: promptText, language: 'markdown' });
-  await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
+async function openPromptTextInEditor(extensionContext: vscode.ExtensionContext, promptText: string): Promise<void> {
+  await ensureReadonlyVirtualMarkdownDocOpened({ extensionContext, docId: '~TMP: prompt', markdownText: promptText });
 }
 
-async function openMergedConfigInEditor(mergedConfigReportText: string): Promise<void> {
-  const doc = await vscode.workspace.openTextDocument({ content: mergedConfigReportText, language: 'markdown' });
-  await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
+async function openMergedConfigInEditor(
+  extensionContext: vscode.ExtensionContext,
+  mergedConfigReportText: string
+): Promise<void> {
+  await ensureReadonlyVirtualMarkdownDocOpened({
+    extensionContext,
+    docId: '~TMP: merged-config',
+    markdownText: mergedConfigReportText,
+  });
 }
