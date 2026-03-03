@@ -14,7 +14,6 @@ import { MustacheRenderer } from './mustache-renderer';
 // '2) sharedVariablesById values can be computed from config via a special prefix:',
 // '   - sharedVariablesById["SOME_VALUE"] = "{{LLM_CPP_CFG.some.path}}"',
 // '   - LLM_CPP_CFG.* is supported ONLY inside sharedVariablesById values (not in prompt files)',
-// '   - Under the hood LLM_CPP_CFG.* is translated to existing cfg.* to reuse current resolver behavior',
 // '',
 // '3) Conditional blocks in prompt files use ONLY shared variables:',
 // '   - {{#if someSharedVariableId}} ... {{/if}}',
@@ -197,12 +196,7 @@ export class TechPromptBuilder {
         const rawTemplate = sharedVariableTemplatesById[sharedVariableId] ?? '';
 
         const resolvedValue = this._mustacheRenderer.renderPlaceholders(rawTemplate, placeholderKey => {
-          const normalizedPlaceholderKey = this._normalizeCfgPlaceholderKey(placeholderKey);
-
-          return this._configTreeValueResolver.tryResolvePlaceholderValue(
-            normalizedPlaceholderKey,
-            resolvedSharedVariablesById
-          );
+          return this._configTreeValueResolver.tryResolvePlaceholderValue(placeholderKey, resolvedSharedVariablesById);
         });
 
         const previousValue = resolvedSharedVariablesById[sharedVariableId];
@@ -221,17 +215,6 @@ export class TechPromptBuilder {
     }
 
     return resolvedSharedVariablesById;
-  }
-
-  private _normalizeCfgPlaceholderKey(placeholderKey: string): string {
-    if (!placeholderKey) return placeholderKey;
-
-    if (placeholderKey === 'LLM_CPP_CFG') return 'cfg';
-
-    const prefix = 'LLM_CPP_CFG.';
-    if (!placeholderKey.startsWith(prefix)) return placeholderKey;
-
-    return 'cfg.' + placeholderKey.slice(prefix.length);
   }
 
   private async _tryReadPromptText(
