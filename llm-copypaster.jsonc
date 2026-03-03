@@ -1,7 +1,6 @@
+// Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig (TODO: when release ext - add url of the file)
+// NOTE: if you don’t want to “show” the file in git, add `/llm-copypaster.jsonc` to `.git/info/exclude`
 {
-  // Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig
-  // This file supports JSONC (comments, trailing commas)
-
   "baseSettings": {
     "promptInstructionConfig": {
       "subInstructionsById": {
@@ -23,7 +22,6 @@
       },
     },
   },
-
   "profilesById": {
     "Disable web-git-prompt": {
       "description": "Disable web-git-prompt",
