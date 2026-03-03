@@ -41,6 +41,22 @@
         "title": "LLM Copypaster: Copy File(s)"
       },
       {
+        "command": "llm-copypaster.openSelectedFiles",
+        "title": "Open Selected Files"
+      },
+      {
+        "command": "llm-copypaster.openSelectedFilesInNewTabGroup",
+        "title": "Open Selected Files In New Tab Group"
+      },
+      {
+        "command": "llm-copypaster.openSelectedFilesInActiveTabGroup",
+        "title": "Open Selected Files In ACTIVE Tab Group"
+      },
+      {
+        "command": "llm-copypaster.openSelectedFilesInTabGroup",
+        "title": "Open Selected Files In Tab Group"
+      },
+      {
         "command": "llm-copypaster.applyClipboardToFiles",
         "title": "LLM Copypaster: Paste Clipboard to Files"
       },
@@ -79,6 +95,26 @@
           "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
           "group": "1-navigation@1"
+        },
+        {
+          "command": "llm-copypaster.openSelectedFiles",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "1-navigation@2"
+        },
+        {
+          "command": "llm-copypaster.openSelectedFilesInNewTabGroup",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "1-navigation@3"
+        },
+        {
+          "command": "llm-copypaster.openSelectedFilesInActiveTabGroup",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "1-navigation@4"
+        },
+        {
+          "command": "llm-copypaster.openSelectedFilesInTabGroup",
+          "when": "explorerResourceIsFolder || resourceScheme == file",
+          "group": "1-navigation@5"
         }
       ],
       "editor/context": [

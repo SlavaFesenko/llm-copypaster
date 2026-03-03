@@ -18,6 +18,11 @@ export const commandIds = {
   copyPinnedFilesInActiveTabGroupAsLlmContext: 'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
 
+  openSelectedFiles: 'llm-copypaster.openSelectedFiles',
+  openSelectedFilesInNewTabGroup: 'llm-copypaster.openSelectedFilesInNewTabGroup',
+  openSelectedFilesInActiveTabGroup: 'llm-copypaster.openSelectedFilesInActiveTabGroup',
+  openSelectedFilesInTabGroup: 'llm-copypaster.openSelectedFilesInTabGroup',
+
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
 
   forceCloseAllTabs: 'llm-copypaster.forceCloseAllTabs',
@@ -70,6 +75,38 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
       commandIds.copySelectedExplorerItemsAsLlmContext,
       async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
         await deps.editorToLlmModule.copySelectedExplorerItemsAsContext({ selectedUris } as CopySelectedExplorerItemsArgs);
+      }
+    ),
+
+    // #endregion
+
+    // #region Open Selected Files
+
+    vscode.commands.registerCommand(
+      commandIds.openSelectedFiles,
+      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        await deps.advancedCloseModule.openSelectedFiles({ selectedUris });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      commandIds.openSelectedFilesInNewTabGroup,
+      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        await deps.advancedCloseModule.openSelectedFilesInNewTabGroup({ selectedUris });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      commandIds.openSelectedFilesInActiveTabGroup,
+      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        await deps.advancedCloseModule.openSelectedFilesInActiveTabGroup({ selectedUris });
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      commandIds.openSelectedFilesInTabGroup,
+      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+        await deps.advancedCloseModule.openSelectedFilesInTabGroup({ selectedUris });
       }
     ),
 
