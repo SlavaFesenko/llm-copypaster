@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { tryGetUriFromTab } from '../ide-to-llm/common.helpers';
 
 export interface TabGroupPickItem extends vscode.QuickPickItem {
@@ -118,4 +119,103 @@ function getFileNameFromUri(uri: vscode.Uri): string {
       .filter(part => part.trim())
       .pop() ?? uri.toString()
   );
+}
+
+export async function pickTabGroupForOpenSelectedFiles(): Promise<vscode.TabGroup | null> {
+  const allTabGroups = vscode.window.tabGroups.all;
+  if (allTabGroups.length === 0) return null;
+
+  if (allTabGroups.length === 1) return allTabGroups[0];
+
+  const quickPickItems = buildTabGroupQuickPickItems({ tabGroups: [...allTabGroups], allTabGroups });
+
+  const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
+    placeHolder: 'Select tab group to open selected files in',
+    canPickMany: false,
+  });
+
+  return selectedItem?.tabGroup ?? null;
+}
+
+export async function pickTabGroupForTabGroupAction(args: {
+  clickedContext?: unknown;
+  logger: OutputChannelLogger;
+}): Promise<vscode.TabGroup | null> {
+  const allTabGroups = vscode.window.tabGroups.all;
+
+  const clickedTabGroup = tryGetTabGroupFromClickedContext(args.clickedContext, allTabGroups);
+  if (clickedTabGroup) return clickedTabGroup;
+
+  const clickedFileUri = tryGetFileUriFromClickedContext(args.clickedContext);
+  if (clickedFileUri && clickedFileUri.scheme === 'file') {
+    const matchingTabGroups = findTabGroupsContainingUri({ uri: clickedFileUri, tabGroups: allTabGroups });
+
+    if (matchingTabGroups.length === 1) return matchingTabGroups[0];
+
+    if (matchingTabGroups.length > 1)
+      return await pickFromMultipleMatchingTabGroups({
+        matchingTabGroups,
+        allTabGroups,
+        placeHolder:
+          "Select tab group to act on, since this file is open in multiple tab groups and VS Code API can't tell which group was clicked",
+      });
+  }
+
+  const activeEditor = vscode.window.activeTextEditor;
+  if (!activeEditor) return vscode.window.tabGroups.activeTabGroup;
+
+  const activeDocumentUri = activeEditor.document.uri;
+  if (activeDocumentUri.scheme !== 'file') return vscode.window.tabGroups.activeTabGroup;
+
+  const matchingTabGroups = findTabGroupsContainingUri({ uri: activeDocumentUri, tabGroups: allTabGroups });
+
+  if (matchingTabGroups.length === 0) return vscode.window.tabGroups.activeTabGroup;
+
+  if (matchingTabGroups.length === 1) return matchingTabGroups[0];
+
+  return await pickFromMultipleMatchingTabGroups({
+    matchingTabGroups,
+    allTabGroups,
+    placeHolder:
+      "Select tab group to act on, since this file is open in multiple tab groups and VS Code API can't tell which group was clicked",
+  });
+}
+
+export function tryGetTabGroupFromClickedContext(
+  clickedContext: unknown,
+  allTabGroups: readonly vscode.TabGroup[]
+): vscode.TabGroup | null {
+  const anyTab = clickedContext as vscode.Tab | null;
+
+  if (!anyTab || typeof anyTab !== 'object') return null;
+
+  const hasTabLikeShape = 'input' in anyTab;
+  if (!hasTabLikeShape) return null;
+
+  return tryFindTabGroupContainingTab({ tab: anyTab, tabGroups: allTabGroups });
+}
+
+export function tryGetFileUriFromClickedContext(clickedContext: unknown): vscode.Uri | null {
+  if (clickedContext instanceof vscode.Uri) return clickedContext;
+
+  const anyTab = clickedContext as vscode.Tab | null;
+
+  if (anyTab && typeof anyTab === 'object' && 'input' in anyTab) return tryGetUriFromTab(anyTab);
+
+  return null;
+}
+
+export async function pickFromMultipleMatchingTabGroups(args: {
+  matchingTabGroups: vscode.TabGroup[];
+  allTabGroups: readonly vscode.TabGroup[];
+  placeHolder: string;
+}): Promise<vscode.TabGroup | null> {
+  const quickPickItems = buildTabGroupQuickPickItems({ tabGroups: args.matchingTabGroups, allTabGroups: args.allTabGroups });
+
+  const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
+    placeHolder: args.placeHolder,
+    canPickMany: false,
+  });
+
+  return selectedItem?.tabGroup ?? null;
 }
