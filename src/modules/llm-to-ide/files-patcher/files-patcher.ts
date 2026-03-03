@@ -85,56 +85,23 @@ async function fileExists(uri: vscode.Uri): Promise<boolean> {
 }
 
 async function tryFormatAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
-  for (const file of payload.files) {
-    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
-    if (operation === FilePayloadOperationType.Deleted) continue;
+  await tryApplyToFilesPayloadDocuments(payload, logger, 'Format', toWorkspaceUri, async document => {
+    await vscode.window.showTextDocument(document, { preview: true, preserveFocus: true });
 
-    const targetUri = toWorkspaceUri(file.path);
-    if (!targetUri) continue;
-
-    try {
-      const document = await vscode.workspace.openTextDocument(targetUri);
-      await vscode.window.showTextDocument(document, { preview: true, preserveFocus: true });
-
-      await vscode.commands.executeCommand('editor.action.formatDocument');
-    } catch (error) {
-      logger.debug(`Format skipped for ${file.path}: ${String(error)}`);
-    }
-  }
+    await vscode.commands.executeCommand('editor.action.formatDocument');
+  });
 }
 
 async function trySaveAppliedDocuments(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
-  for (const file of payload.files) {
-    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
-    if (operation === FilePayloadOperationType.Deleted) continue;
-
-    const targetUri = toWorkspaceUri(file.path);
-    if (!targetUri) continue;
-
-    try {
-      const document = await vscode.workspace.openTextDocument(targetUri);
-      await document.save();
-    } catch (error) {
-      logger.debug(`Save skipped for ${file.path}: ${String(error)}`);
-    }
-  }
+  await tryApplyToFilesPayloadDocuments(payload, logger, 'Save', toWorkspaceUri, async document => {
+    await document.save();
+  });
 }
 
 async function tryOpenAppliedDocumentsInEditor(payload: FilesPayload, logger: OutputChannelLogger): Promise<void> {
-  for (const file of payload.files) {
-    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
-    if (operation === FilePayloadOperationType.Deleted) continue;
-
-    const targetUri = toWorkspaceUri(file.path);
-    if (!targetUri) continue;
-
-    try {
-      const document = await vscode.workspace.openTextDocument(targetUri);
-      await vscode.window.showTextDocument(document, { preview: false, preserveFocus: true });
-    } catch (error) {
-      logger.debug(`Open in editor skipped for ${file.path}: ${String(error)}`);
-    }
-  }
+  await tryApplyToFilesPayloadDocuments(payload, logger, 'Open in editor', toWorkspaceUri, async document => {
+    await vscode.window.showTextDocument(document, { preview: false, preserveFocus: true });
+  });
 }
 
 export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, logger?: OutputChannelLogger): Promise<void> {
@@ -144,5 +111,28 @@ export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, log
     await vscode.workspace.fs.createDirectory(parentUri);
   } catch (error) {
     logger?.debug(`Create directory skipped for ${parentUri.toString()}: ${String(error)}`);
+  }
+}
+
+export async function tryApplyToFilesPayloadDocuments(
+  payload: FilesPayload,
+  logger: OutputChannelLogger,
+  actionName: string,
+  resolveTargetUri: (filePath: string) => vscode.Uri | null,
+  action: (document: vscode.TextDocument, targetUri: vscode.Uri) => Promise<void>
+): Promise<void> {
+  for (const file of payload.files) {
+    const operation = file.operation ?? FilePayloadOperationType.EditedFull;
+    if (operation === FilePayloadOperationType.Deleted) continue;
+
+    const targetUri = resolveTargetUri(file.path);
+    if (!targetUri) continue;
+
+    try {
+      const document = await vscode.workspace.openTextDocument(targetUri);
+      await action(document, targetUri);
+    } catch (error) {
+      await vscode.window.showErrorMessage(`${actionName} failed for ${file.path}: ${String(error)}`);
+    }
   }
 }
