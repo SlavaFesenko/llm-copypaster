@@ -2,7 +2,6 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config-service';
-import { FilePayloadOperationType } from '../../../types/files-payload';
 import { ConfigTreeValueResolver } from './config-tree-value-resolver';
 import { MustacheRenderer } from './mustache-renderer';
 
@@ -140,21 +139,7 @@ export class TechPromptBuilder {
   private _buildRenderConstantsById(): Record<string, string> {
     const sharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
 
-    return {
-      ...sharedVariablesById,
-
-      // LLM-to-IDE parsing anchors (commonly needed by prompt-instructions)
-      techPromptDelimiter: this._config.llmToIdeParsingAnchors.techPromptDelimiter,
-      codeListingHeaderStartFragment: this._getCodeListingHeaderStartFragmentWithSpace(),
-      fileStatusPrefix: this._config.llmToIdeParsingAnchors.fileStatusPrefix,
-      placeholderStartFragment: this._config.llmToIdeParsingAnchors.placeholderStartFragment,
-      placeholderEndFragment: this._config.llmToIdeParsingAnchors.placeholderEndFragment,
-
-      // File payload operation types
-      filePayloadOperationTypeEditedFull: FilePayloadOperationType.EditedFull,
-      filePayloadOperationTypeCreated: FilePayloadOperationType.Created,
-      filePayloadOperationTypeDeleted: FilePayloadOperationType.Deleted,
-    };
+    return sharedVariablesById;
   }
 
   private async _tryReadPromptText(

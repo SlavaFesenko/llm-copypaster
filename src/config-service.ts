@@ -15,6 +15,9 @@ export interface LlmToIdeParsingAnchorsConfig {
   fileStatusPrefix: string;
   placeholderStartFragment: string;
   placeholderEndFragment: string;
+  filePayloadOperationTypeEditedFull: string;
+  filePayloadOperationTypeCreated: string;
+  filePayloadOperationTypeDeleted: string;
 }
 
 export interface PromptInstructionConfig {
@@ -90,6 +93,9 @@ export class ConfigService {
         fileStatusPrefix: '#### FILE WAS ',
         placeholderStartFragment: '{{',
         placeholderEndFragment: '}}',
+        filePayloadOperationTypeEditedFull: 'EDITED_FULL',
+        filePayloadOperationTypeCreated: 'CREATED',
+        filePayloadOperationTypeDeleted: 'DELETED',
       },
       baseSettings: this._buildBaseSettings(),
       profilesById: {
