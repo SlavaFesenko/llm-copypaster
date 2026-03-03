@@ -7,7 +7,6 @@ import {
   TabBasedFileItemsResult,
   tryGetUriFromTab,
 } from './common.helpers';
-import { buildTabGroupQuickPickItems, findTabGroupsContainingUri } from './tab-group-picker-helpers';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
@@ -120,8 +119,7 @@ export class EditorHelper {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
 
-    const tabGroup = await this._pickTabGroupForTabGroupCopyCommand();
-    if (!tabGroup) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    const tabGroup = vscode.window.tabGroups.activeTabGroup;
 
     const tabUris: vscode.Uri[] = [];
     const unresolvedTabs: vscode.Tab[] = [];
@@ -201,8 +199,7 @@ export class EditorHelper {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
 
-    const tabGroup = await this._pickTabGroupForTabGroupCopyCommand();
-    if (!tabGroup) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    const tabGroup = vscode.window.tabGroups.activeTabGroup;
 
     const tabUris: vscode.Uri[] = [];
     const unresolvedTabs: vscode.Tab[] = [];
@@ -224,32 +221,6 @@ export class EditorHelper {
     const readResult = await readUrisAsFileItems(this._deps, tabUris);
 
     return { ...readResult, unresolvedTabs };
-  }
-
-  private async _pickTabGroupForTabGroupCopyCommand(): Promise<vscode.TabGroup | null> {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor) return vscode.window.tabGroups.activeTabGroup;
-
-    const activeDocumentUri = activeEditor.document.uri;
-    if (activeDocumentUri.scheme !== 'file') return vscode.window.tabGroups.activeTabGroup;
-
-    const allTabGroups = vscode.window.tabGroups.all;
-
-    const matchingTabGroups = findTabGroupsContainingUri({ uri: activeDocumentUri, tabGroups: allTabGroups });
-
-    if (matchingTabGroups.length === 0) return vscode.window.tabGroups.activeTabGroup;
-
-    if (matchingTabGroups.length === 1) return matchingTabGroups[0];
-
-    const quickPickItems = buildTabGroupQuickPickItems({ tabGroups: matchingTabGroups, allTabGroups });
-
-    const selectedItem = await vscode.window.showQuickPick(quickPickItems, {
-      placeHolder:
-        "Select tab group to copy, since this file is open in multiple tab groups and VS Code API can't tell which group was clicked",
-      canPickMany: false,
-    });
-
-    return selectedItem?.tabGroup ?? null;
   }
 
   private async _copyTabBasedSelectionAsContext(args: {

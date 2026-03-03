@@ -21,7 +21,10 @@ export const commandIds = {
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
 
-  closeFilesInThisTabGroup: 'llm-copypaster.closeFilesInThisTabGroup',
+  forceCloseAllTabs: 'llm-copypaster.forceCloseAllTabs',
+  forceCloseTabsInTabGroup: 'llm-copypaster.forceCloseTabsInTabGroup',
+  pinAllTabs: 'llm-copypaster.pinAllTabs',
+  pinTabsInTabGroup: 'llm-copypaster.pinTabsInTabGroup',
 
   lsConfig: 'llm-copypaster.lsConfig',
 } as const;
@@ -89,8 +92,20 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     // #region Advanced Close
 
-    vscode.commands.registerCommand(commandIds.closeFilesInThisTabGroup, async () => {
-      await deps.advancedCloseModule.closeFilesInThisTabGroup();
+    vscode.commands.registerCommand(commandIds.forceCloseAllTabs, async () => {
+      await deps.advancedCloseModule.forceCloseAllTabs();
+    }),
+
+    vscode.commands.registerCommand(commandIds.forceCloseTabsInTabGroup, async () => {
+      await deps.advancedCloseModule.forceCloseTabsInTabGroup();
+    }),
+
+    vscode.commands.registerCommand(commandIds.pinAllTabs, async () => {
+      await deps.advancedCloseModule.pinAllTabs();
+    }),
+
+    vscode.commands.registerCommand(commandIds.pinTabsInTabGroup, async () => {
+      await deps.advancedCloseModule.pinTabsInTabGroup();
     }),
 
     // #endregion

@@ -45,12 +45,30 @@
         "title": "LLM Copypaster: Paste Clipboard to Files"
       },
       {
-        "command": "llm-copypaster.closeFilesInThisTabGroup",
-        "title": "Close Files in this Tab Group"
+        "command": "llm-copypaster.forceCloseAllTabs",
+        "title": "Force Close All Tabs"
+      },
+      {
+        "command": "llm-copypaster.forceCloseTabsInTabGroup",
+        "title": "Force Close Tabs in Tab Group"
+      },
+      {
+        "command": "llm-copypaster.pinAllTabs",
+        "title": "Pin All Tabs"
+      },
+      {
+        "command": "llm-copypaster.pinTabsInTabGroup",
+        "title": "Pin Tabs in Tab Group"
       },
       {
         "command": "llm-copypaster.lsConfig",
         "title": "ls config"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "llm-copypaster.pinnedOps",
+        "label": "Pinned Ops"
       }
     ],
     "menus": {
@@ -91,11 +109,35 @@
           "command": "llm-copypaster.applyClipboardToFiles",
           "when": "resourceScheme == file",
           "group": "0-navigation@6"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "submenu": "llm-copypaster.pinnedOps",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@50"
+        }
+      ],
+      "llm-copypaster.pinnedOps": [
+        {
+          "command": "llm-copypaster.forceCloseAllTabs",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@1"
         },
         {
-          "command": "llm-copypaster.closeFilesInThisTabGroup",
+          "command": "llm-copypaster.forceCloseTabsInTabGroup",
           "when": "resourceScheme == file",
-          "group": "0-navigation@7"
+          "group": "0-navigation@2"
+        },
+        {
+          "command": "llm-copypaster.pinAllTabs",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@3"
+        },
+        {
+          "command": "llm-copypaster.pinTabsInTabGroup",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@4"
         }
       ]
     },

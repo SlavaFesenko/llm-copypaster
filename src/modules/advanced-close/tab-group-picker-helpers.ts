@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { tryGetUriFromTab } from './common.helpers';
+import { tryGetUriFromTab } from '../ide-to-llm/common.helpers';
 
 export interface TabGroupPickItem extends vscode.QuickPickItem {
   tabGroup: vscode.TabGroup;
