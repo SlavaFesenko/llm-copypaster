@@ -44,6 +44,19 @@ export class AdvancedCloseModule {
     await this._tryPinTabsInTabGroup(tabGroup);
   }
 
+  public async unpinAllTabs(): Promise<void> {
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      await this._tryUnpinTabsInTabGroup(tabGroup);
+    }
+  }
+
+  public async unpinTabsInTabGroup(): Promise<void> {
+    const tabGroup = await this._pickTabGroupForTabGroupAction();
+    if (!tabGroup) return;
+
+    await this._tryUnpinTabsInTabGroup(tabGroup);
+  }
+
   private async _pickTabGroupForTabGroupAction(): Promise<vscode.TabGroup | null> {
     const activeEditor = vscode.window.activeTextEditor;
     if (!activeEditor) return vscode.window.tabGroups.activeTabGroup;
@@ -98,6 +111,29 @@ export class AdvancedCloseModule {
       }
     } catch (error) {
       this._logger.warn(`Failed pinning tabs: ${String(error)}`);
+    }
+  }
+
+  private async _tryUnpinTabsInTabGroup(tabGroup: vscode.TabGroup): Promise<void> {
+    try {
+      for (const tab of tabGroup.tabs) {
+        if (!tab.isPinned) continue;
+
+        const tabUri = tryGetUriFromTab(tab);
+        if (!tabUri) continue;
+
+        if (tabUri.scheme !== 'file') continue;
+
+        await vscode.window.showTextDocument(tabUri, {
+          preview: false,
+          preserveFocus: false,
+          viewColumn: tabGroup.viewColumn,
+        });
+
+        await vscode.commands.executeCommand('workbench.action.unpinEditor');
+      }
+    } catch (error) {
+      this._logger.warn(`Failed unpinning tabs: ${String(error)}`);
     }
   }
 }

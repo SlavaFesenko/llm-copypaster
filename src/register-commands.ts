@@ -25,6 +25,8 @@ export const commandIds = {
   forceCloseTabsInTabGroup: 'llm-copypaster.forceCloseTabsInTabGroup',
   pinAllTabs: 'llm-copypaster.pinAllTabs',
   pinTabsInTabGroup: 'llm-copypaster.pinTabsInTabGroup',
+  unpinAllTabs: 'llm-copypaster.unpinAllTabs',
+  unpinTabsInTabGroup: 'llm-copypaster.unpinTabsInTabGroup',
 
   lsConfig: 'llm-copypaster.lsConfig',
 } as const;
@@ -106,6 +108,14 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     vscode.commands.registerCommand(commandIds.pinTabsInTabGroup, async () => {
       await deps.advancedCloseModule.pinTabsInTabGroup();
+    }),
+
+    vscode.commands.registerCommand(commandIds.unpinAllTabs, async () => {
+      await deps.advancedCloseModule.unpinAllTabs();
+    }),
+
+    vscode.commands.registerCommand(commandIds.unpinTabsInTabGroup, async () => {
+      await deps.advancedCloseModule.unpinTabsInTabGroup();
     }),
 
     // #endregion

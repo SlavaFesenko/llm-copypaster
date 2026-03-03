@@ -61,14 +61,16 @@
         "title": "Pin Tabs in Tab Group"
       },
       {
+        "command": "llm-copypaster.unpinAllTabs",
+        "title": "Unpin All Tabs"
+      },
+      {
+        "command": "llm-copypaster.unpinTabsInTabGroup",
+        "title": "Unpin Tabs in Tab Group"
+      },
+      {
         "command": "llm-copypaster.lsConfig",
         "title": "ls config"
-      }
-    ],
-    "submenus": [
-      {
-        "id": "llm-copypaster.pinnedOps",
-        "label": "Pinned Ops"
       }
     ],
     "menus": {
@@ -113,19 +115,12 @@
       ],
       "editor/title/context": [
         {
-          "submenu": "llm-copypaster.pinnedOps",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@50"
-        }
-      ],
-      "llm-copypaster.pinnedOps": [
-        {
-          "command": "llm-copypaster.forceCloseAllTabs",
+          "command": "llm-copypaster.pinTabsInTabGroup",
           "when": "resourceScheme == file",
           "group": "0-navigation@1"
         },
         {
-          "command": "llm-copypaster.forceCloseTabsInTabGroup",
+          "command": "llm-copypaster.unpinTabsInTabGroup",
           "when": "resourceScheme == file",
           "group": "0-navigation@2"
         },
@@ -135,9 +130,19 @@
           "group": "0-navigation@3"
         },
         {
-          "command": "llm-copypaster.pinTabsInTabGroup",
+          "command": "llm-copypaster.unpinAllTabs",
           "when": "resourceScheme == file",
           "group": "0-navigation@4"
+        },
+        {
+          "command": "llm-copypaster.forceCloseAllTabs",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@5"
+        },
+        {
+          "command": "llm-copypaster.forceCloseTabsInTabGroup",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@6"
         }
       ]
     },
