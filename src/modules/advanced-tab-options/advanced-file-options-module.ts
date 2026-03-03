@@ -8,7 +8,7 @@ export interface OpenSelectedFilesArgs {
   selectedUris?: vscode.Uri[];
 }
 
-export class AdvancedFilesOptionsModule {
+export class AdvancedTabOptionsModule {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
   public async forceCloseAllTabs(): Promise<void> {
