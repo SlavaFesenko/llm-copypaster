@@ -5,25 +5,24 @@ import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../.
 import { ConfigTreeValueResolver } from './config-tree-value-resolver';
 import { MustacheRenderer } from './mustache-renderer';
 
-// 'Supported Mustache-like syntax:',
+// 'Supported Mustache-like syntax (NEW RULES):',
 // '',
-// '1) Placeholder replacement:',
-// '   - {{someKey}}',
-// '   - {{cfg.some.path}}',
-// '   - Placeholder keys are resolved by caller (e.g., sharedVariablesById by default; cfg.* can be resolved from config tree)',
-// '   - cfg.* may resolve to both leaf values (string/number/bool) and section nodes (object/array)',
-// '   - Leaf values are stringified as-is; object/array nodes are stringified via JSON.stringify(...)',
+// '1) Prompt files can use ONLY shared variables:',
+// '   - {{someSharedVariableId}}',
+// '   - shared variables are taken from config: baseSettings.promptInstructionConfig.sharedVariablesById',
 // '',
-// '2) Conditional blocks (evaluation is passed by caller):',
-// '   - {{#if someFlag}} ... {{/if}}',
-// '   - {{#if !someFlag}} ... {{/if}}',
-// '   - {{#if !!!someFlag}} ... {{/if}}',
-// '   - {{#if cfg.some.path.to-boolean}} ... {{/if}}',
-// '   - {{#if !cfg.some.path.to-boolean}} ... {{/if}}',
-// '   - {{#if someFlag}} ... {{else}} ... {{/if}}',
-// '   - {{#if someFlag}} ... {{else if otherFlag}} ... {{else}} ... {{/if}}',
-// '   - {{#if someFlag}} ... {{else if !otherFlag}} ... {{else}} ... {{/if}}',
-// '   - Leaf values are coerced to boolean (true/false, 1/0, yes/no, on/off, non-empty strings); object/array nodes are truthy',
+// '2) sharedVariablesById values can be computed from config via a special prefix:',
+// '   - sharedVariablesById["SOME_VALUE"] = "{{LLM_CPP_CFG.some.path}}"',
+// '   - LLM_CPP_CFG.* is supported ONLY inside sharedVariablesById values (not in prompt files)',
+// '   - Under the hood LLM_CPP_CFG.* is translated to existing cfg.* to reuse current resolver behavior',
+// '',
+// '3) Conditional blocks in prompt files use ONLY shared variables:',
+// '   - {{#if someSharedVariableId}} ... {{/if}}',
+// '   - {{#if !someSharedVariableId}} ... {{/if}}',
+// '   - {{#if !!!someSharedVariableId}} ... {{/if}}',
+// '   - {{#if someSharedVariableId}} ... {{else}} ... {{/if}}',
+// '   - {{#if someSharedVariableId}} ... {{else if otherSharedVariableId}} ... {{else}} ... {{/if}}',
+// '   - Flags are coerced to boolean (true/false, 1/0, yes/no, on/off, non-empty strings)',
 // '',
 // 'Notes:',
 // ' - Unknown/mismatched tags are kept unchanged',
@@ -48,7 +47,7 @@ export class TechPromptBuilder {
     if (promptIdsInConfig.length === 0) return '';
 
     const builtPrompts: string[] = [];
-    const renderConstantsById = this._buildRenderConstantsById();
+    const resolvedSharedVariablesById = this._buildResolvedSharedVariablesById();
 
     for (const promptId of promptIdsInConfig) {
       const promptInstructionsConfig = subInstructionsById[promptId];
@@ -57,7 +56,7 @@ export class TechPromptBuilder {
       const builtPromptText = await this._tryBuildPromptText({
         promptId,
         promptInstructionsConfig,
-        renderConstantsById,
+        resolvedSharedVariablesById,
       });
 
       if (!builtPromptText) continue;
@@ -75,7 +74,7 @@ export class TechPromptBuilder {
   private async _tryBuildPromptText(args: {
     promptId: string;
     promptInstructionsConfig: PromptInstructionsConfig;
-    renderConstantsById: Record<string, string>;
+    resolvedSharedVariablesById: Record<string, string>;
   }): Promise<string | null> {
     if (args.promptInstructionsConfig.ignore) return null;
 
@@ -84,9 +83,9 @@ export class TechPromptBuilder {
 
     let nextPromptText = promptText;
 
-    nextPromptText = this._renderPlaceholders(nextPromptText, args.renderConstantsById);
+    nextPromptText = this._renderPlaceholdersFromSharedVariablesOnly(nextPromptText, args.resolvedSharedVariablesById);
 
-    const flagsById = this._buildIfFlagsById(nextPromptText, args.renderConstantsById);
+    const flagsById = this._buildIfFlagsById(nextPromptText, args.resolvedSharedVariablesById);
     nextPromptText = this._mustacheRenderer.renderIfBlocks(nextPromptText, flagsById);
 
     if (!nextPromptText.trim()) return null;
@@ -94,21 +93,70 @@ export class TechPromptBuilder {
     return nextPromptText;
   }
 
-  private _renderPlaceholders(promptText: string, constantsById: Record<string, string>): string {
-    return this._mustacheRenderer.renderPlaceholders(promptText, placeholderKey =>
-      this._configTreeValueResolver.tryResolvePlaceholderValue(placeholderKey, constantsById)
-    );
+  private _renderPlaceholdersFromSharedVariablesOnly(
+    promptText: string,
+    sharedVariablesById: Record<string, string>
+  ): string {
+    return this._mustacheRenderer.renderPlaceholders(promptText, placeholderKey => {
+      const resolvedValue = sharedVariablesById?.[placeholderKey];
+      if (resolvedValue === undefined) return null;
+
+      return resolvedValue;
+    });
   }
 
-  private _buildIfFlagsById(promptText: string, constantsById: Record<string, string>): Record<string, boolean> {
+  private _buildIfFlagsById(promptText: string, sharedVariablesById: Record<string, string>): Record<string, boolean> {
     const flagsById: Record<string, boolean> = {};
     const ifFlagNames = this._extractIfFlagNames(promptText);
 
     for (const ifFlagName of ifFlagNames) {
-      flagsById[ifFlagName] = this._configTreeValueResolver.tryResolveIfFlagValue(ifFlagName, constantsById);
+      flagsById[ifFlagName] = this._tryResolveIfFlagValueFromSharedVariablesOnly(ifFlagName, sharedVariablesById);
     }
 
     return flagsById;
+  }
+
+  private _tryResolveIfFlagValueFromSharedVariablesOnly(
+    flagExpression: string,
+    sharedVariablesById: Record<string, string>
+  ): boolean {
+    const rawExpression = (flagExpression ?? '').trim();
+    if (!rawExpression) return false;
+
+    const match = /^(!+)?(.*)$/.exec(rawExpression);
+    const negationPrefix = (match?.[1] ?? '').trim();
+    const rawFlagName = (match?.[2] ?? '').trim();
+
+    const negationsCount = negationPrefix.length;
+    const shouldNegate = negationsCount % 2 === 1;
+
+    const rawValue = sharedVariablesById?.[rawFlagName];
+    const isTruthy = this._coerceTextToBoolean(rawValue);
+
+    return shouldNegate ? !isTruthy : isTruthy;
+  }
+
+  private _coerceTextToBoolean(text: string | undefined): boolean {
+    if (text === undefined) return false;
+
+    const normalized = String(text).trim();
+    if (!normalized) return false;
+
+    const lowered = normalized.toLowerCase();
+
+    if (lowered === 'true') return true;
+    if (lowered === 'false') return false;
+
+    if (lowered === '1') return true;
+    if (lowered === '0') return false;
+
+    if (lowered === 'yes') return true;
+    if (lowered === 'no') return false;
+
+    if (lowered === 'on') return true;
+    if (lowered === 'off') return false;
+
+    return true;
   }
 
   private _extractIfFlagNames(promptText: string): string[] {
@@ -136,10 +184,54 @@ export class TechPromptBuilder {
     return foundFlagNames;
   }
 
-  private _buildRenderConstantsById(): Record<string, string> {
-    const sharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
+  private _buildResolvedSharedVariablesById(): Record<string, string> {
+    const rawSharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
+    const sharedVariableTemplatesById = { ...rawSharedVariablesById };
 
-    return sharedVariablesById;
+    let resolvedSharedVariablesById = { ...rawSharedVariablesById };
+
+    for (let passIndex = 0; passIndex < 10; passIndex++) {
+      let didAnyValueChange = false;
+
+      for (const sharedVariableId of Object.keys(sharedVariableTemplatesById)) {
+        const rawTemplate = sharedVariableTemplatesById[sharedVariableId] ?? '';
+
+        const resolvedValue = this._mustacheRenderer.renderPlaceholders(rawTemplate, placeholderKey => {
+          const normalizedPlaceholderKey = this._normalizeCfgPlaceholderKey(placeholderKey);
+
+          return this._configTreeValueResolver.tryResolvePlaceholderValue(
+            normalizedPlaceholderKey,
+            resolvedSharedVariablesById
+          );
+        });
+
+        const previousValue = resolvedSharedVariablesById[sharedVariableId];
+
+        if (previousValue === resolvedValue) continue;
+
+        resolvedSharedVariablesById = {
+          ...resolvedSharedVariablesById,
+          [sharedVariableId]: resolvedValue,
+        };
+
+        didAnyValueChange = true;
+      }
+
+      if (!didAnyValueChange) break;
+    }
+
+    return resolvedSharedVariablesById;
+  }
+
+  private _normalizeCfgPlaceholderKey(placeholderKey: string): string {
+    if (!placeholderKey) return placeholderKey;
+
+    if (placeholderKey === 'LLM_CPP_CFG') return 'cfg';
+
+    const prefix = 'LLM_CPP_CFG.';
+    if (!placeholderKey.startsWith(prefix)) return placeholderKey;
+
+    return 'cfg.' + placeholderKey.slice(prefix.length);
   }
 
   private async _tryReadPromptText(
@@ -213,6 +305,6 @@ export class TechPromptBuilder {
   }
 
   private _escapeRegExp(text: string): string {
-    return text.replace(/[.*+?^${}()|[]\]/g, '$&');
+    return text.replace(/[.*+?^${}()|[]]/g, '$&');
   }
 }
