@@ -144,12 +144,18 @@ export async function showCopyResultNotification(
   const hasProfiles = await deps.configService.hasAvailableProfiles();
 
   const openPromptInEditor = 'Open Prompt in Editor';
+  const eraseInstructions = 'Erase Instructions';
 
   let selectedProfileIds: string[] = [];
   let currentPromptText = args.promptText;
+  let isTechPromptErased = false;
 
   while (true) {
-    const effectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
+    const baseEffectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
+
+    const effectiveConfig = isTechPromptErased
+      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.baseSettings, skipTechPrompt: true } }
+      : baseEffectiveConfig;
 
     const promptStatsResult = buildTextSizeStats({
       promptText: currentPromptText,
@@ -176,6 +182,7 @@ export async function showCopyResultNotification(
 
     const actionLabels = [
       openPromptInEditor,
+      ...(isTechPromptErased ? [] : [eraseInstructions]),
       ...(hasProfiles ? [applyOrChangeProfilesLabel] : []),
       ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
     ];
@@ -195,6 +202,25 @@ export async function showCopyResultNotification(
     if (selectedAction === openPromptInEditor) {
       await openPromptTextInEditor(currentPromptText);
       return;
+    }
+
+    if (selectedAction === eraseInstructions) {
+      isTechPromptErased = true;
+
+      const rebuiltPrompt = await buildLlmPromptTextForProfiles({
+        extensionContext: deps.extensionContext,
+        configService: deps.configService,
+        profileIds: selectedProfileIds,
+        includeTechPromptFromCommand: args.includeTechPrompt,
+        fileItems: args.fileItems,
+        forceSkipTechPrompt: true,
+      });
+
+      currentPromptText = rebuiltPrompt;
+
+      await vscode.env.clipboard.writeText(currentPromptText);
+
+      continue;
     }
 
     if (selectedAction === closeUnavailableActionLabel) {
@@ -220,6 +246,7 @@ export async function showCopyResultNotification(
         profileIds: selectedProfileIds,
         includeTechPromptFromCommand: args.includeTechPrompt,
         fileItems: args.fileItems,
+        forceSkipTechPrompt: isTechPromptErased,
       });
 
       currentPromptText = rebuiltPrompt;

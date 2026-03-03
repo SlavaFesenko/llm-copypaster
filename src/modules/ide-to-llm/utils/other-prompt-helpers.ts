@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../../config-service';
+import { ConfigService, LlmCopypasterConfig } from '../../../config-service';
 import { CollectedFileItem } from '../../../types/files-payload';
 import { buildLlmContextText } from './llm-context-formatter';
 import { TechPromptBuilder } from './tech-prompt-builder';
@@ -11,8 +11,18 @@ export async function buildLlmPromptTextForProfiles(args: {
   profileIds: string[];
   includeTechPromptFromCommand: boolean;
   fileItems: CollectedFileItem[];
+  baseConfigOverride?: LlmCopypasterConfig;
+  forceSkipTechPrompt?: boolean;
 }): Promise<string> {
-  const effectiveConfig = await args.configService.buildEffectiveConfigForProfileIds(args.profileIds);
+  const baseEffectiveConfig = await args.configService.buildEffectiveConfigForProfileIds(
+    args.profileIds,
+    args.baseConfigOverride
+  );
+
+  const effectiveConfig =
+    args.forceSkipTechPrompt === true
+      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.baseSettings, skipTechPrompt: true } }
+      : baseEffectiveConfig;
 
   const shouldIncludeTechPrompt = args.includeTechPromptFromCommand && effectiveConfig.baseSettings.skipTechPrompt !== true;
 
