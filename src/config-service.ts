@@ -76,15 +76,6 @@ export interface LlmCopypasterConfig {
 export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
-  public async getConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = this.buildSystemConfig();
-    const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
-
-    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildBaseSettings());
-
-    return mergedConfig;
-  }
-
   public buildSystemConfig(): LlmCopypasterConfig {
     return {
       llmToIdeParsingAnchors: {
@@ -107,6 +98,63 @@ export class ConfigService {
         },
       },
     };
+  }
+
+  private _buildBaseSettings(): ProfileSettingsConfig {
+    return {
+      skipTechPrompt: false,
+      skipCodeListings: false,
+      ideToLlmContextConfig: {
+        skipPromptSizeStatsInCopyNotification: false,
+        promptSizeApproxCharsPerToken: 3.5,
+        maxLinesCountInContext: 1000,
+        maxTokensCountInContext: 12000,
+      },
+      llmToIdeContextConfig: {
+        promptSizeApproxCharsPerToken: 3.5,
+        maxLinesCountInContext: 1000,
+        maxTokensCountInContext: 12000,
+      },
+      llmToIdeSanitizationRulesById: {
+        'strip-codefence': {
+          pattern: '`{3}[^\r\n]*',
+          replaceWith: '',
+          disabledForLanguages: ['markdown'],
+          disabledForPaths: ['docs/'],
+        },
+      },
+      postFilePatchActionsConfig: {
+        enableSaveAfterFilePatch: true,
+        enableLintingAfterFilePatch: false,
+        enableOpeningPatchedFilesInEditor: true,
+      },
+      promptInstructionConfig: {
+        subInstructionsById: {
+          'llm-response-rules-prompt': {
+            relativePathToSubInstruction: '.sys-prompts/llm-response-rules-prompt.md',
+            isSystemBundledFile: true,
+            ignore: false,
+          },
+        },
+        sharedVariablesById: {
+          CODE_LISTING_HEADER_START_FRAGMENT: 'LLM_CPP_CFG.llmToIdeParsingAnchors.codeListingHeaderStartFragment',
+          FILE_STATUS_PREFIX: 'LLM_CPP_CFG.llmToIdeParsingAnchors.fileStatusPrefix',
+          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull',
+          FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeCreated',
+          FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeDeleted',
+          WEB_GIT_PROMPT_IGNORE: 'LLM_CPP_CFG.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore',
+        },
+      },
+    };
+  }
+
+  public async getConfig(): Promise<LlmCopypasterConfig> {
+    const systemConfig = this.buildSystemConfig();
+    const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
+
+    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildBaseSettings());
+
+    return mergedConfig;
   }
 
   public async getProfilesById(config?: LlmCopypasterConfig): Promise<Record<string, ProfileConfig>> {
@@ -220,54 +268,6 @@ export class ConfigService {
       llmToIdeSanitizationRulesById: {
         ...(baseSettings.llmToIdeSanitizationRulesById ?? {}),
         ...(profileSettingsConfig.llmToIdeSanitizationRulesById ?? {}),
-      },
-    };
-  }
-
-  private _buildBaseSettings(): ProfileSettingsConfig {
-    return {
-      skipTechPrompt: false,
-      skipCodeListings: false,
-      ideToLlmContextConfig: {
-        skipPromptSizeStatsInCopyNotification: false,
-        promptSizeApproxCharsPerToken: 3.5,
-        maxLinesCountInContext: 1000,
-        maxTokensCountInContext: 12000,
-      },
-      llmToIdeContextConfig: {
-        promptSizeApproxCharsPerToken: 3.5,
-        maxLinesCountInContext: 1000,
-        maxTokensCountInContext: 12000,
-      },
-      llmToIdeSanitizationRulesById: {
-        'strip-codefence': {
-          pattern: '`{3}[^\r\n]*',
-          replaceWith: '',
-          disabledForLanguages: ['markdown'],
-          disabledForPaths: ['docs/'],
-        },
-      },
-      postFilePatchActionsConfig: {
-        enableSaveAfterFilePatch: true,
-        enableLintingAfterFilePatch: false,
-        enableOpeningPatchedFilesInEditor: true,
-      },
-      promptInstructionConfig: {
-        subInstructionsById: {
-          'llm-response-rules-prompt': {
-            relativePathToSubInstruction: '.sys-prompts/llm-response-rules-prompt.md',
-            isSystemBundledFile: true,
-            ignore: false,
-          },
-        },
-        sharedVariablesById: {
-          CODE_LISTING_HEADER_START_FRAGMENT: 'LLM_CPP_CFG.llmToIdeParsingAnchors.codeListingHeaderStartFragment',
-          FILE_STATUS_PREFIX: 'LLM_CPP_CFG.llmToIdeParsingAnchors.fileStatusPrefix',
-          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull',
-          FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeCreated',
-          FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeDeleted',
-          WEB_GIT_PROMPT_IGNORE: 'LLM_CPP_CFG.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore',
-        },
       },
     };
   }
