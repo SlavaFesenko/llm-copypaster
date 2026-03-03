@@ -64,6 +64,12 @@ export function mergeLlmToIdeParsingAnchors(
     fileStatusPrefix: userAnchors.fileStatusPrefix ?? baseAnchors.fileStatusPrefix,
     placeholderStartFragment: userAnchors.placeholderStartFragment ?? baseAnchors.placeholderStartFragment,
     placeholderEndFragment: userAnchors.placeholderEndFragment ?? baseAnchors.placeholderEndFragment,
+    filePayloadOperationTypeEditedFull:
+      userAnchors.filePayloadOperationTypeEditedFull ?? baseAnchors.filePayloadOperationTypeEditedFull,
+    filePayloadOperationTypeCreated:
+      userAnchors.filePayloadOperationTypeCreated ?? baseAnchors.filePayloadOperationTypeCreated,
+    filePayloadOperationTypeDeleted:
+      userAnchors.filePayloadOperationTypeDeleted ?? baseAnchors.filePayloadOperationTypeDeleted,
   };
 }
 

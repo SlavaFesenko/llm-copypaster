@@ -9,6 +9,9 @@ export interface LlmToIdeParsingAnchorsUserConfig {
   fileStatusPrefix?: string;
   placeholderStartFragment?: string;
   placeholderEndFragment?: string;
+  filePayloadOperationTypeEditedFull?: string;
+  filePayloadOperationTypeCreated?: string;
+  filePayloadOperationTypeDeleted?: string;
 }
 
 export interface PromptInstructionUserConfig {

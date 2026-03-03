@@ -261,7 +261,6 @@ export class ConfigService {
           },
         },
         sharedVariablesById: {
-          PARAM_FORM_SYS_CONFIG_JFT: 'just for test',
           CODE_LISTING_HEADER_START_FRAGMENT: '{{LLM_CPP_CFG.llmToIdeParsingAnchors.codeListingHeaderStartFragment}}',
           FILE_STATUS_PREFIX: '{{LLM_CPP_CFG.llmToIdeParsingAnchors.fileStatusPrefix}}',
           FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL:
