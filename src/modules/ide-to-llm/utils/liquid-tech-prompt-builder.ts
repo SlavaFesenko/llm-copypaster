@@ -2,19 +2,18 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
+import get from 'lodash/get';
 
 import {
   type LlmCopypasterConfig,
   type PromptInstructionConfig,
   type PromptInstructionsConfig,
 } from '../../../config-service';
-import { ConfigTreeValueResolver } from './config-tree-value-resolver';
 import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './tech-prompt-resolve-report-helpers';
 
 export class LiquidTechPromptBuilder {
   private readonly _liquidStrict: Liquid;
   private readonly _liquidLight: Liquid;
-  private readonly _configTreeValueResolver: ConfigTreeValueResolver;
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
@@ -22,7 +21,6 @@ export class LiquidTechPromptBuilder {
   ) {
     this._liquidStrict = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
     this._liquidLight = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
-    this._configTreeValueResolver = new ConfigTreeValueResolver(this._config);
   }
 
   public async build(): Promise<string> {
@@ -169,8 +167,11 @@ export class LiquidTechPromptBuilder {
     if (!configVariablePrefix) return undefined;
     if (!normalized.startsWith(configVariablePrefix)) return undefined;
 
-    const resolved = this._configTreeValueResolver.tryResolvePlaceholderValue(normalized, {});
-    if (resolved === null) {
+    const rawPath = normalized.slice(configVariablePrefix.length).trim();
+    if (!rawPath) return rawTemplate;
+
+    const resolvedValue = get(this._config, rawPath);
+    if (resolvedValue === undefined) {
       resolveIssues.configVariablesIssues.push({
         sharedVariableId,
         rawTemplate,
@@ -181,7 +182,22 @@ export class LiquidTechPromptBuilder {
       return rawTemplate;
     }
 
-    return resolved;
+    return this._stringifyPlaceholderValue(resolvedValue);
+  }
+
+  private _stringifyPlaceholderValue(value: unknown): string {
+    if (value === null) return 'null';
+    if (value === undefined) return '';
+
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return String(value);
+    if (typeof value === 'boolean') return value ? 'true' : 'false';
+
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
   }
 
   private _tryExtractConfigVariablePath(rawTemplate: string): string | undefined {

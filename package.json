@@ -218,9 +218,11 @@
   },
   "dependencies": {
     "json-diff-ts": "^4.9.1",
-    "liquidjs": "^10.24.0"
+    "liquidjs": "^10.24.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.17",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/vscode": "^1.109.0",
