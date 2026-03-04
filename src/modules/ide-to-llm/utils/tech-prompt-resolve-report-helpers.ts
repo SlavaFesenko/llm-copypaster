@@ -19,6 +19,7 @@ export interface FilePromptResolveIssue {
 export interface ConfigVariablesResolveIssue {
   sharedVariableId: string;
   rawTemplate: string;
+  configVariablePath?: string;
   errorText: string;
 }
 
@@ -113,6 +114,7 @@ function buildConfigVariablesIssuesMarkdown(configVariablesIssues: ConfigVariabl
 
   for (const issue of configVariablesIssues) {
     lines.push(`- Shared var id: "${issue.sharedVariableId}"`);
+    if (issue.configVariablePath) lines.push(`  Config variable: "${issue.configVariablePath}"`);
     lines.push(`  Template: ${issue.rawTemplate}`);
     lines.push(`  Error: ${issue.errorText}`);
   }

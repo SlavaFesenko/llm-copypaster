@@ -8,16 +8,19 @@ import {
   type PromptInstructionConfig,
   type PromptInstructionsConfig,
 } from '../../../config-service';
+import { ConfigTreeValueResolver } from './config-tree-value-resolver';
 import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './tech-prompt-resolve-report-helpers';
 
 export class LiquidTechPromptBuilder {
   private readonly _liquid: Liquid;
+  private readonly _configTreeValueResolver: ConfigTreeValueResolver;
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
   ) {
     this._liquid = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
+    this._configTreeValueResolver = new ConfigTreeValueResolver(this._config);
   }
 
   public async build(): Promise<string> {
@@ -41,6 +44,7 @@ export class LiquidTechPromptBuilder {
     for (const promptId of promptIdsInConfig) {
       const promptInstructionsConfig = subInstructionsById[promptId] as PromptInstructionsConfig | undefined;
       if (!promptInstructionsConfig) continue;
+      if (promptInstructionsConfig.ignore) continue;
 
       const builtPromptText = await this._tryBuildPromptText({
         promptId,
@@ -102,6 +106,12 @@ export class LiquidTechPromptBuilder {
     for (const sharedVariableId of Object.keys(rawSharedVariablesById)) {
       const rawTemplate = rawSharedVariablesById[sharedVariableId] ?? '';
 
+      const directResolvedConfigValueOrUndefined = this._tryResolveDirectConfigTemplate(rawTemplate);
+      if (directResolvedConfigValueOrUndefined !== undefined) {
+        resolvedSharedVariablesById[sharedVariableId] = directResolvedConfigValueOrUndefined;
+        continue;
+      }
+
       try {
         resolvedSharedVariablesById[sharedVariableId] = await this._liquid.parseAndRender(rawTemplate, {
           LLM_CPP_CFG: this._config,
@@ -112,6 +122,7 @@ export class LiquidTechPromptBuilder {
         resolveIssues.configVariablesIssues.push({
           sharedVariableId,
           rawTemplate,
+          configVariablePath: this._tryExtractConfigVariablePath(rawTemplate),
           errorText,
         });
 
@@ -120,6 +131,29 @@ export class LiquidTechPromptBuilder {
     }
 
     return resolvedSharedVariablesById;
+  }
+
+  private _tryResolveDirectConfigTemplate(rawTemplate: string): string | undefined {
+    const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
+
+    const normalized = (rawTemplate ?? '').trim();
+    if (!configVariablePrefix) return undefined;
+    if (!normalized.startsWith(configVariablePrefix)) return undefined;
+
+    const resolved = this._configTreeValueResolver.tryResolvePlaceholderValue(normalized, {});
+    if (resolved === null) return rawTemplate;
+
+    return resolved;
+  }
+
+  private _tryExtractConfigVariablePath(rawTemplate: string): string | undefined {
+    const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
+
+    const normalized = (rawTemplate ?? '').trim();
+    if (!configVariablePrefix) return undefined;
+    if (!normalized.startsWith(configVariablePrefix)) return undefined;
+
+    return normalized;
   }
 
   private async _tryReadPromptText(
