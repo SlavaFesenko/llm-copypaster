@@ -1,4 +1,3 @@
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
@@ -9,6 +8,13 @@ import {
   type PromptInstructionConfig,
   type PromptInstructionsConfig,
 } from '../../../config-service';
+import {
+  collapseEmptyLines,
+  normalizeDirectPlaceholderValue,
+  tryBuildPromptUri,
+  tryExtractConfigVariablePath,
+  tryParseScalarLiquidValue,
+} from './liquid-tech-prompt-builder-helpers';
 import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './tech-prompt-resolve-report-helpers';
 
 export class LiquidTechPromptBuilder {
@@ -100,31 +106,11 @@ export class LiquidTechPromptBuilder {
     }
 
     const renderedText = renderedTextOrNull ?? '';
-    const normalizedRenderedText = this._collapseEmptyLines(renderedText);
+    const normalizedRenderedText = collapseEmptyLines(renderedText);
 
     if (!normalizedRenderedText.trim()) return null;
 
     return normalizedRenderedText;
-  }
-
-  private _collapseEmptyLines(text: string): string {
-    const normalized = (text ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-    const lines = normalized.split('\n');
-    const collapsedLines: string[] = [];
-
-    let wasPreviousLineEmpty = false;
-
-    for (const line of lines) {
-      const isCurrentLineEmpty = !(line ?? '').trim();
-
-      if (isCurrentLineEmpty && wasPreviousLineEmpty) continue;
-
-      collapsedLines.push(line);
-      wasPreviousLineEmpty = isCurrentLineEmpty;
-    }
-
-    return collapsedLines.join('\n');
   }
 
   private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, unknown>> {
@@ -157,7 +143,10 @@ export class LiquidTechPromptBuilder {
         resolveIssues.configVariablesIssues.push({
           sharedVariableId,
           rawTemplate,
-          configVariablePath: this._tryExtractConfigVariablePath(rawTemplate),
+          configVariablePath: tryExtractConfigVariablePath(
+            rawTemplate,
+            this._config.llmToIdeParsingAnchors.configVariablePrefix
+          ),
           errorText,
         });
       }
@@ -172,7 +161,7 @@ export class LiquidTechPromptBuilder {
         }
       }
 
-      resolvedSharedVariablesById[sharedVariableId] = this._tryParseScalarLiquidValue(renderedValueOrNull ?? '');
+      resolvedSharedVariablesById[sharedVariableId] = tryParseScalarLiquidValue(renderedValueOrNull ?? '');
     }
 
     return resolvedSharedVariablesById;
@@ -197,49 +186,14 @@ export class LiquidTechPromptBuilder {
       resolveIssues.configVariablesIssues.push({
         sharedVariableId,
         rawTemplate,
-        configVariablePath: this._tryExtractConfigVariablePath(rawTemplate),
+        configVariablePath: tryExtractConfigVariablePath(rawTemplate, configVariablePrefix),
         errorText: 'Config value not found for direct placeholder resolution',
       });
 
       return rawTemplate;
     }
 
-    return this._normalizeDirectPlaceholderValue(resolvedValue);
-  }
-
-  private _normalizeDirectPlaceholderValue(value: unknown): unknown {
-    if (value === null) return 'null';
-    if (value === undefined) return '';
-
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number') return String(value);
-
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return String(value);
-    }
-  }
-
-  private _tryParseScalarLiquidValue(rawValue: string): unknown {
-    const normalized = (rawValue ?? '').trim();
-    const normalizedLower = normalized.toLowerCase();
-
-    if (normalizedLower === 'true') return true;
-    if (normalizedLower === 'false') return false;
-
-    return rawValue;
-  }
-
-  private _tryExtractConfigVariablePath(rawTemplate: string): string | undefined {
-    const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
-
-    const normalized = (rawTemplate ?? '').trim();
-    if (!configVariablePrefix) return undefined;
-    if (!normalized.startsWith(configVariablePrefix)) return undefined;
-
-    return normalized;
+    return normalizeDirectPlaceholderValue(resolvedValue);
   }
 
   private async _tryReadPromptText(
@@ -247,7 +201,10 @@ export class LiquidTechPromptBuilder {
     promptId: string,
     resolveIssues: TechPromptResolveIssues
   ): Promise<string | null> {
-    const promptUri = this._tryBuildPromptUri(promptInstructionsConfig);
+    const promptUri = tryBuildPromptUri({
+      promptInstructionsConfig,
+      extensionContext: this._extensionContext,
+    });
 
     if (!promptUri) {
       resolveIssues.filePromptsIssues.push({
@@ -277,23 +234,5 @@ export class LiquidTechPromptBuilder {
 
       return null;
     }
-  }
-
-  private _tryBuildPromptUri(promptInstructionsConfig: PromptInstructionsConfig): vscode.Uri | null {
-    const rawPath = promptInstructionsConfig.relativePathToSubInstruction;
-
-    if (rawPath.startsWith('file:')) return vscode.Uri.parse(rawPath); // support file:// URI values (not raw OS paths)
-    if (path.isAbsolute(rawPath)) return vscode.Uri.file(rawPath);
-
-    return promptInstructionsConfig.isSystemBundledFile
-      ? vscode.Uri.joinPath(this._extensionContext.extensionUri, rawPath)
-      : this._tryBuildWorkspacePromptUri(rawPath);
-  }
-
-  private _tryBuildWorkspacePromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return null;
-
-    return vscode.Uri.joinPath(workspaceFolder.uri, relativePathToSubInstruction);
   }
 }
