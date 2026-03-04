@@ -23,6 +23,7 @@
         "BLOB_GITHUB_BASE_URL": "https://github.com/",
         "AUTHOR_REPO": "SlavaFesenko/llm-copypaster/",
         "IS_REMOTE_FILE_EDIT_ALLOWED": "true",
+        "KEY_REFERENCE_URLS_RELATIVE_PATHS": "package.json | src/config-service.ts | src/register-commands.ts | src/modules/ide-to-llm/ide-to-llm-module.ts | src/modules/llm-to-ide/llm-to-ide-module.ts",
       },
     },
   },
