@@ -115,7 +115,11 @@ export class LiquidTechPromptBuilder {
     for (const sharedVariableId of Object.keys(rawSharedVariablesById)) {
       const rawTemplate = rawSharedVariablesById[sharedVariableId] ?? '';
 
-      const directResolvedConfigValueOrUndefined = this._tryResolveDirectConfigTemplate(rawTemplate);
+      const directResolvedConfigValueOrUndefined = this._tryResolveDirectConfigTemplate(
+        rawTemplate,
+        sharedVariableId,
+        resolveIssues
+      );
       if (directResolvedConfigValueOrUndefined !== undefined) {
         resolvedSharedVariablesById[sharedVariableId] = directResolvedConfigValueOrUndefined;
         continue;
@@ -154,7 +158,11 @@ export class LiquidTechPromptBuilder {
     return resolvedSharedVariablesById;
   }
 
-  private _tryResolveDirectConfigTemplate(rawTemplate: string): string | undefined {
+  private _tryResolveDirectConfigTemplate(
+    rawTemplate: string,
+    sharedVariableId: string,
+    resolveIssues: TechPromptResolveIssues
+  ): string | undefined {
     const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
 
     const normalized = (rawTemplate ?? '').trim();
@@ -162,7 +170,16 @@ export class LiquidTechPromptBuilder {
     if (!normalized.startsWith(configVariablePrefix)) return undefined;
 
     const resolved = this._configTreeValueResolver.tryResolvePlaceholderValue(normalized, {});
-    if (resolved === null) return rawTemplate;
+    if (resolved === null) {
+      resolveIssues.configVariablesIssues.push({
+        sharedVariableId,
+        rawTemplate,
+        configVariablePath: this._tryExtractConfigVariablePath(rawTemplate),
+        errorText: 'Config value not found for direct placeholder resolution',
+      });
+
+      return rawTemplate;
+    }
 
     return resolved;
   }
