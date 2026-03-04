@@ -215,6 +215,9 @@ export class ConfigService {
     baseSettings: ProfileSettingsConfig,
     profileSettingsConfig: Partial<ProfileSettingsConfig>
   ): ProfileSettingsConfig {
+    const basePromptInstructionConfig = baseSettings.promptInstructionConfig ?? {};
+    const profilePromptInstructionConfig = profileSettingsConfig.promptInstructionConfig ?? {};
+
     return {
       skipTechPrompt: profileSettingsConfig.skipTechPrompt ?? baseSettings.skipTechPrompt,
       skipCodeListings: profileSettingsConfig.skipCodeListings ?? baseSettings.skipCodeListings,
@@ -255,21 +258,63 @@ export class ConfigService {
           baseSettings.postFilePatchActionsConfig.enableOpeningPatchedFilesInEditor,
       },
       promptInstructionConfig: {
-        ...(baseSettings.promptInstructionConfig ?? {}),
-        ...(profileSettingsConfig.promptInstructionConfig ?? {}),
+        ...(basePromptInstructionConfig ?? {}),
+        ...(profilePromptInstructionConfig ?? {}),
         sharedVariablesById: {
-          ...(baseSettings.promptInstructionConfig?.sharedVariablesById ?? {}),
-          ...(profileSettingsConfig.promptInstructionConfig?.sharedVariablesById ?? {}),
+          ...(basePromptInstructionConfig.sharedVariablesById ?? {}),
+          ...(profilePromptInstructionConfig.sharedVariablesById ?? {}),
         },
-        subInstructionsById: {
-          ...(baseSettings.promptInstructionConfig?.subInstructionsById ?? {}),
-          ...(profileSettingsConfig.promptInstructionConfig?.subInstructionsById ?? {}),
-        },
+        subInstructionsById: this._mergeSubInstructionsById(
+          basePromptInstructionConfig.subInstructionsById,
+          profilePromptInstructionConfig.subInstructionsById as Record<string, Partial<PromptInstructionsConfig>> | undefined
+        ),
       },
       llmToIdeSanitizationRulesById: {
         ...(baseSettings.llmToIdeSanitizationRulesById ?? {}),
         ...(profileSettingsConfig.llmToIdeSanitizationRulesById ?? {}),
       },
     };
+  }
+
+  private _mergeSubInstructionsById(
+    baseSubInstructionsById: Record<string, PromptInstructionsConfig> | undefined,
+    profileSubInstructionsById: Record<string, Partial<PromptInstructionsConfig>> | undefined
+  ): Record<string, PromptInstructionsConfig> | undefined {
+    if (!baseSubInstructionsById && !profileSubInstructionsById) return undefined;
+
+    if (!profileSubInstructionsById) return baseSubInstructionsById;
+
+    const nextSubInstructionsById: Record<string, PromptInstructionsConfig> = { ...(baseSubInstructionsById ?? {}) };
+
+    for (const subInstructionId of Object.keys(profileSubInstructionsById)) {
+      const baseSubInstruction = baseSubInstructionsById?.[subInstructionId];
+      const profileSubInstruction = profileSubInstructionsById[subInstructionId];
+
+      if (!baseSubInstruction) {
+        if (
+          !profileSubInstruction.relativePathToSubInstruction ||
+          profileSubInstruction.isSystemBundledFile === undefined ||
+          profileSubInstruction.ignore === undefined
+        )
+          continue;
+
+        nextSubInstructionsById[subInstructionId] = {
+          relativePathToSubInstruction: profileSubInstruction.relativePathToSubInstruction,
+          isSystemBundledFile: profileSubInstruction.isSystemBundledFile,
+          ignore: profileSubInstruction.ignore,
+        };
+
+        continue;
+      }
+
+      nextSubInstructionsById[subInstructionId] = {
+        relativePathToSubInstruction:
+          profileSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
+        isSystemBundledFile: profileSubInstruction.isSystemBundledFile ?? baseSubInstruction.isSystemBundledFile,
+        ignore: profileSubInstruction.ignore ?? baseSubInstruction.ignore,
+      };
+    }
+
+    return nextSubInstructionsById;
   }
 }

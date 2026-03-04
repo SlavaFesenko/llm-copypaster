@@ -264,6 +264,54 @@ export function mapLlmToIdeSanitizationRulesById(
   return nextRulesById;
 }
 
+function mergeProfileSettingsConfigAsPartial(
+  baseSettings: Partial<ProfileSettingsConfig>,
+  userSettings: ProfileSettingsUserConfig
+): Partial<ProfileSettingsConfig> {
+  const nextSettings: Partial<ProfileSettingsConfig> = { ...baseSettings };
+
+  if (userSettings.skipTechPrompt !== undefined) nextSettings.skipTechPrompt = userSettings.skipTechPrompt;
+
+  if (userSettings.skipCodeListings !== undefined) nextSettings.skipCodeListings = userSettings.skipCodeListings;
+
+  if (userSettings.ideToLlmContextConfig) {
+    nextSettings.ideToLlmContextConfig = {
+      ...(baseSettings.ideToLlmContextConfig ?? {}),
+      ...userSettings.ideToLlmContextConfig,
+    } as IdeToLlmContextConfig;
+  }
+
+  if (userSettings.llmToIdeContextConfig) {
+    nextSettings.llmToIdeContextConfig = {
+      ...(baseSettings.llmToIdeContextConfig ?? {}),
+      ...userSettings.llmToIdeContextConfig,
+    } as LlmToIdeContextConfig;
+  }
+
+  if (userSettings.postFilePatchActionsConfig) {
+    nextSettings.postFilePatchActionsConfig = {
+      ...(baseSettings.postFilePatchActionsConfig ?? {}),
+      ...userSettings.postFilePatchActionsConfig,
+    } as PostFilePatchActionsConfig;
+  }
+
+  if (userSettings.promptInstructionConfig) {
+    nextSettings.promptInstructionConfig = mergePromptInstructionConfig(
+      baseSettings.promptInstructionConfig ?? {},
+      userSettings.promptInstructionConfig
+    );
+  }
+
+  if (userSettings.llmToIdeSanitizationRulesById) {
+    nextSettings.llmToIdeSanitizationRulesById = mergeLlmToIdeSanitizationRulesById(
+      baseSettings.llmToIdeSanitizationRulesById ?? {},
+      userSettings
+    );
+  }
+
+  return nextSettings;
+}
+
 export function mergeProfilesById(
   baseProfilesById: Record<string, ProfileConfig> | undefined,
   userConfig: LlmCopypasterUserConfig,
@@ -296,7 +344,7 @@ export function mapProfilesById(
         description: userProfile.description,
         version: userProfile.version ?? '',
         profileSettingsConfig: userProfile.profileSettingsConfig
-          ? mergeProfileSettingsConfig(buildBaseSettingsFn(), userProfile.profileSettingsConfig, buildBaseSettingsFn)
+          ? mergeProfileSettingsConfigAsPartial({}, userProfile.profileSettingsConfig)
           : {},
       };
 
@@ -307,14 +355,12 @@ export function mapProfilesById(
       description: userProfile.description ?? baseProfile.description,
       version: userProfile.version ?? baseProfile.version ?? '',
       profileSettingsConfig: userProfile.profileSettingsConfig
-        ? mergeProfileSettingsConfig(
-            { ...buildBaseSettingsFn(), ...baseProfile.profileSettingsConfig } as ProfileSettingsConfig,
-            userProfile.profileSettingsConfig,
-            buildBaseSettingsFn
-          )
+        ? mergeProfileSettingsConfigAsPartial(baseProfile.profileSettingsConfig ?? {}, userProfile.profileSettingsConfig)
         : baseProfile.profileSettingsConfig,
     };
   }
+
+  void buildBaseSettingsFn;
 
   return nextProfilesById;
 }
