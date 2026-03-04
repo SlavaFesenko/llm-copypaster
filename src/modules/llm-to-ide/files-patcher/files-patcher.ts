@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { LlmToIdeParsingAnchorsConfig, PostFilePatchActionsConfig } from '../../../config-service';
@@ -27,8 +28,53 @@ export async function applyFilesPayloadToWorkspace(
     const workspaceEdit = new vscode.WorkspaceEdit();
 
     let appliedFilesCount = 0;
+    let hasWorkspaceEdits = false;
+
+    const workspaceRootFsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null;
+
+    const normalizePathForCompare = (inputPath: string): string => {
+      const normalizedPath = path.resolve(inputPath);
+
+      if (process.platform === 'win32') return normalizedPath.toLowerCase();
+
+      return normalizedPath;
+    };
+
+    const isPathInsideWorkspaceRoot = (absoluteFilePath: string): boolean => {
+      if (!workspaceRootFsPath) return false;
+
+      const normalizedWorkspaceRootFsPath = normalizePathForCompare(workspaceRootFsPath);
+      const normalizedAbsoluteFilePath = normalizePathForCompare(absoluteFilePath);
+
+      if (normalizedAbsoluteFilePath === normalizedWorkspaceRootFsPath) return true;
+
+      return normalizedAbsoluteFilePath.startsWith(normalizedWorkspaceRootFsPath + path.sep);
+    };
+
+    const insideWorkspaceFiles: FilesPayload['files'] = [];
+    const outsideWorkspaceFiles: FilesPayload['files'] = [];
 
     for (const file of payload.files) {
+      const isAbsolutePath = path.isAbsolute(file.path);
+
+      if (!isAbsolutePath) {
+        insideWorkspaceFiles.push(file);
+        continue;
+      }
+
+      if (isPathInsideWorkspaceRoot(file.path)) {
+        const normalizedWorkspaceRootFsPath = path.resolve(workspaceRootFsPath as string);
+        const normalizedAbsoluteFilePath = path.resolve(file.path);
+        const workspaceRelativePath = path.relative(normalizedWorkspaceRootFsPath, normalizedAbsoluteFilePath);
+
+        insideWorkspaceFiles.push({ ...file, path: workspaceRelativePath });
+        continue;
+      }
+
+      outsideWorkspaceFiles.push(file);
+    }
+
+    for (const file of insideWorkspaceFiles) {
       const targetUri = toWorkspaceUri(file.path);
 
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
@@ -37,6 +83,7 @@ export async function applyFilesPayloadToWorkspace(
 
       if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
         workspaceEdit.deleteFile(targetUri, { ignoreIfNotExists: true });
+        hasWorkspaceEdits = true;
         appliedFilesCount++;
         continue;
       }
@@ -53,30 +100,84 @@ export async function applyFilesPayloadToWorkspace(
         );
 
         workspaceEdit.replace(targetUri, fullRange, file.content);
+        hasWorkspaceEdits = true;
       } else {
         workspaceEdit.createFile(targetUri, { ignoreIfExists: true });
         workspaceEdit.insert(targetUri, new vscode.Position(0, 0), file.content);
+        hasWorkspaceEdits = true;
       }
 
       appliedFilesCount++;
     }
 
-    const applied = await vscode.workspace.applyEdit(workspaceEdit);
-    if (!applied) return { ok: false, errorMessage: 'VS Code refused to apply WorkspaceEdit' };
+    for (const file of outsideWorkspaceFiles) {
+      const externalTargetUri = vscode.Uri.file(file.path);
 
-    if (postFilesPatchActions.enableLintingAfterFilePatch)
-      await tryFormatAppliedDocuments(payload, llmToIdeParsingAnchors, logger);
+      const isConfirmed = await confirmOutOfWorkspaceFileOperation(externalTargetUri);
+      if (!isConfirmed) return { ok: false, errorMessage: `Cancelled by user: ${file.path}` };
 
-    if (postFilesPatchActions.enableSaveAfterFilePatch)
-      await trySaveAppliedDocuments(payload, llmToIdeParsingAnchors, logger);
+      const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
 
-    if (postFilesPatchActions.enableOpeningPatchedFilesInEditor)
-      await tryOpenAppliedDocumentsInEditor(payload, llmToIdeParsingAnchors, logger);
+      if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
+        try {
+          await vscode.workspace.fs.delete(externalTargetUri, { recursive: false, useTrash: true });
+        } catch (error) {
+          logger.debug(`Delete out of workspace skipped for ${externalTargetUri.toString()}: ${String(error)}`);
+        }
+
+        appliedFilesCount++;
+        continue;
+      }
+
+      await ensureParentDirectoryExists(externalTargetUri, logger);
+
+      const encodedContent = new TextEncoder().encode(file.content);
+
+      await vscode.workspace.fs.writeFile(externalTargetUri, encodedContent);
+
+      appliedFilesCount++;
+    }
+
+    if (hasWorkspaceEdits) {
+      const applied = await vscode.workspace.applyEdit(workspaceEdit);
+      if (!applied) return { ok: false, errorMessage: 'VS Code refused to apply WorkspaceEdit' };
+
+      const insideWorkspacePayload: FilesPayload = { ...payload, files: insideWorkspaceFiles };
+
+      if (postFilesPatchActions.enableLintingAfterFilePatch)
+        await tryFormatAppliedDocuments(insideWorkspacePayload, llmToIdeParsingAnchors, logger);
+
+      if (postFilesPatchActions.enableSaveAfterFilePatch)
+        await trySaveAppliedDocuments(insideWorkspacePayload, llmToIdeParsingAnchors, logger);
+
+      if (postFilesPatchActions.enableOpeningPatchedFilesInEditor)
+        await tryOpenAppliedDocumentsInEditor(insideWorkspacePayload, llmToIdeParsingAnchors, logger);
+    }
 
     return { ok: true, appliedFilesCount };
   } catch (error) {
     return { ok: false, errorMessage: String(error) };
   }
+}
+
+async function confirmOutOfWorkspaceFileOperation(targetUri: vscode.Uri): Promise<boolean> {
+  const fileName = path.basename(targetUri.fsPath);
+  const messageLines = [
+    'You are about to write a file OUTSIDE the current workspace.',
+    'Double-check the path — Git may not be used for this location.',
+    '',
+    `File: ${fileName}`,
+    `Path: ${targetUri.fsPath}`,
+  ];
+
+  const pickedAction = await vscode.window.showWarningMessage(
+    messageLines.join('\n'),
+    { modal: true },
+    'Write file',
+    'Cancel'
+  );
+
+  return pickedAction === 'Write file';
 }
 
 async function fileExists(uri: vscode.Uri): Promise<boolean> {
