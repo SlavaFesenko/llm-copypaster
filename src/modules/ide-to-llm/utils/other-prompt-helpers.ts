@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 
 import { ConfigService, LlmCopypasterConfig } from '../../../config-service';
 import { CollectedFileItem } from '../../../types/files-payload';
+import { LiquidTechPromptBuilder } from './liquid-tech-prompt-builder';
 import { buildLlmContextText } from './llm-context-formatter';
-import { TechPromptBuilder } from './tech-prompt-builder';
 
 export async function buildLlmPromptTextForProfiles(args: {
   extensionContext: vscode.ExtensionContext;
@@ -29,7 +29,7 @@ export async function buildLlmPromptTextForProfiles(args: {
   const effectiveFileItems = effectiveConfig.baseSettings.skipCodeListings === true ? [] : args.fileItems;
 
   const techPromptText = shouldIncludeTechPrompt
-    ? await new TechPromptBuilder(args.extensionContext, effectiveConfig).build()
+    ? await new LiquidTechPromptBuilder(args.extensionContext, effectiveConfig).build()
     : '';
 
   return buildLlmContextText({

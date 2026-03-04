@@ -7,9 +7,9 @@ import {
   readUrisAsFileItems,
   showCopyResultNotification,
 } from './common.helpers';
+import { LiquidTechPromptBuilder } from './utils/liquid-tech-prompt-builder';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
-import { TechPromptBuilder } from './utils/tech-prompt-builder';
 
 export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];
@@ -44,7 +44,7 @@ export class ExplorerHelper {
     if (selection.fileItems.length > 0) {
       const config = await this._deps.configService.getConfig();
 
-      const techPromptText = await new TechPromptBuilder(this._deps.extensionContext, config).build();
+      const techPromptText = await new LiquidTechPromptBuilder(this._deps.extensionContext, config).build();
 
       const contextText = buildLlmContextText({
         fileItems: selection.fileItems,
