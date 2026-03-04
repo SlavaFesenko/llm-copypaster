@@ -8,6 +8,7 @@ import {
   type PromptInstructionConfig,
   type PromptInstructionsConfig,
 } from '../../../config-service';
+import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './tech-prompt-resolve-report-helpers';
 
 export class LiquidTechPromptBuilder {
   private readonly _liquid: Liquid;
@@ -16,7 +17,7 @@ export class LiquidTechPromptBuilder {
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
   ) {
-    this._liquid = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
+    this._liquid = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
   }
 
   public async build(): Promise<string> {
@@ -27,8 +28,15 @@ export class LiquidTechPromptBuilder {
 
     if (promptIdsInConfig.length === 0) return '';
 
+    const resolveIssues: TechPromptResolveIssues = {
+      filePromptsIssues: [],
+      configVariablesIssues: [],
+      liquidJsIssues: [],
+    };
+
+    const resolvedSharedVariablesById = await this._buildResolvedSharedVariablesById(resolveIssues);
+
     const builtPrompts: string[] = [];
-    const resolvedSharedVariablesById = await this._buildResolvedSharedVariablesById();
 
     for (const promptId of promptIdsInConfig) {
       const promptInstructionsConfig = subInstructionsById[promptId] as PromptInstructionsConfig | undefined;
@@ -38,12 +46,15 @@ export class LiquidTechPromptBuilder {
         promptId,
         promptInstructionsConfig,
         resolvedSharedVariablesById,
+        resolveIssues,
       });
 
       if (!builtPromptText) continue;
 
       builtPrompts.push(builtPromptText);
     }
+
+    showTechPromptResolveIssuesIfAny({ extensionContext: this._extensionContext, resolveIssues });
 
     if (builtPrompts.length === 0) return '';
 
@@ -56,10 +67,11 @@ export class LiquidTechPromptBuilder {
     promptId: string;
     promptInstructionsConfig: PromptInstructionsConfig;
     resolvedSharedVariablesById: Record<string, string>;
+    resolveIssues: TechPromptResolveIssues;
   }): Promise<string | null> {
     if (args.promptInstructionsConfig.ignore) return null;
 
-    const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId);
+    const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId, args.resolveIssues);
     if (!promptText) return null;
 
     let renderedText: string;
@@ -68,7 +80,12 @@ export class LiquidTechPromptBuilder {
       renderedText = await this._liquid.parseAndRender(promptText, { ...args.resolvedSharedVariablesById });
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
-      vscode.window.showWarningMessage(`Liquid render failed: id="${args.promptId}", error="${errorText}"`);
+
+      args.resolveIssues.liquidJsIssues.push({
+        promptId: args.promptId,
+        errorText,
+      });
+
       return null;
     }
 
@@ -77,40 +94,29 @@ export class LiquidTechPromptBuilder {
     return renderedText;
   }
 
-  private async _buildResolvedSharedVariablesById(): Promise<Record<string, string>> {
+  private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, string>> {
     const rawSharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
-    let resolvedSharedVariablesById: Record<string, string> = { ...rawSharedVariablesById };
 
-    for (let passIndex = 0; passIndex < 10; passIndex++) {
-      let didAnyValueChange = false;
+    const resolvedSharedVariablesById: Record<string, string> = {};
 
-      for (const sharedVariableId of Object.keys(rawSharedVariablesById)) {
-        const rawTemplate = rawSharedVariablesById[sharedVariableId] ?? '';
+    for (const sharedVariableId of Object.keys(rawSharedVariablesById)) {
+      const rawTemplate = rawSharedVariablesById[sharedVariableId] ?? '';
 
-        let resolvedValue: string;
+      try {
+        resolvedSharedVariablesById[sharedVariableId] = await this._liquid.parseAndRender(rawTemplate, {
+          LLM_CPP_CFG: this._config,
+        });
+      } catch (error: unknown) {
+        const errorText = error instanceof Error ? error.message || error.name : String(error);
 
-        try {
-          resolvedValue = await this._liquid.parseAndRender(rawTemplate, {
-            ...resolvedSharedVariablesById,
-            LLM_CPP_CFG: this._config,
-          });
-        } catch {
-          resolvedValue = rawTemplate;
-        }
+        resolveIssues.configVariablesIssues.push({
+          sharedVariableId,
+          rawTemplate,
+          errorText,
+        });
 
-        const previousValue = resolvedSharedVariablesById[sharedVariableId];
-
-        if (previousValue === resolvedValue) continue;
-
-        resolvedSharedVariablesById = {
-          ...resolvedSharedVariablesById,
-          [sharedVariableId]: resolvedValue,
-        };
-
-        didAnyValueChange = true;
+        resolvedSharedVariablesById[sharedVariableId] = rawTemplate;
       }
-
-      if (!didAnyValueChange) break;
     }
 
     return resolvedSharedVariablesById;
@@ -118,12 +124,19 @@ export class LiquidTechPromptBuilder {
 
   private async _tryReadPromptText(
     promptInstructionsConfig: PromptInstructionsConfig,
-    promptId: string
+    promptId: string,
+    resolveIssues: TechPromptResolveIssues
   ): Promise<string | null> {
     const promptUri = this._tryBuildPromptUri(promptInstructionsConfig);
 
     if (!promptUri) {
-      this._showPromptReadWarning(promptInstructionsConfig, promptId, 'Workspace folder not found');
+      resolveIssues.filePromptsIssues.push({
+        promptId,
+        source: promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace',
+        relativePathToSubInstruction: promptInstructionsConfig.relativePathToSubInstruction,
+        errorText: 'Workspace folder not found',
+      });
+
       return null;
     }
 
@@ -132,7 +145,16 @@ export class LiquidTechPromptBuilder {
 
       return Buffer.from(bytes).toString('utf8');
     } catch (error: unknown) {
-      this._showPromptReadWarning(promptInstructionsConfig, promptId, error, promptUri);
+      const errorText = error instanceof Error ? error.message || error.name : String(error);
+
+      resolveIssues.filePromptsIssues.push({
+        promptId,
+        source: promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace',
+        relativePathToSubInstruction: promptInstructionsConfig.relativePathToSubInstruction,
+        errorText,
+        promptUriString: promptUri.toString(),
+      });
+
       return null;
     }
   }
@@ -146,26 +168,6 @@ export class LiquidTechPromptBuilder {
     return promptInstructionsConfig.isSystemBundledFile
       ? vscode.Uri.joinPath(this._extensionContext.extensionUri, rawPath)
       : this._tryBuildWorkspacePromptUri(rawPath);
-  }
-
-  private _showPromptReadWarning(
-    promptInstructionsConfig: PromptInstructionsConfig,
-    promptId: string,
-    errorOrMessage: unknown,
-    promptUri?: vscode.Uri
-  ): void {
-    const source = promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace';
-
-    let errorText = '';
-
-    if (typeof errorOrMessage === 'string') errorText = errorOrMessage;
-    else if (errorOrMessage instanceof Error) errorText = errorOrMessage.message || errorOrMessage.name;
-    else if (errorOrMessage) errorText = String(errorOrMessage);
-    else errorText = 'Unknown error';
-
-    vscode.window.showWarningMessage(
-      `Prompt file not found or unreadable: id="${promptId}", source="${source}", error="${errorText}"`
-    );
   }
 
   private _tryBuildWorkspacePromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
