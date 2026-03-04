@@ -70,7 +70,7 @@ export class LiquidTechPromptBuilder {
   private async _tryBuildPromptText(args: {
     promptId: string;
     promptInstructionsConfig: PromptInstructionsConfig;
-    resolvedSharedVariablesById: Record<string, string>;
+    resolvedSharedVariablesById: Record<string, unknown>;
     resolveIssues: TechPromptResolveIssues;
   }): Promise<string | null> {
     if (args.promptInstructionsConfig.ignore) return null;
@@ -105,10 +105,10 @@ export class LiquidTechPromptBuilder {
     return renderedText;
   }
 
-  private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, string>> {
+  private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, unknown>> {
     const rawSharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
 
-    const resolvedSharedVariablesById: Record<string, string> = {};
+    const resolvedSharedVariablesById: Record<string, unknown> = {};
 
     for (const sharedVariableId of Object.keys(rawSharedVariablesById)) {
       const rawTemplate = rawSharedVariablesById[sharedVariableId] ?? '';
@@ -150,7 +150,7 @@ export class LiquidTechPromptBuilder {
         }
       }
 
-      resolvedSharedVariablesById[sharedVariableId] = renderedValueOrNull ?? '';
+      resolvedSharedVariablesById[sharedVariableId] = this._tryParseScalarLiquidValue(renderedValueOrNull ?? '');
     }
 
     return resolvedSharedVariablesById;
@@ -160,7 +160,7 @@ export class LiquidTechPromptBuilder {
     rawTemplate: string,
     sharedVariableId: string,
     resolveIssues: TechPromptResolveIssues
-  ): string | undefined {
+  ): unknown | undefined {
     const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
 
     const normalized = (rawTemplate ?? '').trim();
@@ -182,22 +182,32 @@ export class LiquidTechPromptBuilder {
       return rawTemplate;
     }
 
-    return this._stringifyPlaceholderValue(resolvedValue);
+    return this._normalizeDirectPlaceholderValue(resolvedValue);
   }
 
-  private _stringifyPlaceholderValue(value: unknown): string {
+  private _normalizeDirectPlaceholderValue(value: unknown): unknown {
     if (value === null) return 'null';
     if (value === undefined) return '';
 
+    if (typeof value === 'boolean') return value;
     if (typeof value === 'string') return value;
     if (typeof value === 'number') return String(value);
-    if (typeof value === 'boolean') return value ? 'true' : 'false';
 
     try {
       return JSON.stringify(value);
     } catch {
       return String(value);
     }
+  }
+
+  private _tryParseScalarLiquidValue(rawValue: string): unknown {
+    const normalized = (rawValue ?? '').trim();
+    const normalizedLower = normalized.toLowerCase();
+
+    if (normalizedLower === 'true') return true;
+    if (normalizedLower === 'false') return false;
+
+    return rawValue;
   }
 
   private _tryExtractConfigVariablePath(rawTemplate: string): string | undefined {
