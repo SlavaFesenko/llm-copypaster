@@ -12,14 +12,16 @@ import { ConfigTreeValueResolver } from './config-tree-value-resolver';
 import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './tech-prompt-resolve-report-helpers';
 
 export class LiquidTechPromptBuilder {
-  private readonly _liquid: Liquid;
+  private readonly _liquidStrict: Liquid;
+  private readonly _liquidLight: Liquid;
   private readonly _configTreeValueResolver: ConfigTreeValueResolver;
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
   ) {
-    this._liquid = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
+    this._liquidStrict = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
+    this._liquidLight = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
     this._configTreeValueResolver = new ConfigTreeValueResolver(this._config);
   }
 
@@ -78,10 +80,10 @@ export class LiquidTechPromptBuilder {
     const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId, args.resolveIssues);
     if (!promptText) return null;
 
-    let renderedText: string;
+    let renderedTextOrNull: string | null = null;
 
     try {
-      renderedText = await this._liquid.parseAndRender(promptText, { ...args.resolvedSharedVariablesById });
+      renderedTextOrNull = await this._liquidStrict.parseAndRender(promptText, { ...args.resolvedSharedVariablesById });
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
@@ -89,10 +91,17 @@ export class LiquidTechPromptBuilder {
         promptId: args.promptId,
         errorText,
       });
-
-      return null;
     }
 
+    if (renderedTextOrNull === null) {
+      try {
+        renderedTextOrNull = await this._liquidLight.parseAndRender(promptText, { ...args.resolvedSharedVariablesById });
+      } catch {
+        return null;
+      }
+    }
+
+    const renderedText = renderedTextOrNull ?? '';
     if (!renderedText.trim()) return null;
 
     return renderedText;
@@ -112,8 +121,10 @@ export class LiquidTechPromptBuilder {
         continue;
       }
 
+      let renderedValueOrNull: string | null = null;
+
       try {
-        resolvedSharedVariablesById[sharedVariableId] = await this._liquid.parseAndRender(rawTemplate, {
+        renderedValueOrNull = await this._liquidStrict.parseAndRender(rawTemplate, {
           LLM_CPP_CFG: this._config,
         });
       } catch (error: unknown) {
@@ -125,9 +136,19 @@ export class LiquidTechPromptBuilder {
           configVariablePath: this._tryExtractConfigVariablePath(rawTemplate),
           errorText,
         });
-
-        resolvedSharedVariablesById[sharedVariableId] = rawTemplate;
       }
+
+      if (renderedValueOrNull === null) {
+        try {
+          renderedValueOrNull = await this._liquidLight.parseAndRender(rawTemplate, {
+            LLM_CPP_CFG: this._config,
+          });
+        } catch {
+          renderedValueOrNull = rawTemplate;
+        }
+      }
+
+      resolvedSharedVariablesById[sharedVariableId] = renderedValueOrNull ?? '';
     }
 
     return resolvedSharedVariablesById;
