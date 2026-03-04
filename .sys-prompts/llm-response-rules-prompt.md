@@ -1,4 +1,6 @@
-# OUTPUT INSTRUCTIONS (strict)
+{% comment %} PROMPT_VERSION: 1.1.0 - added ``` to avoid auto-parsing to md of file content {% endcomment %}
+
+# OUTPUT INSTRUCTIONS (local)
 
 - The prohibitions below apply to the MODEL OUTPUT (output), not to the text of these instructions
 - First comes the `EXPLANATIONS BLOCK`
@@ -18,6 +20,8 @@
 - First line strictly: `{{CODE_LISTING_HEADER_START_FRAGMENT}} relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
 - Second line strictly one of: {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}, {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}, {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
 - Immediately after — the full file content as raw text, or in case of a deleted file — do not output any content at all (immediately the next header or end of output)
+- For each non-deleted file in `FILE LISTING`: wrap the file content in a fenced code block: `text ... `
+- Headers `{{CODE_LISTING_HEADER_START_FRAGMENT}} ...` and status line MUST stay outside the code block
 
 ## WHICH FILES TO OUTPUT:
 
@@ -45,7 +49,9 @@ Files changed:
 {{CODE_LISTING_HEADER_START_FRAGMENT}} src/index.ts
 {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}
 
+```ts
 console.log('Hello world!');
+```
 
 {{CODE_LISTING_HEADER_START_FRAGMENT}} src/dont-need-anymore.ts
 {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
@@ -53,4 +59,6 @@ console.log('Hello world!');
 {{CODE_LISTING_HEADER_START_FRAGMENT}} src/subnode/created-file
 {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}
 
+```text
 console.log('Hello world from new file!');
+```
