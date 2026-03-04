@@ -100,9 +100,31 @@ export class LiquidTechPromptBuilder {
     }
 
     const renderedText = renderedTextOrNull ?? '';
-    if (!renderedText.trim()) return null;
+    const normalizedRenderedText = this._collapseEmptyLines(renderedText);
 
-    return renderedText;
+    if (!normalizedRenderedText.trim()) return null;
+
+    return normalizedRenderedText;
+  }
+
+  private _collapseEmptyLines(text: string): string {
+    const normalized = (text ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+    const lines = normalized.split('\n');
+    const collapsedLines: string[] = [];
+
+    let wasPreviousLineEmpty = false;
+
+    for (const line of lines) {
+      const isCurrentLineEmpty = !(line ?? '').trim();
+
+      if (isCurrentLineEmpty && wasPreviousLineEmpty) continue;
+
+      collapsedLines.push(line);
+      wasPreviousLineEmpty = isCurrentLineEmpty;
+    }
+
+    return collapsedLines.join('\n');
   }
 
   private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, unknown>> {
