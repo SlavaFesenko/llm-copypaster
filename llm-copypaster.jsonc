@@ -1,5 +1,6 @@
 // Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig (TODO: when release ext - add url of the file)
 // NOTE: if you don’t want to “show” the file in git, add `/llm-copypaster.jsonc` to `.git/info/exclude`
+// todo: show warning if config can't be parsed, let's say when required param (profile version) was not defined or so
 {
   "baseSettings": {
     "promptInstructionConfig": {
@@ -27,7 +28,7 @@
   "profilesById": {
     "Disallow REMOTE_FILE_EDIT": {
       "description": "Disallow REMOTE_FILE_EDIT - make them just readonly",
-      "version": "1",
+      "version": "1", // todo mark version as optional
       "profileSettingsConfig": {
         "promptInstructionConfig": {
           "sharedVariablesById": {
