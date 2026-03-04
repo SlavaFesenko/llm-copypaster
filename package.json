@@ -217,7 +217,8 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "json-diff-ts": "^4.9.1"
+    "json-diff-ts": "^4.9.1",
+    "liquidjs": "^10.24.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

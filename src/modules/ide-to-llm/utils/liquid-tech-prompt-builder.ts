@@ -1,33 +1,18 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { type LlmCopypasterConfig, type PromptInstructionsConfig } from '../../../config-service';
+import { Liquid } from 'liquidjs';
+
+import {
+  type LlmCopypasterConfig,
+  type PromptInstructionConfig,
+  type PromptInstructionsConfig,
+} from '../../../config-service';
 import { ConfigTreeValueResolver } from './config-tree-value-resolver';
-import { LiquidTechPromptBuilder } from './liquid-tech-prompt-builder';
 import { MustacheRenderer } from './mustache-renderer';
 
-// 'Supported Mustache-like syntax (NEW RULES):',
-// '',
-// '1) Prompt files can use ONLY shared variables:',
-// '   - {{someSharedVariableId}}',
-// '   - shared variables are taken from config: baseSettings.promptInstructionConfig.sharedVariablesById',
-// '',
-// '2) sharedVariablesById values can be computed from config via a special prefix:',
-// '   - sharedVariablesById["SOME_VALUE"] = "{{LLM_CPP_CFG.some.path}}"',
-// '   - LLM_CPP_CFG.* is supported ONLY inside sharedVariablesById values (not in prompt files)',
-// '',
-// '3) Conditional blocks in prompt files use ONLY shared variables:',
-// '   - {{#if someSharedVariableId}} ... {{/if}}',
-// '   - {{#if !someSharedVariableId}} ... {{/if}}',
-// '   - {{#if !!!someSharedVariableId}} ... {{/if}}',
-// '   - {{#if someSharedVariableId}} ... {{else}} ... {{/if}}',
-// '   - {{#if someSharedVariableId}} ... {{else if otherSharedVariableId}} ... {{else}} ... {{/if}}',
-// '   - Flags are coerced to boolean (true/false, 1/0, yes/no, on/off, non-empty strings)',
-// '',
-// 'Notes:',
-// ' - Unknown/mismatched tags are kept unchanged',
-// ' - renderIf/renderIfElse supports nested {{#if ...}} blocks',
-export class TechPromptBuilder {
+export class LiquidTechPromptBuilder {
+  private readonly _liquid: Liquid;
   private readonly _mustacheRenderer: MustacheRenderer;
   private readonly _configTreeValueResolver: ConfigTreeValueResolver;
 
@@ -35,57 +20,56 @@ export class TechPromptBuilder {
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: LlmCopypasterConfig
   ) {
-    this._mustacheRenderer = new MustacheRenderer(this._buildPlaceholderRegexPattern());
+    this._liquid = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
+    this._mustacheRenderer = new MustacheRenderer(this._buildPlaceholderRegexPattern()); // used only for sharedVariablesById resolution
     this._configTreeValueResolver = new ConfigTreeValueResolver(this._config);
   }
 
   public async build(): Promise<string> {
-    const liquidTechPromptBuilder = new LiquidTechPromptBuilder(this._extensionContext, this._config);
+    const promptInstructionConfig: Partial<PromptInstructionConfig> =
+      this._config.baseSettings.promptInstructionConfig ?? {};
+    const subInstructionsById = promptInstructionConfig.subInstructionsById ?? {};
+    const promptIdsInConfig = Object.keys(subInstructionsById);
 
-    return await liquidTechPromptBuilder.build();
-    // const promptInstructionConfig = this._config.baseSettings.promptInstructionConfig;
-    // const subInstructionsById = promptInstructionConfig.subInstructionsById ?? {};
-    // const promptIdsInConfig = Object.keys(subInstructionsById);
+    if (promptIdsInConfig.length === 0) return '';
 
-    // if (promptIdsInConfig.length === 0) return '';
+    const builtPrompts: string[] = [];
 
-    // const builtPrompts: string[] = [];
+    const sharedVariablesBuildResult = this._buildResolvedSharedVariablesById();
+    const resolvedSharedVariablesById = sharedVariablesBuildResult.resolvedSharedVariablesById;
 
-    // const sharedVariablesBuildResult = this._buildResolvedSharedVariablesById();
-    // const resolvedSharedVariablesById = sharedVariablesBuildResult.resolvedSharedVariablesById;
+    const unresolvedPromptSharedVariables = new Set<string>();
+    const unresolvedPromptIfFlags = new Set<string>();
 
-    // const unresolvedPromptSharedVariables = new Set<string>();
-    // const unresolvedPromptIfFlags = new Set<string>();
+    for (const promptId of promptIdsInConfig) {
+      const promptInstructionsConfig = subInstructionsById[promptId] as PromptInstructionsConfig | undefined;
+      if (!promptInstructionsConfig) continue;
 
-    // for (const promptId of promptIdsInConfig) {
-    //   const promptInstructionsConfig = subInstructionsById[promptId];
-    //   if (!promptInstructionsConfig) continue;
+      const builtPromptText = await this._tryBuildPromptText({
+        promptId,
+        promptInstructionsConfig,
+        resolvedSharedVariablesById,
+        unresolvedPromptSharedVariables,
+        unresolvedPromptIfFlags,
+      });
 
-    //   const builtPromptText = await this._tryBuildPromptText({
-    //     promptId,
-    //     promptInstructionsConfig,
-    //     resolvedSharedVariablesById,
-    //     unresolvedPromptSharedVariables,
-    //     unresolvedPromptIfFlags,
-    //   });
+      if (!builtPromptText) continue;
 
-    //   if (!builtPromptText) continue;
+      builtPrompts.push(builtPromptText);
+    }
 
-    //   builtPrompts.push(builtPromptText);
-    // }
+    this._showUnresolvedVariablesWarningIfNeeded({
+      unresolvedConfigVariables: sharedVariablesBuildResult.unresolvedConfigVariableKeys,
+      unresolvedSharedVariablesInSharedVariables: sharedVariablesBuildResult.unresolvedSharedVariableKeys,
+      unresolvedPromptSharedVariables,
+      unresolvedPromptIfFlags,
+    });
 
-    // this._showUnresolvedVariablesWarningIfNeeded({
-    //   unresolvedConfigVariables: sharedVariablesBuildResult.unresolvedConfigVariableKeys,
-    //   unresolvedSharedVariablesInSharedVariables: sharedVariablesBuildResult.unresolvedSharedVariableKeys,
-    //   unresolvedPromptSharedVariables,
-    //   unresolvedPromptIfFlags,
-    // });
+    if (builtPrompts.length === 0) return '';
 
-    // if (builtPrompts.length === 0) return '';
+    const delimiterLine = `\n${this._config.llmToIdeParsingAnchors.techPromptDelimiter}\n`;
 
-    // const delimiterLine = `\n${this._config.llmToIdeParsingAnchors.techPromptDelimiter}\n`;
-
-    // return builtPrompts.join(delimiterLine);
+    return builtPrompts.join(delimiterLine);
   }
 
   private async _tryBuildPromptText(args: {
@@ -100,145 +84,79 @@ export class TechPromptBuilder {
     const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId);
     if (!promptText) return null;
 
-    let nextPromptText = promptText;
-
-    nextPromptText = this._renderPlaceholdersFromSharedVariablesOnly(
-      nextPromptText,
+    this._registerUnresolvedLiquidVariables(
+      promptText,
       args.resolvedSharedVariablesById,
       args.unresolvedPromptSharedVariables
     );
+    this._registerUnresolvedLiquidIfFlags(promptText, args.resolvedSharedVariablesById, args.unresolvedPromptIfFlags);
 
-    const flagsById = this._buildIfFlagsById(nextPromptText, args.resolvedSharedVariablesById, args.unresolvedPromptIfFlags);
-    nextPromptText = this._mustacheRenderer.renderIfBlocks(nextPromptText, flagsById);
+    const liquidContext = { ...args.resolvedSharedVariablesById };
 
-    if (!nextPromptText.trim()) return null;
+    let renderedText: string;
 
-    return nextPromptText;
-  }
-
-  private _renderPlaceholdersFromSharedVariablesOnly(
-    promptText: string,
-    sharedVariablesById: Record<string, string>,
-    unresolvedPromptSharedVariables: Set<string>
-  ): string {
-    return this._mustacheRenderer.renderPlaceholders(promptText, placeholderKey => {
-      const resolvedValue = sharedVariablesById?.[placeholderKey];
-      if (resolvedValue === undefined) {
-        unresolvedPromptSharedVariables.add(placeholderKey);
-        return null;
-      }
-
-      return resolvedValue;
-    });
-  }
-
-  private _buildIfFlagsById(
-    promptText: string,
-    sharedVariablesById: Record<string, string>,
-    unresolvedPromptIfFlags: Set<string>
-  ): Record<string, boolean> {
-    const flagsById: Record<string, boolean> = {};
-    const ifFlagNames = this._extractIfFlagNames(promptText);
-
-    for (const ifFlagName of ifFlagNames) {
-      const didResolveFlagName = this._tryRegisterUnresolvedIfFlagName(
-        ifFlagName,
-        sharedVariablesById,
-        unresolvedPromptIfFlags
-      );
-      flagsById[ifFlagName] = this._tryResolveIfFlagValueFromSharedVariablesOnly(ifFlagName, sharedVariablesById);
-
-      if (!didResolveFlagName) continue;
+    try {
+      renderedText = await this._liquid.parseAndRender(promptText, liquidContext);
+    } catch (error: unknown) {
+      const errorText = error instanceof Error ? error.message || error.name : String(error);
+      vscode.window.showWarningMessage(`Liquid render failed: id="${args.promptId}", error="${errorText}"`);
+      return null;
     }
 
-    return flagsById;
+    if (!renderedText.trim()) return null;
+
+    return renderedText;
   }
 
-  private _tryRegisterUnresolvedIfFlagName(
-    flagExpression: string,
-    sharedVariablesById: Record<string, string>,
-    unresolvedPromptIfFlags: Set<string>
-  ): boolean {
-    const rawExpression = (flagExpression ?? '').trim();
-    if (!rawExpression) return false;
-
-    const match = /^(!+)?(.*)$/.exec(rawExpression);
-    const rawFlagName = (match?.[2] ?? '').trim();
-    if (!rawFlagName) return false;
-
-    const rawValue = sharedVariablesById?.[rawFlagName];
-    if (rawValue !== undefined) return true;
-
-    unresolvedPromptIfFlags.add(rawFlagName);
-    return false;
-  }
-
-  private _tryResolveIfFlagValueFromSharedVariablesOnly(
-    flagExpression: string,
-    sharedVariablesById: Record<string, string>
-  ): boolean {
-    const rawExpression = (flagExpression ?? '').trim();
-    if (!rawExpression) return false;
-
-    const match = /^(!+)?(.*)$/.exec(rawExpression);
-    const negationPrefix = (match?.[1] ?? '').trim();
-    const rawFlagName = (match?.[2] ?? '').trim();
-
-    const negationsCount = negationPrefix.length;
-    const shouldNegate = negationsCount % 2 === 1;
-
-    const rawValue = sharedVariablesById?.[rawFlagName];
-    const isTruthy = this._coerceTextToBoolean(rawValue);
-
-    return shouldNegate ? !isTruthy : isTruthy;
-  }
-
-  private _coerceTextToBoolean(text: string | undefined): boolean {
-    if (text === undefined) return false;
-
-    const normalized = String(text).trim();
-    if (!normalized) return false;
-
-    const lowered = normalized.toLowerCase();
-
-    if (lowered === 'true') return true;
-    if (lowered === 'false') return false;
-
-    if (lowered === '1') return true;
-    if (lowered === '0') return false;
-
-    if (lowered === 'yes') return true;
-    if (lowered === 'no') return false;
-
-    if (lowered === 'on') return true;
-    if (lowered === 'off') return false;
-
-    return true;
-  }
-
-  private _extractIfFlagNames(promptText: string): string[] {
-    const foundFlagNames: string[] = [];
-
-    const ifStartTagRegex = /{{#if\s+([^}]+)}}/g;
-    const elseIfTagRegex = /{{else\s+if\s+([^}]+)}}/g;
+  private _registerUnresolvedLiquidVariables(
+    promptText: string,
+    resolvedSharedVariablesById: Record<string, string>,
+    unresolvedPromptSharedVariables: Set<string>
+  ): void {
+    const outputTagRegex = /{{\s*([^}]+)\s*}}/g;
 
     let match: RegExpExecArray | null;
 
-    while ((match = ifStartTagRegex.exec(promptText)) !== null) {
-      const rawFlagName = (match[1] ?? '').trim();
-      if (!rawFlagName) continue;
+    while ((match = outputTagRegex.exec(promptText)) !== null) {
+      const rawExpression = (match[1] ?? '').trim();
+      if (!rawExpression) continue;
 
-      foundFlagNames.push(rawFlagName);
+      const beforeFilter = rawExpression.split('|')[0]?.trim() ?? '';
+      const variableMatch = /([a-zA-Z0-9_.-]+)/.exec(beforeFilter);
+      const variableName = (variableMatch?.[1] ?? '').trim();
+
+      if (!variableName) continue;
+      if (resolvedSharedVariablesById?.[variableName] !== undefined) continue;
+
+      unresolvedPromptSharedVariables.add(variableName);
     }
+  }
 
-    while ((match = elseIfTagRegex.exec(promptText)) !== null) {
-      const rawFlagName = (match[1] ?? '').trim();
-      if (!rawFlagName) continue;
+  private _registerUnresolvedLiquidIfFlags(
+    promptText: string,
+    resolvedSharedVariablesById: Record<string, string>,
+    unresolvedPromptIfFlags: Set<string>
+  ): void {
+    const ifTagRegex = /{%\s*(if|elsif)\s+([^%]+?)\s*%}/g;
+    const ignored = new Set<string>(['true', 'false', 'nil', 'blank', 'empty', 'null']);
 
-      foundFlagNames.push(rawFlagName);
+    let match: RegExpExecArray | null;
+
+    while ((match = ifTagRegex.exec(promptText)) !== null) {
+      const rawExpression = (match[2] ?? '').trim();
+      if (!rawExpression) continue;
+
+      const tokenMatch = /([a-zA-Z_][a-zA-Z0-9_.-]*)/.exec(rawExpression);
+      const token = (tokenMatch?.[1] ?? '').trim();
+
+      if (!token) continue;
+      if (ignored.has(token.toLowerCase())) continue;
+
+      const resolved = resolvedSharedVariablesById?.[token];
+      if (resolved !== undefined) continue;
+
+      unresolvedPromptIfFlags.add(token);
     }
-
-    return foundFlagNames;
   }
 
   private _buildResolvedSharedVariablesById(): {
@@ -432,10 +350,6 @@ export class TechPromptBuilder {
     if (!workspaceFolder) return null;
 
     return vscode.Uri.joinPath(workspaceFolder.uri, relativePathToSubInstruction);
-  }
-
-  private _getCodeListingHeaderStartFragmentWithSpace(): string {
-    return this._config.llmToIdeParsingAnchors.codeListingHeaderStartFragment + ' ';
   }
 
   private _buildPlaceholderRegexPattern(): string {
