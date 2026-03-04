@@ -334,7 +334,7 @@ async function pickProfileIds(args: {
 }
 
 async function openPromptTextInEditor(extensionContext: vscode.ExtensionContext, promptText: string): Promise<void> {
-  await ensureReadonlyVirtualMarkdownDocOpened({ extensionContext, docId: '~TMP: prompt', markdownText: promptText });
+  await ensureReadonlyVirtualMarkdownDocOpened({ extensionContext, docId: 'prompt', markdownText: promptText });
 }
 
 async function openMergedConfigInEditor(
@@ -343,7 +343,7 @@ async function openMergedConfigInEditor(
 ): Promise<void> {
   await ensureReadonlyVirtualMarkdownDocOpened({
     extensionContext,
-    docId: '~TMP: merged-config',
+    docId: 'merged-config',
     markdownText: mergedConfigReportText,
   });
 }

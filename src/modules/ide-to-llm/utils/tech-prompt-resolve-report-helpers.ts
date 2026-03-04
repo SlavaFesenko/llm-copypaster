@@ -63,7 +63,7 @@ async function showTechPromptResolveIssuesNotification(args: {
 
   await ensureReadonlyVirtualMarkdownDocOpened({
     extensionContext: args.extensionContext,
-    docId: 'tech-prompt-resolve-report',
+    docId: 'resolve-report',
     markdownText,
   });
 }

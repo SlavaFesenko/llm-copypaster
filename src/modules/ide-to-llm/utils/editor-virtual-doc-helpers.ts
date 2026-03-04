@@ -53,5 +53,5 @@ function ensureProviderRegisteredOnce(extensionContext: vscode.ExtensionContext)
 }
 
 function buildReadonlyMarkdownDocUri(args: { docId: string }): vscode.Uri {
-  return vscode.Uri.parse(`${readonlyMarkdownScheme}://preview/${encodeURIComponent(args.docId)}.md`);
+  return vscode.Uri.parse(`${readonlyMarkdownScheme}://preview/~TMP_${encodeURIComponent(args.docId)}.md`);
 }
