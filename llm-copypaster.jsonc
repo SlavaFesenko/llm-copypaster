@@ -20,18 +20,31 @@
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
         "BLOB_GITHUB_BASE_URL": "https://github.com/",
         "AUTHOR_REPO": "SlavaFesenko/llm-copypaster/",
+        "IS_REMOTE_FILE_EDIT_ALLOWED": "true",
       },
     },
   },
   "profilesById": {
-    "Disable web-git-prompt": {
-      "description": "Disable web-git-prompt",
+    "Disallow REMOTE_FILE_EDIT": {
+      "description": "Disallow REMOTE_FILE_EDIT - make them just readonly",
+      "version": "1",
+      "profileSettingsConfig": {
+        "promptInstructionConfig": {
+          "sharedVariablesById": {
+            "IS_REMOTE_FILE_EDIT_ALLOWED": "false",
+          },
+        },
+      },
+    },
+
+    "Remove web-git-prompt": {
+      "description": "Remove web-git-prompt from instructions section",
       "version": "1",
       "profileSettingsConfig": {
         "promptInstructionConfig": {
           "subInstructionsById": {
             "web-git-prompt": {
-              "relativePathToSubInstruction": "prompts/web-git-prompt.md",
+              "relativePathToSubInstruction": "prompts/web-git-prompt.md", // todo: make sure: are -ById copied by object or by props
               "ignore": true,
             },
           },
