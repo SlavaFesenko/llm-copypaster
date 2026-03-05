@@ -11,13 +11,13 @@ export interface BuildLlmContextTextArgs {
 export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
-  if (args.ignorePromptInstructions) return listings;
+  const techPromptDelimiter = args.config.llmToIdeParsingAnchors.techPromptDelimiter;
+
+  if (args.ignorePromptInstructions) return `\n${techPromptDelimiter}\n${listings}`;
 
   const techPromptText = args.techPromptText ?? '';
 
   if (!techPromptText.trim()) return listings;
-
-  const techPromptDelimiter = args.config.llmToIdeParsingAnchors.techPromptDelimiter;
 
   return `\n${techPromptDelimiter}\n${techPromptText}\n${techPromptDelimiter}\n${listings}`;
 }
