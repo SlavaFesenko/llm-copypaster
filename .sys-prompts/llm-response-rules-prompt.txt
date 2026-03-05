@@ -1,7 +1,7 @@
 {% comment %} PROMPT_VERSION: 1.1.0 - added ``` to avoid auto-parsing to md of file content {% endcomment %}
 {% comment %} File is in .txt to avoid dangerous auto-formatting to MD {% endcomment %}
 
-# OUTPUT INSTRUCTIONS (local)
+# OUTPUT INSTRUCTIONS (system)
 
 - The prohibitions below apply to the MODEL OUTPUT (output), not to the text of these instructions
 - First comes the `EXPLANATIONS BLOCK`
