@@ -7,8 +7,8 @@ import {
   TabBasedFileItemsResult,
   tryGetUriFromTab,
 } from './common.helpers';
+import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { collectActiveFileSelection } from './utils/file-selection';
-import { LiquidTechPromptBuilder } from './utils/liquid-tech-prompt-builder';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
 
@@ -262,7 +262,7 @@ export class EditorHelper {
 
     const config = await this._deps.configService.getConfig();
 
-    const techPromptText = await new LiquidTechPromptBuilder(this._deps.extensionContext, config).build();
+    const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
 
     const fileItems = args.selectionFileItems;
 

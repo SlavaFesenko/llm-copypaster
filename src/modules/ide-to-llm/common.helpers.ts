@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
+import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { ensureReadonlyVirtualMarkdownDocOpened } from './utils/editor-virtual-doc-helpers';
-import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './utils/other-prompt-helpers';
+import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './liquid-builder/external-helpers';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
 import { closeUnavailableTabs } from './utils/uncategorized-helpers';
 

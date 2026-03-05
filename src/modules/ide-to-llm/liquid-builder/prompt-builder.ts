@@ -15,9 +15,9 @@ import {
   tryExtractConfigVariablePath,
   tryParseScalarLiquidValue,
 } from './liquid-tech-prompt-builder-helpers';
-import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './tech-prompt-resolve-report-helpers';
+import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './variables-resolve-report-helpers';
 
-export class LiquidTechPromptBuilder {
+export class PromptBuilder {
   private readonly _liquidStrict: Liquid;
   private readonly _liquidLight: Liquid;
 

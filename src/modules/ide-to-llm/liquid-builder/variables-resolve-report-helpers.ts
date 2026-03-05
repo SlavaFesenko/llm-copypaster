@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ensureReadonlyVirtualMarkdownDocOpened } from './editor-virtual-doc-helpers';
+import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-virtual-doc-helpers';
 
 export interface TechPromptResolveIssues {
   filePromptsIssues: FilePromptResolveIssue[];
