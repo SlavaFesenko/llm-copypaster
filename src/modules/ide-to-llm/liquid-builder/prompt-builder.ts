@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
@@ -8,10 +9,10 @@ import {
   type PromptInstructionConfig,
   type PromptInstructionsConfig,
 } from '../../../config-service';
+import { GLOB_CONSTS } from '../../../global-constants';
 import {
   collapseEmptyLines,
   normalizeDirectPlaceholderValue,
-  tryBuildPromptUri,
   tryExtractConfigVariablePath,
   tryParseScalarLiquidValue,
 } from './liquid-tech-prompt-builder-helpers';
@@ -201,15 +202,14 @@ export class PromptBuilder {
     promptId: string,
     resolveIssues: TechPromptResolveIssues
   ): Promise<string | null> {
-    const promptUri = tryBuildPromptUri({
-      promptInstructionsConfig,
-      extensionContext: this._extensionContext,
-    });
+    const promptUri = this._tryBuildPromptUri(promptInstructionsConfig.relativePathToSubInstruction);
+    const isSystemBundledPromptFile = this._isSystemBundledPromptFile(promptInstructionsConfig.relativePathToSubInstruction);
+    const promptSource = isSystemBundledPromptFile ? 'extension' : 'workspace';
 
     if (!promptUri) {
       resolveIssues.filePromptsIssues.push({
         promptId,
-        source: promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace',
+        source: promptSource,
         relativePathToSubInstruction: promptInstructionsConfig.relativePathToSubInstruction,
         errorText: 'Workspace folder not found',
       });
@@ -226,7 +226,7 @@ export class PromptBuilder {
 
       resolveIssues.filePromptsIssues.push({
         promptId,
-        source: promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace',
+        source: promptSource,
         relativePathToSubInstruction: promptInstructionsConfig.relativePathToSubInstruction,
         errorText,
         promptUriString: promptUri.toString(),
@@ -234,5 +234,25 @@ export class PromptBuilder {
 
       return null;
     }
+  }
+
+  private _tryBuildPromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
+    if (this._isSystemBundledPromptFile(relativePathToSubInstruction))
+      return vscode.Uri.joinPath(this._extensionContext.extensionUri, relativePathToSubInstruction);
+
+    if (relativePathToSubInstruction.startsWith('file:')) return vscode.Uri.parse(relativePathToSubInstruction);
+
+    if (path.isAbsolute(relativePathToSubInstruction)) return vscode.Uri.file(relativePathToSubInstruction);
+
+    const workspaceRootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!workspaceRootUri) return null;
+
+    return vscode.Uri.joinPath(workspaceRootUri, relativePathToSubInstruction);
+  }
+
+  private _isSystemBundledPromptFile(relativePathToSubInstruction: string): boolean {
+    const normalizedRelativePathToSubInstruction = (relativePathToSubInstruction ?? '').replaceAll('\\', '/');
+
+    return normalizedRelativePathToSubInstruction === GLOB_CONSTS.LLM_RESPONSE_RULES_PROMPT_RELATIVE_PATH;
   }
 }

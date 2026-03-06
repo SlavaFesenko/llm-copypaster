@@ -177,27 +177,21 @@ export function mapSubInstructionsById(
   for (const subInstructionId of Object.keys(userSubInstructionsById)) {
     const baseSubInstruction = baseSubInstructionsById[subInstructionId];
     const userSubInstruction = userSubInstructionsById[subInstructionId];
-    const isUserOverridingRelativePath = userSubInstruction.relativePathToSubInstruction !== undefined;
 
     if (!baseSubInstruction) {
       if (!userSubInstruction.relativePathToSubInstruction || userSubInstruction.ignore === undefined) continue;
 
       nextSubInstructionsById[subInstructionId] = {
         relativePathToSubInstruction: userSubInstruction.relativePathToSubInstruction,
-        isSystemBundledFile: false,
         ignore: userSubInstruction.ignore,
       };
 
       continue;
     }
 
-    if (baseSubInstruction.isSystemBundledFile && isUserOverridingRelativePath && userSubInstruction.ignore === true)
-      continue;
-
     nextSubInstructionsById[subInstructionId] = {
       relativePathToSubInstruction:
         userSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
-      isSystemBundledFile: isUserOverridingRelativePath ? false : baseSubInstruction.isSystemBundledFile,
       ignore: userSubInstruction.ignore ?? baseSubInstruction.ignore,
     };
   }

@@ -8,7 +8,7 @@
       "subInstructionsById": {
         "llm-response-rules-prompt": {
           "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\llm-response-rules-prompt.txt",
-          "ignore": false, // todo fix - no matter the ignore flag, this local-version prompt still present
+          "ignore": false,
         },
         "web-git-prompt": {
           "relativePathToSubInstruction": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\web-git-prompt.txt",

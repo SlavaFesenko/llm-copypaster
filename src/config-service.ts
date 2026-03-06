@@ -5,7 +5,6 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export interface PromptInstructionsConfig {
   relativePathToSubInstruction: string;
-  isSystemBundledFile: boolean;
   ignore: boolean;
 }
 
@@ -224,7 +223,6 @@ export class ConfigService {
       if (!baseSubInstruction) {
         nextSubInstructionsById[subInstructionId] = {
           relativePathToSubInstruction: profileSubInstruction.relativePathToSubInstruction,
-          isSystemBundledFile: profileSubInstruction.isSystemBundledFile,
           ignore: profileSubInstruction.ignore,
         };
 
@@ -234,7 +232,6 @@ export class ConfigService {
       nextSubInstructionsById[subInstructionId] = {
         relativePathToSubInstruction:
           profileSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
-        isSystemBundledFile: profileSubInstruction.isSystemBundledFile ?? baseSubInstruction.isSystemBundledFile,
         ignore: profileSubInstruction.ignore ?? baseSubInstruction.ignore,
       };
     }
