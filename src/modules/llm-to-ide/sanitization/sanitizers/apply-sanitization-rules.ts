@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../../config-service';
+import { LlmCopypasterInternalConfig } from '../../../../config-service';
 import { OutputChannelLogger } from '../../../../utils/output-channel-logger';
 
 export interface ApplySanitizationRulesFileMeta {
@@ -9,7 +9,7 @@ export interface ApplySanitizationRulesFileMeta {
 export function applySanitizationRules(
   inputText: string,
   fileMeta: ApplySanitizationRulesFileMeta,
-  config: LlmCopypasterConfig,
+  config: LlmCopypasterInternalConfig,
   logger: OutputChannelLogger
 ): string {
   let outputText = inputText;

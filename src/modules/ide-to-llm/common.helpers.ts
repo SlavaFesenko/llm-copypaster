@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config-service';
+import { ConfigService, OverrideOptionMetadata } from '../../config-service';
 import { CollectedFileItem } from '../../types/files-payload';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
@@ -142,7 +142,10 @@ export async function showCopyResultNotification(
   const closeUnavailableActionLabel =
     unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
-  const hasProfiles = await deps.configService.hasAvailableOverrides();
+  await deps.configService.getCoreSettingsConfig();
+
+  const overrideOptions = deps.configService.overrideOptions;
+  const hasProfiles = overrideOptions.length > 0;
 
   const openPromptInEditor = 'Open Prompt in Editor';
   const eraseInstructions = 'Erase Instructions';
@@ -152,11 +155,8 @@ export async function showCopyResultNotification(
   let isTechPromptErased = false;
 
   while (true) {
-    const baseEffectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
-
-    const effectiveConfig = isTechPromptErased
-      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.coreSettings, skipTechPrompt: true } }
-      : baseEffectiveConfig;
+    const selectedOverrideId = getSelectedOverrideId(selectedProfileIds);
+    const effectiveConfig = await deps.configService.getLlmCopypasterPublicConfig(selectedOverrideId);
 
     const promptStatsResult = buildTextSizeStats({
       promptText: currentPromptText,
@@ -234,9 +234,7 @@ export async function showCopyResultNotification(
     }
 
     if (selectedAction === applyOrChangeProfilesLabel) {
-      const overridesById = await deps.configService.getOverridesById();
-
-      const nextPickResult = await pickProfileIds({ overridesById: overridesById, selectedProfileIds });
+      const nextPickResult = await pickProfileIds({ overrideOptions, selectedProfileIds });
       if (!nextPickResult) return;
 
       selectedProfileIds = nextPickResult.profileIds;
@@ -255,17 +253,15 @@ export async function showCopyResultNotification(
       await vscode.env.clipboard.writeText(currentPromptText);
 
       if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-        const baseConfig = await deps.configService.getCoreSettingsConfig();
-
-        const mergedConfigForSelectedProfiles = await deps.configService.buildEffectiveConfigForProfileIds(
-          selectedProfileIds,
-          baseConfig
-        );
+        const selectedOverrideIdForReport = getSelectedOverrideId(selectedProfileIds);
+        const baseCoreSettingsConfig = await deps.configService.getCoreSettingsConfig();
+        const mergedCoreSettingsConfig = await deps.configService.getCoreSettingsConfig(selectedOverrideIdForReport);
 
         const mergedConfigReportText = await buildMergedConfigMarkdownReportText({
-          baseSettingsConfig: baseConfig.coreSettings,
-          mergedSettingsConfig: mergedConfigForSelectedProfiles.coreSettings,
-          overridesById: baseConfig.overridesById ?? {},
+          configService: deps.configService,
+          baseSettingsConfig: baseCoreSettingsConfig,
+          mergedSettingsConfig: mergedCoreSettingsConfig,
+          overrideOptions,
           selectedProfileIds,
         });
 
@@ -288,7 +284,7 @@ interface PickProfileIdsResult {
 }
 
 async function pickProfileIds(args: {
-  overridesById: Record<string, { description?: string; version?: string }>;
+  overrideOptions: OverrideOptionMetadata[];
   selectedProfileIds: string[];
 }): Promise<PickProfileIdsResult | null> {
   const selectedProfileIdsSet = new Set(args.selectedProfileIds);
@@ -302,16 +298,15 @@ async function pickProfileIds(args: {
     },
   ];
 
-  for (const profileId of Object.keys(args.overridesById)) {
-    const profile = args.overridesById[profileId];
-    const descriptionSuffix = profile.description ? `${profile.description}` : '';
-    const version = profile.version ? `v${profile.version}: ` : '';
+  for (const overrideOption of args.overrideOptions) {
+    const descriptionSuffix = overrideOption.description ? `${overrideOption.description}` : '';
+    const version = overrideOption.version ? `v${overrideOption.version}: ` : '';
 
     items.push({
-      profileId,
-      label: profileId,
+      profileId: overrideOption.id,
+      label: overrideOption.id,
       detail: `${version}${descriptionSuffix}`,
-      picked: selectedProfileIdsSet.has(profileId),
+      picked: selectedProfileIdsSet.has(overrideOption.id),
     });
   }
 
@@ -346,4 +341,8 @@ async function openMergedConfigInEditor(
     docId: 'merged-config',
     markdownText: mergedConfigReportText,
   });
+}
+
+function getSelectedOverrideId(profileIds: string[]): string | undefined {
+  return [...(profileIds ?? [])].reverse().find(profileId => profileId !== 'Default');
 }

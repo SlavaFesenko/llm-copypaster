@@ -260,7 +260,7 @@ export class EditorHelper {
       return;
     }
 
-    const config = await this._deps.configService.getCoreSettingsConfig();
+    const config = await this._deps.configService.getLlmCopypasterPublicConfig();
 
     const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
 

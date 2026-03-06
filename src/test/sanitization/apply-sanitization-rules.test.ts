@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import assert from 'node:assert/strict';
 
-import { ConfigService, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config-service';
+import { ConfigService, LlmCopypasterInternalConfig, LlmToIdeSanitizationRuleConfig } from '../../config-service';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
@@ -18,7 +18,7 @@ suite('applySanitizationRules', () => {
 
     assert.ok(stripCodefenceRule, 'strip-codefence rule was not found in current system config');
 
-    const config: LlmCopypasterConfig = {
+    const config: LlmCopypasterInternalConfig = {
       ...systemConfig,
       coreSettings: {
         ...systemConfig.coreSettings,
@@ -48,7 +48,7 @@ suite('applySanitizationRules', () => {
       disabledForPaths: [],
     };
 
-    const config: LlmCopypasterConfig = {
+    const config: LlmCopypasterInternalConfig = {
       ...systemConfig,
       coreSettings: {
         ...systemConfig.coreSettings,

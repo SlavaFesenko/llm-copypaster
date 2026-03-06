@@ -67,175 +67,99 @@ export interface OverrideConfig {
   coreSettings: CoreSettingsConfig;
 }
 
-export interface LlmCopypasterConfig {
-  vitalParsingAnchors: VitalParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
+export interface LlmCopypasterPublicConfig {
+  vitalParsingAnchors: VitalParsingAnchorsConfig;
   coreSettings: CoreSettingsConfig;
+}
+
+export interface LlmCopypasterInternalConfig extends LlmCopypasterPublicConfig {
   overridesById?: Record<string, OverrideConfig>;
+}
+
+export interface OverrideOptionMetadata {
+  id: string;
+  description?: string;
+  version?: string;
 }
 
 export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
-  private _systemConfigPromise?: Promise<LlmCopypasterConfig>;
-
-  public async getSystemConfig(): Promise<LlmCopypasterConfig> {
-    this._systemConfigPromise ??= this._buildSystemConfig();
-
-    return await this._systemConfigPromise;
+  public get overrideOptions(): OverrideOptionMetadata[] {
+    return this._overrideOptions;
   }
 
-  public async getCoreSettingsConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = await this.getSystemConfig();
-    const userFileConfig = await readUserConfigFile<LlmCopypasterUserConfig>(this._logger);
+  private _systemConfig?: LlmCopypasterInternalConfig;
+  private _llmCopypasterConfig?: LlmCopypasterInternalConfig;
+  private _overrideOptions: OverrideOptionMetadata[] = [];
 
-    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => structuredClone(systemConfig.coreSettings));
+  public async getSystemConfig(): Promise<LlmCopypasterInternalConfig> {
+    if (this._systemConfig) return this._systemConfig;
 
-    return mergedConfig;
+    this._systemConfig = await this._buildSystemConfig();
+
+    return this._systemConfig;
   }
 
-  public async getOverridesById(config?: LlmCopypasterConfig): Promise<Record<string, OverrideConfig>> {
-    const effectiveConfig = await this._getConfigOrUseOverride(config);
-    return effectiveConfig.overridesById ?? {};
+  public async getCoreSettingsConfig(overrideId?: string): Promise<CoreSettingsConfig> {
+    const llmCopypasterConfig = await this._getLlmCopypasterConfig();
+
+    if (!overrideId) return llmCopypasterConfig.coreSettings;
+
+    return llmCopypasterConfig.overridesById?.[overrideId]?.coreSettings ?? llmCopypasterConfig.coreSettings;
   }
 
-  public async hasAvailableOverrides(config?: LlmCopypasterConfig): Promise<boolean> {
-    const profilesById = await this.getOverridesById(config);
-    return Object.keys(profilesById).length > 0;
+  public async getVitalParsingAnchorsConfig(): Promise<VitalParsingAnchorsConfig> {
+    const llmCopypasterConfig = await this._getLlmCopypasterConfig();
+
+    return llmCopypasterConfig.vitalParsingAnchors;
   }
 
-  public async buildEffectiveConfigForProfileIds(
-    profileIds: string[],
-    config?: LlmCopypasterConfig
-  ): Promise<LlmCopypasterConfig> {
-    const effectiveConfig = await this._getConfigOrUseOverride(config);
-
-    const normalizedProfileIds = (profileIds ?? []).filter(Boolean);
-
-    const hasAnyNonDefaultProfile = normalizedProfileIds.some(profileId => profileId !== 'Default');
-
-    if (!hasAnyNonDefaultProfile) return effectiveConfig;
-
-    const profilesById = effectiveConfig.overridesById ?? {};
-
-    let effectiveCoreSettings = effectiveConfig.coreSettings;
-
-    for (const profileId of normalizedProfileIds) {
-      if (profileId === 'Default') continue;
-
-      const profile = profilesById[profileId];
-      if (!profile?.coreSettings) continue;
-
-      effectiveCoreSettings = this._mergeProfileSettingsConfig(effectiveCoreSettings, profile.coreSettings);
-    }
+  public async getLlmCopypasterPublicConfig(overrideId?: string): Promise<LlmCopypasterPublicConfig> {
+    const coreSettings = await this.getCoreSettingsConfig(overrideId);
+    const vitalParsingAnchors = await this.getVitalParsingAnchorsConfig();
 
     return {
-      ...effectiveConfig,
-      coreSettings: effectiveCoreSettings,
+      coreSettings,
+      vitalParsingAnchors,
     };
   }
 
-  private async _buildSystemConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger);
+  private async _buildSystemConfig(): Promise<LlmCopypasterInternalConfig> {
+    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterInternalConfig>(this._logger);
 
     return systemConfig!;
   }
 
-  private async _getConfigOrUseOverride(config?: LlmCopypasterConfig): Promise<LlmCopypasterConfig> {
-    if (config) return config;
-    return await this.getCoreSettingsConfig();
+  private async _getLlmCopypasterConfig(): Promise<LlmCopypasterInternalConfig> {
+    if (this._llmCopypasterConfig) return this._llmCopypasterConfig;
+
+    this._llmCopypasterConfig = await this._buildLlmCopypasterConfig();
+    this._setOverrideOptions(this._llmCopypasterConfig);
+
+    return this._llmCopypasterConfig;
   }
 
-  private _mergeProfileSettingsConfig(
-    coreSettings: CoreSettingsConfig,
-    overrideCoreSettings: CoreSettingsConfig
-  ): CoreSettingsConfig {
-    const basePromptInstructionConfig = coreSettings.promptInstructionConfig;
-    const profilePromptInstructionConfig = overrideCoreSettings.promptInstructionConfig;
+  private async _buildLlmCopypasterConfig(): Promise<LlmCopypasterInternalConfig> {
+    const systemConfig = await this.getSystemConfig();
+    const userFileConfig = await readUserConfigFile<LlmCopypasterUserConfig>(this._logger);
 
-    return {
-      skipInstructions: overrideCoreSettings.skipInstructions ?? coreSettings.skipInstructions,
-      skipCodeListings: overrideCoreSettings.skipCodeListings ?? coreSettings.skipCodeListings,
-      ideToLlmContextConfig: {
-        skipPromptSizeStatsInCopyNotification:
-          overrideCoreSettings.ideToLlmContextConfig?.skipPromptSizeStatsInCopyNotification ??
-          coreSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification,
-        promptSizeApproxCharsPerToken:
-          overrideCoreSettings.ideToLlmContextConfig?.promptSizeApproxCharsPerToken ??
-          coreSettings.ideToLlmContextConfig.promptSizeApproxCharsPerToken,
-        maxLinesCountInContext:
-          overrideCoreSettings.ideToLlmContextConfig?.maxLinesCountInContext ??
-          coreSettings.ideToLlmContextConfig.maxLinesCountInContext,
-        maxTokensCountInContext:
-          overrideCoreSettings.ideToLlmContextConfig?.maxTokensCountInContext ??
-          coreSettings.ideToLlmContextConfig.maxTokensCountInContext,
-      },
-      llmToIdeContextConfig: {
-        promptSizeApproxCharsPerToken:
-          overrideCoreSettings.llmToIdeContextConfig?.promptSizeApproxCharsPerToken ??
-          coreSettings.llmToIdeContextConfig.promptSizeApproxCharsPerToken,
-        maxLinesCountInContext:
-          overrideCoreSettings.llmToIdeContextConfig?.maxLinesCountInContext ??
-          coreSettings.llmToIdeContextConfig.maxLinesCountInContext,
-        maxTokensCountInContext:
-          overrideCoreSettings.llmToIdeContextConfig?.maxTokensCountInContext ??
-          coreSettings.llmToIdeContextConfig.maxTokensCountInContext,
-      },
-      postFilePatchActionsConfig: {
-        enableSaveAfterFilePatch:
-          overrideCoreSettings.postFilePatchActionsConfig?.enableSaveAfterFilePatch ??
-          coreSettings.postFilePatchActionsConfig.enableSaveAfterFilePatch,
-        enableLintingAfterFilePatch:
-          overrideCoreSettings.postFilePatchActionsConfig?.enableLintingAfterFilePatch ??
-          coreSettings.postFilePatchActionsConfig.enableLintingAfterFilePatch,
-        enableOpeningPatchedFilesInEditor:
-          overrideCoreSettings.postFilePatchActionsConfig?.enableOpeningPatchedFilesInEditor ??
-          coreSettings.postFilePatchActionsConfig.enableOpeningPatchedFilesInEditor,
-      },
-      promptInstructionConfig: {
-        ...basePromptInstructionConfig,
-        ...profilePromptInstructionConfig,
-        sharedVariablesById: {
-          ...basePromptInstructionConfig.sharedVariablesById,
-          ...profilePromptInstructionConfig.sharedVariablesById,
-        },
-        subInstructionsById: this._mergeSubInstructionsById(
-          basePromptInstructionConfig.subInstructionsById,
-          profilePromptInstructionConfig.subInstructionsById
-        ),
-      },
-      llmToIdeSanitizationRulesById: {
-        ...(coreSettings.llmToIdeSanitizationRulesById ?? {}),
-        ...(overrideCoreSettings.llmToIdeSanitizationRulesById ?? {}),
-      },
-    };
+    return mergeConfigs(systemConfig, userFileConfig);
   }
 
-  private _mergeSubInstructionsById(
-    baseSubInstructionsById: Record<string, PromptInstructionsConfig>,
-    profileSubInstructionsById: Record<string, PromptInstructionsConfig>
-  ): Record<string, PromptInstructionsConfig> {
-    const nextSubInstructionsById: Record<string, PromptInstructionsConfig> = { ...(baseSubInstructionsById ?? {}) };
+  private _setOverrideOptions(llmCopypasterConfig: LlmCopypasterInternalConfig): void {
+    this._overrideOptions = [];
 
-    for (const subInstructionId of Object.keys(profileSubInstructionsById)) {
-      const baseSubInstruction = baseSubInstructionsById?.[subInstructionId];
-      const profileSubInstruction = profileSubInstructionsById[subInstructionId];
+    const overridesById = llmCopypasterConfig.overridesById ?? {};
 
-      if (!baseSubInstruction) {
-        nextSubInstructionsById[subInstructionId] = {
-          relativePathToSubInstruction: profileSubInstruction.relativePathToSubInstruction,
-          ignore: profileSubInstruction.ignore,
-        };
+    for (const overrideId of Object.keys(overridesById)) {
+      const overrideConfig = overridesById[overrideId];
 
-        continue;
-      }
-
-      nextSubInstructionsById[subInstructionId] = {
-        relativePathToSubInstruction:
-          profileSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
-        ignore: profileSubInstruction.ignore ?? baseSubInstruction.ignore,
-      };
+      this._overrideOptions.push({
+        id: overrideId,
+        description: overrideConfig.description,
+        version: overrideConfig.version,
+      });
     }
-
-    return nextSubInstructionsById;
   }
 }

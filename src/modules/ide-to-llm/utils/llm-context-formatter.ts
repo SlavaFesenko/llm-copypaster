@@ -1,9 +1,9 @@
-import { LlmCopypasterConfig } from '../../../config-service';
+import { LlmCopypasterPublicConfig } from '../../../config-service';
 import { EditorToLlmFileItem } from './file-selection';
 
 export interface BuildLlmContextTextArgs {
   fileItems: EditorToLlmFileItem[];
-  config: LlmCopypasterConfig;
+  config: LlmCopypasterPublicConfig;
   ignorePromptInstructions?: boolean;
   techPromptText?: string;
 }
@@ -22,7 +22,7 @@ export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
   return `\n${techPromptDelimiter}\n${techPromptText}\n${techPromptDelimiter}\n${listings}`;
 }
 
-function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
+function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterPublicConfig): string {
   const headerLine = `${config.vitalParsingAnchors.codeListingHeaderStartFragment} ${fileItem.path}`;
 
   const contentLines: string[] = [];

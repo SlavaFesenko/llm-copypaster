@@ -17,7 +17,7 @@ export class LlmToIdeModule {
 
   public async applyClipboardToFiles(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getCoreSettingsConfig();
+    const config = await this._configService.getLlmCopypasterPublicConfig();
 
     const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
@@ -70,7 +70,7 @@ export class LlmToIdeModule {
 
   public async validateClipboardPayload(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getCoreSettingsConfig();
+    const config = await this._configService.getLlmCopypasterPublicConfig();
 
     const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
@@ -91,7 +91,7 @@ export class LlmToIdeModule {
 
   public async sanitizeClipboardPayload(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getCoreSettingsConfig();
+    const config = await this._configService.getLlmCopypasterPublicConfig();
 
     const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 

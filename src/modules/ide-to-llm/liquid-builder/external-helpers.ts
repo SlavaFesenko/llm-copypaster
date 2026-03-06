@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService, LlmCopypasterConfig } from '../../../config-service';
+import { ConfigService, OverrideOptionMetadata } from '../../../config-service';
 import { CollectedFileItem } from '../../../types/files-payload';
 import { buildLlmContextText } from '../utils/llm-context-formatter';
 import { PromptBuilder } from './prompt-builder';
@@ -11,21 +11,15 @@ export async function buildLlmPromptTextForProfiles(args: {
   profileIds: string[];
   includeTechPromptFromCommand: boolean;
   fileItems: CollectedFileItem[];
-  baseConfigOverride?: LlmCopypasterConfig;
   forceSkipTechPrompt?: boolean;
 }): Promise<string> {
-  const baseEffectiveConfig = await args.configService.buildEffectiveConfigForProfileIds(
-    args.profileIds,
-    args.baseConfigOverride
-  );
-
-  const effectiveConfig =
-    args.forceSkipTechPrompt === true
-      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.coreSettings, skipTechPrompt: true } }
-      : baseEffectiveConfig;
+  const selectedOverrideId = getSelectedOverrideId(args.profileIds);
+  const effectiveConfig = await args.configService.getLlmCopypasterPublicConfig(selectedOverrideId);
 
   const shouldIncludeTechPrompt =
-    args.includeTechPromptFromCommand && effectiveConfig.coreSettings.skipInstructions !== true;
+    args.includeTechPromptFromCommand &&
+    args.forceSkipTechPrompt !== true &&
+    effectiveConfig.coreSettings.skipInstructions !== true;
 
   const effectiveFileItems = effectiveConfig.coreSettings.skipCodeListings === true ? [] : args.fileItems;
 
@@ -42,9 +36,10 @@ export async function buildLlmPromptTextForProfiles(args: {
 }
 
 export async function buildMergedConfigMarkdownReportText(args: {
+  configService: ConfigService;
   baseSettingsConfig: unknown;
   mergedSettingsConfig: unknown;
-  overridesById: Record<string, { coreSettings?: unknown }>;
+  overrideOptions: OverrideOptionMetadata[];
   selectedProfileIds: string[];
 }): Promise<string> {
   const normalizedSelectedProfileIds = (args.selectedProfileIds ?? [])
@@ -83,13 +78,12 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
-  for (const profileId of Object.keys(args.overridesById ?? {})) {
-    const profile = args.overridesById[profileId];
-    const profileOnlyConfiguredSettings = profile?.coreSettings ?? {};
+  for (const overrideOption of args.overrideOptions) {
+    const overrideCoreSettingsConfig = await args.configService.getCoreSettingsConfig(overrideOption.id);
 
-    reportText += `## ${profileId}\n\n`;
+    reportText += `## ${overrideOption.id}\n\n`;
     reportText += tripleTicksWithJson;
-    reportText += `${JSON.stringify(profileOnlyConfiguredSettings, null, 2)}\n`;
+    reportText += `${JSON.stringify(overrideCoreSettingsConfig, null, 2)}\n`;
     reportText += tripleTicksThen2N;
   }
 
@@ -136,4 +130,8 @@ function buildHumanReadableJsonDiffChangeset(value: unknown): unknown {
   }
 
   return nextObject;
+}
+
+function getSelectedOverrideId(profileIds: string[]): string | undefined {
+  return [...(profileIds ?? [])].reverse().find(profileId => profileId !== 'Default');
 }
