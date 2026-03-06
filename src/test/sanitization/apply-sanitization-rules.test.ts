@@ -1,3 +1,4 @@
+import get from 'lodash/get';
 import assert from 'node:assert/strict';
 
 import { ConfigService, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config-service';
@@ -6,22 +7,39 @@ import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
 
 suite('applySanitizationRules', () => {
-  test('applies strip-codefence cases', async () => {
+  test('applies strip-codefence cases from current system config', async () => {
     const cases = [...buildStripCodefenceCases()];
+    const { logger, warnCalls } = createLoggerMock();
+    const systemConfig = await new ConfigService(logger).getSystemConfig();
+
+    const stripCodefenceRule = get(systemConfig, 'coreSettings.llmToIdeSanitizationRulesById.strip-codefence') as
+      | LlmToIdeSanitizationRuleConfig
+      | undefined;
+
+    assert.ok(stripCodefenceRule, 'strip-codefence rule was not found in current system config');
+
+    const config: LlmCopypasterConfig = {
+      ...systemConfig,
+      coreSettings: {
+        ...systemConfig.coreSettings,
+        llmToIdeSanitizationRulesById: {
+          'strip-codefence': stripCodefenceRule,
+        },
+      },
+    };
 
     for (const testCase of cases) {
-      const { logger, warnCalls } = createLoggerMock();
-      const defaultConfig = await new ConfigService(logger).buildSystemConfig();
-
-      const outputText = applySanitizationRules(testCase.inputText, testCase.fileMeta, defaultConfig, logger);
+      const outputText = applySanitizationRules(testCase.inputText, testCase.fileMeta, config, logger);
 
       assert.equal(outputText, testCase.expectedText, `Case failed: ${testCase.name}`);
-      assert.equal(warnCalls.length, 0, `Unexpected warn for case: ${testCase.name}`);
     }
+
+    assert.equal(warnCalls.length, 0);
   });
 
   test('logs warn and keeps output unchanged when rule RegExp construction fails', async () => {
     const { logger, warnCalls } = createLoggerMock();
+    const systemConfig = await new ConfigService(logger).getSystemConfig();
 
     const invalidRule: LlmToIdeSanitizationRuleConfig = {
       pattern: '[',
@@ -29,8 +47,6 @@ suite('applySanitizationRules', () => {
       disabledForLanguages: [],
       disabledForPaths: [],
     };
-
-    const systemConfig = await new ConfigService(logger).buildSystemConfig();
 
     const config: LlmCopypasterConfig = {
       ...systemConfig,

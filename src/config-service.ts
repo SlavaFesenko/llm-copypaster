@@ -77,12 +77,16 @@ export interface LlmCopypasterConfig {
 export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
-  public async buildSystemConfig(): Promise<LlmCopypasterConfig> {
+  public async getSystemConfig(): Promise<LlmCopypasterConfig> {
     const hardcodedFallbackSystemConfig = this._buildHardcodedFallbackSystemConfig();
 
     const systemFileConfig = await readSystemJsonConfigFile<LlmCopypasterUserConfig>(this._logger, 'sys-config.jsonc');
 
     return mergeConfigs(hardcodedFallbackSystemConfig, systemFileConfig, () => this._buildCoreSettings());
+  }
+
+  public async buildSystemConfig(): Promise<LlmCopypasterConfig> {
+    return await this.getSystemConfig();
   }
 
   private _buildHardcodedFallbackSystemConfig(): LlmCopypasterConfig {
@@ -159,7 +163,7 @@ export class ConfigService {
   }
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = await this.buildSystemConfig();
+    const systemConfig = await this.getSystemConfig();
     const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
 
     const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildCoreSettings());
