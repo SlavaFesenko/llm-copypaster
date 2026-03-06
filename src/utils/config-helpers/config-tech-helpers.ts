@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 import { GLOB_CONSTS } from '../../global-constants';
 import { OutputChannelLogger } from '../output-channel-logger';
 
+// TODO: get rid of custom JSONC-parsing logic, use npm-package
+
 export async function readUserConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
@@ -16,6 +18,7 @@ export async function readUserConfigFile<TConfig>(logger: OutputChannelLogger): 
   return await readJsoncConfigFile<TConfig>(configUri, logger, 'Workspace config not loaded');
 }
 
+// TODO: don't return null, only exception + extension failure (or exit?)
 export async function readSystemJsonConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
   const extensionConfigFileName = GLOB_CONSTS.SYS_CONFIG_FILE_NAME;
   const extensionConfigPath = await findFileUpwards(__dirname, extensionConfigFileName);
