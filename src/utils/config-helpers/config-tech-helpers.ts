@@ -24,7 +24,11 @@ export async function readSystemJsonConfigFile<TConfig>(
   const extensionConfigPath = await findFileUpwards(__dirname, extensionConfigFileName);
 
   if (!extensionConfigPath) {
-    logger.debug(`System config not loaded: ${extensionConfigFileName} was not found`);
+    const errorMessage = `System config not loaded: ${extensionConfigFileName} was not found`;
+
+    logger.error(errorMessage);
+    void vscode.window.showErrorMessage(errorMessage);
+
     return null;
   }
 
@@ -36,7 +40,11 @@ export async function readSystemJsonConfigFile<TConfig>(
 
     return parsed;
   } catch (error) {
-    logger.debug(`System config not loaded: ${String(error)}`);
+    const errorMessage = `System config not loaded: ${String(error)}`;
+
+    logger.error(errorMessage);
+    void vscode.window.showErrorMessage(errorMessage);
+
     return null;
   }
 }

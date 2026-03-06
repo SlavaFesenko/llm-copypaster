@@ -15,6 +15,10 @@ export class OutputChannelLogger {
     this._channel.appendLine(`[warn] ${message}`);
   }
 
+  public error(message: string): void {
+    this._channel.appendLine(`[error] ${message}`);
+  }
+
   public debug(message: string): void {
     this._channel.appendLine(`[debug] ${message}`);
   }
