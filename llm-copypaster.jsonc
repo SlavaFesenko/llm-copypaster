@@ -18,7 +18,7 @@
       "sharedVariablesById": {
         "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.baseSettings.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore",
         "WEB_GIT_PROMPT_NAME": "Web Git Prompt",
-        "BRANCH_NAME": "master",
+        "BRANCH_NAME": "feature/config-refactor", // master
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
         "BLOB_GITHUB_BASE_URL": "https://github.com/",
         "AUTHOR_REPO": "SlavaFesenko/llm-copypaster/",
