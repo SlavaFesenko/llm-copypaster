@@ -78,10 +78,12 @@ export interface LlmCopypasterConfig {
 export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
-  public async getSystemConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger, 'sys-config.jsonc');
+  private _systemConfigPromise?: Promise<LlmCopypasterConfig>;
 
-    return this._applySystemConfigPatches(systemConfig!);
+  public async getSystemConfig(): Promise<LlmCopypasterConfig> {
+    this._systemConfigPromise ??= this._buildSystemConfig();
+
+    return await this._systemConfigPromise;
   }
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
@@ -134,9 +136,21 @@ export class ConfigService {
     };
   }
 
+  private async _buildSystemConfig(): Promise<LlmCopypasterConfig> {
+    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger, 'sys-config.jsonc');
+
+    return this._applySystemConfigPatches(systemConfig!);
+  }
+
   // sys-config.jsonc is based on UserConfig rather than full Config, so some inner Config-only properties
   // can't (and should'n!) be expressed in JSONC and must be additionally patched in code while building -Config object
   private _applySystemConfigPatches(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
+    this._applySystemBundledPromptPatch(systemConfig);
+
+    return systemConfig;
+  }
+
+  private _applySystemBundledPromptPatch(systemConfig: LlmCopypasterConfig): void {
     const systemBundledPromptId = 'llm-response-rules-prompt';
     const targetSubInstruction =
       systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
@@ -144,12 +158,10 @@ export class ConfigService {
     if (!targetSubInstruction) {
       void vscode.window.showWarningMessage(`System prompt "${systemBundledPromptId}" was not found in system config`);
 
-      return systemConfig;
+      return;
     }
 
-    systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId].isSystemBundledFile = true;
-
-    return systemConfig;
+    targetSubInstruction.isSystemBundledFile = true;
   }
 
   private async _getConfigOrUseOverride(config?: LlmCopypasterConfig): Promise<LlmCopypasterConfig> {
