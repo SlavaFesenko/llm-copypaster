@@ -1,5 +1,5 @@
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
-import { readWorkspaceJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
+import { readSystemJsonConfigFile, readWorkspaceJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
 import { LlmCopypasterUserConfig } from './utils/config-helpers/user-config';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
@@ -77,7 +77,15 @@ export interface LlmCopypasterConfig {
 export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
-  public buildSystemConfig(): LlmCopypasterConfig {
+  public async buildSystemConfig(): Promise<LlmCopypasterConfig> {
+    const hardcodedFallbackSystemConfig = this._buildHardcodedFallbackSystemConfig();
+
+    const systemFileConfig = await readSystemJsonConfigFile<LlmCopypasterUserConfig>(this._logger, 'sys-config.jsonc');
+
+    return mergeConfigs(hardcodedFallbackSystemConfig, systemFileConfig, () => this._buildCoreSettings());
+  }
+
+  private _buildHardcodedFallbackSystemConfig(): LlmCopypasterConfig {
     return {
       vitalParsingAnchors: {
         techPromptDelimiter: '--' + '-',
@@ -151,7 +159,7 @@ export class ConfigService {
   }
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = this.buildSystemConfig();
+    const systemConfig = await this.buildSystemConfig();
     const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
 
     const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildCoreSettings());

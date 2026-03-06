@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { OutputChannelLogger } from '../output-channel-logger';
 
@@ -12,6 +14,38 @@ export async function readWorkspaceJsonConfigFile<TConfig>(logger: OutputChannel
 
   const configUri = vscode.Uri.joinPath(workspaceFolder.uri, workspaceConfigFileName);
 
+  return await readJsoncConfigFile<TConfig>(configUri, logger, 'Workspace config not loaded');
+}
+
+export async function readSystemJsonConfigFile<TConfig>(
+  logger: OutputChannelLogger,
+  extensionConfigFileName: string
+): Promise<TConfig | null> {
+  const extensionConfigPath = await findFileUpwards(__dirname, extensionConfigFileName);
+
+  if (!extensionConfigPath) {
+    logger.debug(`System config not loaded: ${extensionConfigFileName} was not found`);
+    return null;
+  }
+
+  try {
+    const jsonText = await fs.readFile(extensionConfigPath, 'utf8');
+    const jsonTextWithoutComments = stripJsoncComments(jsonText);
+    const jsonTextWithoutTrailingCommas = stripJsoncTrailingCommas(jsonTextWithoutComments);
+    const parsed = JSON.parse(jsonTextWithoutTrailingCommas) as TConfig;
+
+    return parsed;
+  } catch (error) {
+    logger.debug(`System config not loaded: ${String(error)}`);
+    return null;
+  }
+}
+
+export async function readJsoncConfigFile<TConfig>(
+  configUri: vscode.Uri,
+  logger: OutputChannelLogger,
+  notLoadedMessagePrefix: string
+): Promise<TConfig | null> {
   try {
     const bytes = await vscode.workspace.fs.readFile(configUri);
     const jsonText = Buffer.from(bytes).toString('utf8');
@@ -21,8 +55,31 @@ export async function readWorkspaceJsonConfigFile<TConfig>(logger: OutputChannel
 
     return parsed;
   } catch (error) {
-    logger.debug(`Workspace config not loaded: ${String(error)}`);
+    logger.debug(`${notLoadedMessagePrefix}: ${String(error)}`);
     return null;
+  }
+}
+
+export async function findFileUpwards(startDirectoryPath: string, fileName: string): Promise<string | null> {
+  let currentDirectoryPath = startDirectoryPath;
+
+  while (true) {
+    const candidateFilePath = path.join(currentDirectoryPath, fileName);
+
+    try {
+      await fs.access(candidateFilePath);
+      return candidateFilePath;
+    } catch {
+      void 0;
+    }
+
+    const parentDirectoryPath = path.dirname(currentDirectoryPath);
+
+    if (parentDirectoryPath === currentDirectoryPath) {
+      return null;
+    }
+
+    currentDirectoryPath = parentDirectoryPath;
   }
 }
 

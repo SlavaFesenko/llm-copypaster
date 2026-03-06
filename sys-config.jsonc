@@ -1,0 +1,64 @@
+{
+  "vitalParsingAnchors": {
+    "techPromptDelimiter": "---",
+    "codeListingHeaderStartFragment": "## LLM-CPP-FILE:",
+    "fileStatusPrefix": "#### FILE WAS ",
+    "placeholderStartFragment": "{{",
+    "placeholderEndFragment": "}}",
+    "filePayloadOperationTypeEditedFull": "EDITED_FULL",
+    "filePayloadOperationTypeCreated": "CREATED",
+    "filePayloadOperationTypeDeleted": "DELETED",
+    "configVariablePrefix": "LLM_CPP_CFG.",
+  },
+  "coreSettings": {
+    "skipInstructions": false,
+    "skipCodeListings": false,
+    "ideToLlmContextConfig": {
+      "skipPromptSizeStatsInCopyNotification": false,
+      "promptSizeApproxCharsPerToken": 3.5,
+      "maxLinesCountInContext": 1000,
+      "maxTokensCountInContext": 12000,
+    },
+    "llmToIdeContextConfig": {
+      "promptSizeApproxCharsPerToken": 3.5,
+      "maxLinesCountInContext": 1000,
+      "maxTokensCountInContext": 12000,
+    },
+    "llmToIdeSanitizationRulesById": {
+      "strip-codefence": {
+        "pattern": "`{3}[^\\r\\n]*",
+        "replaceWith": "",
+        "disabledForLanguages": ["markdown"],
+        "disabledForPaths": ["docs/"],
+      },
+    },
+    "postFilePatchActionsConfig": {
+      "enableSaveAfterFilePatch": true,
+      "enableLintingAfterFilePatch": false,
+      "enableOpeningPatchedFilesInEditor": true,
+    },
+    "promptInstructionConfig": {
+      "subInstructionsById": {
+        "llm-response-rules-prompt": {
+          "relativePathToSubInstruction": ".sys-prompts/llm-response-rules-prompt.txt",
+          "ignore": false,
+        },
+      },
+      "sharedVariablesById": {
+        "CODE_LISTING_HEADER_START_FRAGMENT": "LLM_CPP_CFG.vitalParsingAnchors.codeListingHeaderStartFragment",
+        "FILE_STATUS_PREFIX": "LLM_CPP_CFG.vitalParsingAnchors.fileStatusPrefix",
+        "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeEditedFull",
+        "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeCreated",
+        "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeDeleted",
+      },
+    },
+  },
+  "overridesById": {
+    "Drop ALL Instructions": {
+      "description": "Runs without any prompt-instructions",
+      "coreSettings": {
+        "skipInstructions": true,
+      },
+    },
+  },
+}

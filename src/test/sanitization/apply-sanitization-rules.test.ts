@@ -6,12 +6,12 @@ import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 import { createLoggerMock } from './test-helpers/logger-mock';
 
 suite('applySanitizationRules', () => {
-  test('applies strip-codefence cases', () => {
+  test('applies strip-codefence cases', async () => {
     const cases = [...buildStripCodefenceCases()];
 
     for (const testCase of cases) {
       const { logger, warnCalls } = createLoggerMock();
-      const defaultConfig = new ConfigService(logger).buildSystemConfig();
+      const defaultConfig = await new ConfigService(logger).buildSystemConfig();
 
       const outputText = applySanitizationRules(testCase.inputText, testCase.fileMeta, defaultConfig, logger);
 
@@ -20,7 +20,7 @@ suite('applySanitizationRules', () => {
     }
   });
 
-  test('logs warn and keeps output unchanged when rule RegExp construction fails', () => {
+  test('logs warn and keeps output unchanged when rule RegExp construction fails', async () => {
     const { logger, warnCalls } = createLoggerMock();
 
     const invalidRule: LlmToIdeSanitizationRuleConfig = {
@@ -30,7 +30,7 @@ suite('applySanitizationRules', () => {
       disabledForPaths: [],
     };
 
-    const systemConfig = new ConfigService(logger).buildSystemConfig();
+    const systemConfig = await new ConfigService(logger).buildSystemConfig();
 
     const config: LlmCopypasterConfig = {
       ...systemConfig,
