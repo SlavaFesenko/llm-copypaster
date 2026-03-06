@@ -1,5 +1,5 @@
 import { LlmCopypasterInternalConfig } from '../../../config-service';
-import { FilesPayload } from '../../../types/files-payload';
+import { FilesPayload } from '../../../contracts/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { applySanitizationRules } from './sanitizers/apply-sanitization-rules';
 

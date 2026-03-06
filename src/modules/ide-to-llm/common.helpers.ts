@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService, OverrideOptionMetadata } from '../../config-service';
-import { CollectedFileItem } from '../../types/files-payload';
+import { CollectedFileItem } from '../../contracts/files-payload';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './liquid-builder/external-helpers';

@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { PostFilePatchActionsConfig, VitalParsingAnchorsConfig } from '../../../config-service';
-import { FilesPayload } from '../../../types/files-payload';
+import { FilesPayload } from '../../../contracts/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
 

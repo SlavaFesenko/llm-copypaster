@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService, OverrideOptionMetadata } from '../../../config-service';
-import { CollectedFileItem } from '../../../types/files-payload';
+import { CollectedFileItem } from '../../../contracts/files-payload';
 import { buildLlmContextText } from '../utils/llm-context-formatter';
 import { PromptBuilder } from './prompt-builder';
 

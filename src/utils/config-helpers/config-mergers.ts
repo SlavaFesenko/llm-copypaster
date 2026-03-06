@@ -21,7 +21,7 @@ import {
   PromptInstructionsUserConfig,
   PromptInstructionUserConfig,
   VitalParsingAnchorsUserConfig,
-} from './user-config';
+} from '../../contracts/user-config';
 
 export function mergeConfigs(
   systemConfig: LlmCopypasterInternalConfig,

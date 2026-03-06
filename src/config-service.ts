@@ -1,6 +1,6 @@
+import { LlmCopypasterUserConfig } from './contracts/user-config';
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
 import { readSystemJsonConfigFile, readUserConfigFile } from './utils/config-helpers/config-tech-helpers';
-import { LlmCopypasterUserConfig } from './utils/config-helpers/user-config';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export interface PromptInstructionsConfig {
