@@ -54,10 +54,10 @@
     },
   },
   "overridesById": {
-    "Drop ALL Instructions": {
-      "description": "Runs without any prompt-instructions",
+    "Skip code-listings in final prompt": {
+      "shouldBeSkipped": false,
       "coreSettings": {
-        "skipInstructions": true,
+        "skipCodeListings": true,
       },
     },
   },

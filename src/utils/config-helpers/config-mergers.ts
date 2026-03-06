@@ -272,6 +272,7 @@ export function mapProfilesById(
       nextProfilesById[profileId] = {
         description: userProfile.description,
         version: userProfile.version ?? '',
+        shouldBeSkipped: userProfile.shouldBeSkipped ?? false,
         coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
       };
 
@@ -281,6 +282,7 @@ export function mapProfilesById(
     nextProfilesById[profileId] = {
       description: userProfile.description ?? baseProfile.description,
       version: userProfile.version ?? baseProfile.version ?? '',
+      shouldBeSkipped: userProfile.shouldBeSkipped ?? baseProfile.shouldBeSkipped ?? false,
       coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
     };
   }

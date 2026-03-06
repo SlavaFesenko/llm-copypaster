@@ -64,6 +64,7 @@ export interface CoreSettingsConfig {
 export interface OverrideConfig {
   description?: string;
   version?: string;
+  shouldBeSkipped: boolean;
   coreSettings: CoreSettingsConfig;
 }
 
@@ -154,6 +155,8 @@ export class ConfigService {
 
     for (const overrideId of Object.keys(overridesById)) {
       const overrideConfig = overridesById[overrideId];
+
+      if (overrideConfig.shouldBeSkipped) continue;
 
       this._overrideOptions.push({
         id: overrideId,

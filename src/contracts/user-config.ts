@@ -61,6 +61,7 @@ export interface CoreSettingsUserConfig {
 export interface OverrideUserConfig {
   description?: string;
   version?: string;
+  shouldBeSkipped?: boolean;
   coreSettings?: CoreSettingsUserConfig;
 }
 
