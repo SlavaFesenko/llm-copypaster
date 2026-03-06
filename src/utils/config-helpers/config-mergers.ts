@@ -103,6 +103,8 @@ export function mergeProfileSettingsConfig(
     ),
   };
 
+  void buildBaseSettingsFn;
+
   return nextSettings;
 }
 
@@ -149,13 +151,13 @@ export function mergePostFilePatchActionsConfig(
 }
 
 export function mergePromptInstructionConfig(
-  baseConfig: Partial<PromptInstructionConfig>,
+  baseConfig: PromptInstructionConfig,
   userConfig: PromptInstructionUserConfig | undefined
-): Partial<PromptInstructionConfig> {
+): PromptInstructionConfig {
   if (!userConfig) return baseConfig;
 
-  const baseSharedVariablesById = baseConfig.sharedVariablesById ?? {};
-  const baseSubInstructionsById = baseConfig.subInstructionsById ?? {};
+  const baseSharedVariablesById = baseConfig.sharedVariablesById;
+  const baseSubInstructionsById = baseConfig.subInstructionsById;
 
   const nextSharedVariablesById = { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
   const nextSubInstructionsById = mapSubInstructionsById(baseSubInstructionsById, userConfig.subInstructionsById ?? {});
@@ -253,54 +255,6 @@ export function mapLlmToIdeSanitizationRulesById(
   return nextRulesById;
 }
 
-function mergeProfileSettingsConfigAsPartial(
-  baseSettings: Partial<CoreSettingsConfig>,
-  userSettings: CoreSettingsUserConfig
-): Partial<CoreSettingsConfig> {
-  const nextSettings: Partial<CoreSettingsConfig> = { ...baseSettings };
-
-  if (userSettings.skipInstructions !== undefined) nextSettings.skipInstructions = userSettings.skipInstructions;
-
-  if (userSettings.skipCodeListings !== undefined) nextSettings.skipCodeListings = userSettings.skipCodeListings;
-
-  if (userSettings.ideToLlmContextConfig) {
-    nextSettings.ideToLlmContextConfig = {
-      ...(baseSettings.ideToLlmContextConfig ?? {}),
-      ...userSettings.ideToLlmContextConfig,
-    } as IdeToLlmContextConfig;
-  }
-
-  if (userSettings.llmToIdeContextConfig) {
-    nextSettings.llmToIdeContextConfig = {
-      ...(baseSettings.llmToIdeContextConfig ?? {}),
-      ...userSettings.llmToIdeContextConfig,
-    } as LlmToIdeContextConfig;
-  }
-
-  if (userSettings.postFilePatchActionsConfig) {
-    nextSettings.postFilePatchActionsConfig = {
-      ...(baseSettings.postFilePatchActionsConfig ?? {}),
-      ...userSettings.postFilePatchActionsConfig,
-    } as PostFilePatchActionsConfig;
-  }
-
-  if (userSettings.promptInstructionConfig) {
-    nextSettings.promptInstructionConfig = mergePromptInstructionConfig(
-      baseSettings.promptInstructionConfig ?? {},
-      userSettings.promptInstructionConfig
-    );
-  }
-
-  if (userSettings.llmToIdeSanitizationRulesById) {
-    nextSettings.llmToIdeSanitizationRulesById = mergeLlmToIdeSanitizationRulesById(
-      baseSettings.llmToIdeSanitizationRulesById ?? {},
-      userSettings
-    );
-  }
-
-  return nextSettings;
-}
-
 export function mergeProfilesById(
   baseProfilesById: Record<string, OverrideConfig> | undefined,
   userConfig: LlmCopypasterUserConfig,
@@ -323,6 +277,7 @@ export function mapProfilesById(
   for (const profileId of Object.keys(userProfilesById)) {
     const baseProfile = baseProfilesById[profileId];
     const userProfile = userProfilesById[profileId];
+    const baseProfileCoreSettings = baseProfile?.coreSettings ?? buildBaseSettingsFn();
 
     if (!baseProfile) {
       if (!userProfile.description || !userProfile.version) continue;
@@ -330,7 +285,9 @@ export function mapProfilesById(
       nextProfilesById[profileId] = {
         description: userProfile.description,
         version: userProfile.version ?? '',
-        coreSettings: userProfile.coreSettings ? mergeProfileSettingsConfigAsPartial({}, userProfile.coreSettings) : {},
+        coreSettings: userProfile.coreSettings
+          ? mergeProfileSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings, buildBaseSettingsFn)
+          : baseProfileCoreSettings,
       };
 
       continue;
@@ -340,12 +297,10 @@ export function mapProfilesById(
       description: userProfile.description ?? baseProfile.description,
       version: userProfile.version ?? baseProfile.version ?? '',
       coreSettings: userProfile.coreSettings
-        ? mergeProfileSettingsConfigAsPartial(baseProfile.coreSettings ?? {}, userProfile.coreSettings)
-        : baseProfile.coreSettings,
+        ? mergeProfileSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings, buildBaseSettingsFn)
+        : baseProfileCoreSettings,
     };
   }
-
-  void buildBaseSettingsFn;
 
   return nextProfilesById;
 }

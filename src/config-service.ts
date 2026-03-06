@@ -58,14 +58,14 @@ export interface CoreSettingsConfig {
   ideToLlmContextConfig: IdeToLlmContextConfig;
   llmToIdeContextConfig: LlmToIdeContextConfig;
   postFilePatchActionsConfig: PostFilePatchActionsConfig;
-  promptInstructionConfig: Partial<PromptInstructionConfig>;
+  promptInstructionConfig: PromptInstructionConfig;
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
 export interface OverrideConfig {
   description?: string;
   version?: string;
-  coreSettings: Partial<CoreSettingsConfig>; // todo: this field can't be partial, ибо он содержит полный сет настроек, partial это тлько юзер-конфиг 2) переимновать на overrideCoreSettings
+  coreSettings: CoreSettingsConfig; // todo: переимновать на overrideCoreSettings
 }
 
 export interface LlmCopypasterConfig {
@@ -95,6 +95,7 @@ export class ConfigService {
         'Drop ALL Instructions': {
           description: 'Runs without any prompt-instructions',
           coreSettings: {
+            ...this._buildCoreSettings(),
             skipInstructions: true,
           },
         },
@@ -213,10 +214,10 @@ export class ConfigService {
 
   private _mergeProfileSettingsConfig(
     coreSettings: CoreSettingsConfig,
-    overrideCoreSettings: Partial<CoreSettingsConfig>
+    overrideCoreSettings: CoreSettingsConfig
   ): CoreSettingsConfig {
-    const basePromptInstructionConfig = coreSettings.promptInstructionConfig ?? {};
-    const profilePromptInstructionConfig = overrideCoreSettings.promptInstructionConfig ?? {};
+    const basePromptInstructionConfig = coreSettings.promptInstructionConfig;
+    const profilePromptInstructionConfig = overrideCoreSettings.promptInstructionConfig;
 
     return {
       skipInstructions: overrideCoreSettings.skipInstructions ?? coreSettings.skipInstructions,
@@ -258,15 +259,15 @@ export class ConfigService {
           coreSettings.postFilePatchActionsConfig.enableOpeningPatchedFilesInEditor,
       },
       promptInstructionConfig: {
-        ...(basePromptInstructionConfig ?? {}),
-        ...(profilePromptInstructionConfig ?? {}),
+        ...basePromptInstructionConfig,
+        ...profilePromptInstructionConfig,
         sharedVariablesById: {
-          ...(basePromptInstructionConfig.sharedVariablesById ?? {}),
-          ...(profilePromptInstructionConfig.sharedVariablesById ?? {}),
+          ...basePromptInstructionConfig.sharedVariablesById,
+          ...profilePromptInstructionConfig.sharedVariablesById,
         },
         subInstructionsById: this._mergeSubInstructionsById(
           basePromptInstructionConfig.subInstructionsById,
-          profilePromptInstructionConfig.subInstructionsById as Record<string, Partial<PromptInstructionsConfig>> | undefined
+          profilePromptInstructionConfig.subInstructionsById
         ),
       },
       llmToIdeSanitizationRulesById: {
@@ -277,13 +278,9 @@ export class ConfigService {
   }
 
   private _mergeSubInstructionsById(
-    baseSubInstructionsById: Record<string, PromptInstructionsConfig> | undefined,
-    profileSubInstructionsById: Record<string, Partial<PromptInstructionsConfig>> | undefined
-  ): Record<string, PromptInstructionsConfig> | undefined {
-    if (!baseSubInstructionsById && !profileSubInstructionsById) return undefined;
-
-    if (!profileSubInstructionsById) return baseSubInstructionsById;
-
+    baseSubInstructionsById: Record<string, PromptInstructionsConfig>,
+    profileSubInstructionsById: Record<string, PromptInstructionsConfig>
+  ): Record<string, PromptInstructionsConfig> {
     const nextSubInstructionsById: Record<string, PromptInstructionsConfig> = { ...(baseSubInstructionsById ?? {}) };
 
     for (const subInstructionId of Object.keys(profileSubInstructionsById)) {
@@ -291,13 +288,6 @@ export class ConfigService {
       const profileSubInstruction = profileSubInstructionsById[subInstructionId];
 
       if (!baseSubInstruction) {
-        if (
-          !profileSubInstruction.relativePathToSubInstruction ||
-          profileSubInstruction.isSystemBundledFile === undefined ||
-          profileSubInstruction.ignore === undefined
-        )
-          continue;
-
         nextSubInstructionsById[subInstructionId] = {
           relativePathToSubInstruction: profileSubInstruction.relativePathToSubInstruction,
           isSystemBundledFile: profileSubInstruction.isSystemBundledFile,
