@@ -65,12 +65,12 @@ export interface CoreSettingsConfig {
 export interface OverrideConfig {
   description?: string;
   version?: string;
-  coreSettings: Partial<CoreSettingsConfig>; // partial because it's override, so not all of the fields have to set
+  coreSettings: Partial<CoreSettingsConfig>; // todo: this field can't be partial, ибо он содержит полный сет настроек, partial это тлько юзер-конфиг 2) переимновать на overrideCoreSettings
 }
 
 export interface LlmCopypasterConfig {
   vitalParsingAnchors: VitalParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
-  coreSettings: CoreSettingsConfig;
+  coreSettings: CoreSettingsConfig; // туду переименовать на baseCoreSettings (чтобы отличать от overrideCoreSettings, хоть тип и один)
   overridesById?: Record<string, OverrideConfig>;
 }
 
