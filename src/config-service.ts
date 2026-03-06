@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
+import { GLOB_CONSTS } from './global-constants';
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
-import { readSystemJsonConfigFile, readWorkspaceJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
+import { readSystemJsonConfigFile, readUserConfigFile } from './utils/config-helpers/config-tech-helpers';
 import { LlmCopypasterUserConfig } from './utils/config-helpers/user-config';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
@@ -88,7 +89,7 @@ export class ConfigService {
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
     const systemConfig = await this.getSystemConfig();
-    const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
+    const userFileConfig = await readUserConfigFile<LlmCopypasterUserConfig>(this._logger);
 
     const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => structuredClone(systemConfig.coreSettings));
 
@@ -137,7 +138,7 @@ export class ConfigService {
   }
 
   private async _buildSystemConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger, 'sys-config.jsonc');
+    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger);
 
     return this._applySystemConfigPatches(systemConfig!);
   }
@@ -151,7 +152,7 @@ export class ConfigService {
   }
 
   private _applySystemBundledPromptPatch(systemConfig: LlmCopypasterConfig): void {
-    const systemBundledPromptId = 'llm-response-rules-prompt';
+    const systemBundledPromptId = GLOB_CONSTS.LLM_RESPONSE_INSTRUCTION_ID;
     const targetSubInstruction =
       systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
 

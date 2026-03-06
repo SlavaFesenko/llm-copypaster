@@ -1,26 +1,23 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { GLOB_CONSTS } from '../../global-constants';
 import { OutputChannelLogger } from '../output-channel-logger';
 
-export async function readWorkspaceJsonConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
-  const workspaceConfigFileName = 'llm-copypaster.jsonc';
-
+export async function readUserConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) {
     return null;
   }
 
-  const configUri = vscode.Uri.joinPath(workspaceFolder.uri, workspaceConfigFileName);
+  const configUri = vscode.Uri.joinPath(workspaceFolder.uri, GLOB_CONSTS.USER_CONFIG_FILE_NAME);
 
   return await readJsoncConfigFile<TConfig>(configUri, logger, 'Workspace config not loaded');
 }
 
-export async function readSystemJsonConfigFile<TConfig>(
-  logger: OutputChannelLogger,
-  extensionConfigFileName: string
-): Promise<TConfig | null> {
+export async function readSystemJsonConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
+  const extensionConfigFileName = GLOB_CONSTS.SYS_CONFIG_FILE_NAME;
   const extensionConfigPath = await findFileUpwards(__dirname, extensionConfigFileName);
 
   if (!extensionConfigPath) {
