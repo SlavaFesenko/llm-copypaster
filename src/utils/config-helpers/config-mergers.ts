@@ -24,25 +24,25 @@ import {
 } from './user-config';
 
 export function mergeConfigs(
-  defaultConfig: LlmCopypasterConfig,
-  userFileConfig: LlmCopypasterUserConfig | null,
-  buildBaseSettingsFn: () => CoreSettingsConfig
+  systemConfig: LlmCopypasterConfig,
+  userConfig: LlmCopypasterUserConfig | null,
+  buildCoreSettingsFn: () => CoreSettingsConfig
 ): LlmCopypasterConfig {
-  if (!userFileConfig) return defaultConfig;
+  if (!userConfig) return systemConfig;
 
-  return applyUserConfig(defaultConfig, userFileConfig, buildBaseSettingsFn);
+  return applyUserConfig(systemConfig, userConfig, buildCoreSettingsFn);
 }
 
 export function applyUserConfig(
-  baseConfig: LlmCopypasterConfig,
+  systemConfig: LlmCopypasterConfig,
   userConfig: LlmCopypasterUserConfig,
   buildBaseSettingsFn: () => CoreSettingsConfig
 ): LlmCopypasterConfig {
-  const mergedProfilesById = mergeProfilesById(baseConfig.overridesById, userConfig, buildBaseSettingsFn);
+  const mergedProfilesById = mergeProfilesById(systemConfig.overridesById, userConfig, buildBaseSettingsFn);
 
   const nextConfig: LlmCopypasterConfig = {
-    vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseConfig.vitalParsingAnchors, userConfig.vitalParsingAnchors),
-    coreSettings: mergeProfileSettingsConfig(baseConfig.coreSettings, userConfig.coreSettings, buildBaseSettingsFn),
+    vitalParsingAnchors: mergeLlmToIdeParsingAnchors(systemConfig.vitalParsingAnchors, userConfig.vitalParsingAnchors),
+    coreSettings: mergeProfileSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings, buildBaseSettingsFn),
     ...(mergedProfilesById ? { overridesById: mergedProfilesById } : {}),
   };
 
