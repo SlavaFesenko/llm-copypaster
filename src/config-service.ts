@@ -64,12 +64,12 @@ export interface CoreSettingsConfig {
 export interface OverrideConfig {
   description?: string;
   version?: string;
-  coreSettings: CoreSettingsConfig; // todo: переимновать на overrideCoreSettings
+  coreSettings: CoreSettingsConfig;
 }
 
 export interface LlmCopypasterConfig {
   vitalParsingAnchors: VitalParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
-  coreSettings: CoreSettingsConfig; // туду переименовать на baseCoreSettings (чтобы отличать от overrideCoreSettings, хоть тип и один)
+  coreSettings: CoreSettingsConfig;
   overridesById?: Record<string, OverrideConfig>;
 }
 
