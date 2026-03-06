@@ -1,5 +1,3 @@
-import * as vscode from 'vscode';
-import { GLOB_CONSTS } from './global-constants';
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
 import { readSystemJsonConfigFile, readUserConfigFile } from './utils/config-helpers/config-tech-helpers';
 import { LlmCopypasterUserConfig } from './utils/config-helpers/user-config';
@@ -140,29 +138,7 @@ export class ConfigService {
   private async _buildSystemConfig(): Promise<LlmCopypasterConfig> {
     const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger);
 
-    return this._applySystemConfigPatches(systemConfig!);
-  }
-
-  // sys-config.jsonc is based on UserConfig rather than full Config, so some inner Config-only properties
-  // can't (and should'n!) be expressed in JSONC and must be additionally patched in code while building -Config object
-  private _applySystemConfigPatches(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
-    this._applySystemBundledPromptPatch(systemConfig);
-
-    return systemConfig;
-  }
-
-  private _applySystemBundledPromptPatch(systemConfig: LlmCopypasterConfig): void {
-    const systemBundledPromptId = GLOB_CONSTS.LLM_RESPONSE_INSTRUCTION_ID;
-    const targetSubInstruction =
-      systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
-
-    if (!targetSubInstruction) {
-      void vscode.window.showWarningMessage(`System prompt "${systemBundledPromptId}" was not found in system config`);
-
-      return;
-    }
-
-    targetSubInstruction.isSystemBundledFile = true;
+    return systemConfig!;
   }
 
   private async _getConfigOrUseOverride(config?: LlmCopypasterConfig): Promise<LlmCopypasterConfig> {
