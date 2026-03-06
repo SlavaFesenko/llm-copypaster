@@ -142,7 +142,7 @@ export async function showCopyResultNotification(
   const closeUnavailableActionLabel =
     unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
 
-  const hasProfiles = await deps.configService.hasAvailableProfiles();
+  const hasProfiles = await deps.configService.hasAvailableOverrides();
 
   const openPromptInEditor = 'Open Prompt in Editor';
   const eraseInstructions = 'Erase Instructions';

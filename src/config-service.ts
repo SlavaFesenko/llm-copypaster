@@ -79,124 +79,16 @@ export class ConfigService {
   public constructor(private readonly _logger: OutputChannelLogger) {}
 
   public async getSystemConfig(): Promise<LlmCopypasterConfig> {
-    const hardcodedFallbackSystemConfig = this._buildHardcodedFallbackSystemConfig();
+    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger, 'sys-config.jsonc');
 
-    const systemFileConfig = await readSystemJsonConfigFile<LlmCopypasterUserConfig>(this._logger, 'sys-config.jsonc');
-
-    const mergedSystemConfig = mergeConfigs(hardcodedFallbackSystemConfig, systemFileConfig, () =>
-      this._buildCoreSettings()
-    );
-
-    return this._markSystemBundledPromptAsBundled(mergedSystemConfig);
-  }
-
-  private _markSystemBundledPromptAsBundled(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
-    const systemBundledPromptId = 'llm-response-rules-prompt';
-    const targetSubInstruction =
-      systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
-
-    if (!targetSubInstruction) {
-      void vscode.window.showWarningMessage(`System prompt "${systemBundledPromptId}" was not found in system config`);
-
-      return systemConfig;
-    }
-
-    return {
-      ...systemConfig,
-      coreSettings: {
-        ...systemConfig.coreSettings,
-        promptInstructionConfig: {
-          ...systemConfig.coreSettings.promptInstructionConfig,
-          subInstructionsById: {
-            ...systemConfig.coreSettings.promptInstructionConfig.subInstructionsById,
-            [systemBundledPromptId]: {
-              ...targetSubInstruction,
-              isSystemBundledFile: true,
-            },
-          },
-        },
-      },
-    };
-  }
-
-  private _buildHardcodedFallbackSystemConfig(): LlmCopypasterConfig {
-    return {
-      vitalParsingAnchors: {
-        techPromptDelimiter: '--' + '-',
-        codeListingHeaderStartFragment: '## LLM-CPP-FILE:',
-        fileStatusPrefix: '#### FILE WAS ',
-        placeholderStartFragment: '{{',
-        placeholderEndFragment: '}}',
-        filePayloadOperationTypeEditedFull: 'EDITED_FULL',
-        filePayloadOperationTypeCreated: 'CREATED',
-        filePayloadOperationTypeDeleted: 'DELETED',
-        configVariablePrefix: 'LLM_CPP_CFG.', // this exact anchor will be parsed by regex (including dot at the end)
-      },
-      coreSettings: this._buildCoreSettings(),
-      overridesById: {
-        'Drop ALL Instructions': {
-          description: 'Runs without any prompt-instructions',
-          coreSettings: {
-            ...this._buildCoreSettings(),
-            skipInstructions: true,
-          },
-        },
-      },
-    };
-  }
-
-  private _buildCoreSettings(): CoreSettingsConfig {
-    return {
-      skipInstructions: false,
-      skipCodeListings: false,
-      ideToLlmContextConfig: {
-        skipPromptSizeStatsInCopyNotification: false,
-        promptSizeApproxCharsPerToken: 3.5,
-        maxLinesCountInContext: 1000,
-        maxTokensCountInContext: 12000,
-      },
-      llmToIdeContextConfig: {
-        promptSizeApproxCharsPerToken: 3.5,
-        maxLinesCountInContext: 1000,
-        maxTokensCountInContext: 12000,
-      },
-      llmToIdeSanitizationRulesById: {
-        'strip-codefence': {
-          pattern: '`{3}[^\r\n]*',
-          replaceWith: '',
-          disabledForLanguages: ['markdown'],
-          disabledForPaths: ['docs/'],
-        },
-      },
-      postFilePatchActionsConfig: {
-        enableSaveAfterFilePatch: true,
-        enableLintingAfterFilePatch: false,
-        enableOpeningPatchedFilesInEditor: true,
-      },
-      promptInstructionConfig: {
-        subInstructionsById: {
-          'llm-response-rules-prompt': {
-            relativePathToSubInstruction: '.sys-prompts/llm-response-rules-prompt.txt',
-            isSystemBundledFile: true,
-            ignore: false,
-          },
-        },
-        sharedVariablesById: {
-          CODE_LISTING_HEADER_START_FRAGMENT: 'LLM_CPP_CFG.vitalParsingAnchors.codeListingHeaderStartFragment',
-          FILE_STATUS_PREFIX: 'LLM_CPP_CFG.vitalParsingAnchors.fileStatusPrefix',
-          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeEditedFull',
-          FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeCreated',
-          FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeDeleted',
-        },
-      },
-    };
+    return this._markSystemBundledPromptAsBundled(systemConfig!);
   }
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
     const systemConfig = await this.getSystemConfig();
     const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
 
-    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildCoreSettings());
+    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => structuredClone(systemConfig.coreSettings));
 
     return mergedConfig;
   }
@@ -206,16 +98,9 @@ export class ConfigService {
     return effectiveConfig.overridesById ?? {};
   }
 
-  public async hasAvailableProfiles(config?: LlmCopypasterConfig): Promise<boolean> {
+  public async hasAvailableOverrides(config?: LlmCopypasterConfig): Promise<boolean> {
     const profilesById = await this.getOverridesById(config);
     return Object.keys(profilesById).length > 0;
-  }
-
-  public async buildEffectiveConfigForProfileId(
-    profileId: string,
-    config?: LlmCopypasterConfig
-  ): Promise<LlmCopypasterConfig> {
-    return await this.buildEffectiveConfigForProfileIds([profileId], config);
   }
 
   public async buildEffectiveConfigForProfileIds(
@@ -246,6 +131,35 @@ export class ConfigService {
     return {
       ...effectiveConfig,
       coreSettings: effectiveCoreSettings,
+    };
+  }
+
+  private _markSystemBundledPromptAsBundled(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
+    const systemBundledPromptId = 'llm-response-rules-prompt';
+    const targetSubInstruction =
+      systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
+
+    if (!targetSubInstruction) {
+      void vscode.window.showWarningMessage(`System prompt "${systemBundledPromptId}" was not found in system config`);
+
+      return systemConfig;
+    }
+
+    return {
+      ...systemConfig,
+      coreSettings: {
+        ...systemConfig.coreSettings,
+        promptInstructionConfig: {
+          ...systemConfig.coreSettings.promptInstructionConfig,
+          subInstructionsById: {
+            ...systemConfig.coreSettings.promptInstructionConfig.subInstructionsById,
+            [systemBundledPromptId]: {
+              ...targetSubInstruction,
+              isSystemBundledFile: true,
+            },
+          },
+        },
+      },
     };
   }
 
