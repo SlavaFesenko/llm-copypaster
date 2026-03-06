@@ -81,7 +81,7 @@ export class ConfigService {
   public async getSystemConfig(): Promise<LlmCopypasterConfig> {
     const systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>(this._logger, 'sys-config.jsonc');
 
-    return this._markSystemBundledPromptAsBundled(systemConfig!);
+    return this._applySystemConfigPatches(systemConfig!);
   }
 
   public async getConfig(): Promise<LlmCopypasterConfig> {
@@ -134,7 +134,9 @@ export class ConfigService {
     };
   }
 
-  private _markSystemBundledPromptAsBundled(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
+  // sys-config.jsonc is based on UserConfig rather than full Config, so some inner Config-only properties
+  // can't (and should'n!) be expressed in JSONC and must be additionally patched in code while building -Config object
+  private _applySystemConfigPatches(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
     const systemBundledPromptId = 'llm-response-rules-prompt';
     const targetSubInstruction =
       systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
@@ -145,22 +147,9 @@ export class ConfigService {
       return systemConfig;
     }
 
-    return {
-      ...systemConfig,
-      coreSettings: {
-        ...systemConfig.coreSettings,
-        promptInstructionConfig: {
-          ...systemConfig.coreSettings.promptInstructionConfig,
-          subInstructionsById: {
-            ...systemConfig.coreSettings.promptInstructionConfig.subInstructionsById,
-            [systemBundledPromptId]: {
-              ...targetSubInstruction,
-              isSystemBundledFile: true,
-            },
-          },
-        },
-      },
-    };
+    systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId].isSystemBundledFile = true;
+
+    return systemConfig;
   }
 
   private async _getConfigOrUseOverride(config?: LlmCopypasterConfig): Promise<LlmCopypasterConfig> {
