@@ -85,10 +85,6 @@ export class ConfigService {
     return mergeConfigs(hardcodedFallbackSystemConfig, systemFileConfig, () => this._buildCoreSettings());
   }
 
-  public async buildSystemConfig(): Promise<LlmCopypasterConfig> {
-    return await this.getSystemConfig();
-  }
-
   private _buildHardcodedFallbackSystemConfig(): LlmCopypasterConfig {
     return {
       vitalParsingAnchors: {
