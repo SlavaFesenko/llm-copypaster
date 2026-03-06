@@ -119,7 +119,7 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
-      const config = await deps.configService.getConfig();
+      const config = await deps.configService.getCoreSettingsConfig();
       const configJson = JSON.stringify(config, null, 2);
 
       await lsConfigReadonlyView.open(configJson);

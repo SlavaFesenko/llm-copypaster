@@ -255,7 +255,7 @@ export async function showCopyResultNotification(
       await vscode.env.clipboard.writeText(currentPromptText);
 
       if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-        const baseConfig = await deps.configService.getConfig();
+        const baseConfig = await deps.configService.getCoreSettingsConfig();
 
         const mergedConfigForSelectedProfiles = await deps.configService.buildEffectiveConfigForProfileIds(
           selectedProfileIds,

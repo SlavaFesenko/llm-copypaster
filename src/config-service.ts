@@ -84,7 +84,7 @@ export class ConfigService {
     return await this._systemConfigPromise;
   }
 
-  public async getConfig(): Promise<LlmCopypasterConfig> {
+  public async getCoreSettingsConfig(): Promise<LlmCopypasterConfig> {
     const systemConfig = await this.getSystemConfig();
     const userFileConfig = await readUserConfigFile<LlmCopypasterUserConfig>(this._logger);
 
@@ -142,7 +142,7 @@ export class ConfigService {
 
   private async _getConfigOrUseOverride(config?: LlmCopypasterConfig): Promise<LlmCopypasterConfig> {
     if (config) return config;
-    return await this.getConfig();
+    return await this.getCoreSettingsConfig();
   }
 
   private _mergeProfileSettingsConfig(
