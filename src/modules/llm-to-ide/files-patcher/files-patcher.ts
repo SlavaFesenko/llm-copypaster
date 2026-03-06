@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { LlmToIdeParsingAnchorsConfig, PostFilePatchActionsConfig } from '../../../config-service';
+import { PostFilePatchActionsConfig, VitalParsingAnchorsConfig } from '../../../config-service';
 import { FilesPayload } from '../../../types/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
@@ -21,7 +21,7 @@ export type ApplyResult = ApplyOk | ApplyFail;
 export async function applyFilesPayloadToWorkspace(
   payload: FilesPayload,
   postFilesPatchActions: PostFilePatchActionsConfig,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<ApplyResult> {
   try {
@@ -191,7 +191,7 @@ async function fileExists(uri: vscode.Uri): Promise<boolean> {
 
 async function tryFormatAppliedDocuments(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<void> {
   await tryApplyToFilesPayloadDocuments(
@@ -210,7 +210,7 @@ async function tryFormatAppliedDocuments(
 
 async function trySaveAppliedDocuments(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<void> {
   await tryApplyToFilesPayloadDocuments(payload, llmToIdeParsingAnchors, logger, 'Save', toWorkspaceUri, async document => {
@@ -220,7 +220,7 @@ async function trySaveAppliedDocuments(
 
 async function tryOpenAppliedDocumentsInEditor(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<void> {
   await tryApplyToFilesPayloadDocuments(
@@ -247,7 +247,7 @@ export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, log
 
 export async function tryApplyToFilesPayloadDocuments(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger,
   actionName: string,
   resolveTargetUri: (filePath: string) => vscode.Uri | null,

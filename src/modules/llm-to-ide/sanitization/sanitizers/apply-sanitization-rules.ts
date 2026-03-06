@@ -14,7 +14,7 @@ export function applySanitizationRules(
 ): string {
   let outputText = inputText;
 
-  const sanitizationRulesById = config.baseSettings.llmToIdeSanitizationRulesById;
+  const sanitizationRulesById = config.coreSettings.llmToIdeSanitizationRulesById;
 
   for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
     if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;

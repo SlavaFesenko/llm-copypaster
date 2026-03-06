@@ -31,7 +31,7 @@ export class PromptBuilder {
 
   public async build(): Promise<string> {
     const promptInstructionConfig: Partial<PromptInstructionConfig> =
-      this._config.baseSettings.promptInstructionConfig ?? {};
+      this._config.coreSettings.promptInstructionConfig ?? {};
     const subInstructionsById = promptInstructionConfig.subInstructionsById ?? {};
     const promptIdsInConfig = Object.keys(subInstructionsById);
 
@@ -68,7 +68,7 @@ export class PromptBuilder {
 
     if (builtPrompts.length === 0) return '';
 
-    const delimiterLine = `\n${this._config.llmToIdeParsingAnchors.techPromptDelimiter}\n`;
+    const delimiterLine = `\n${this._config.vitalParsingAnchors.techPromptDelimiter}\n`;
 
     return builtPrompts.join(delimiterLine);
   }
@@ -114,7 +114,7 @@ export class PromptBuilder {
   }
 
   private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, unknown>> {
-    const rawSharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
+    const rawSharedVariablesById = this._config.coreSettings.promptInstructionConfig.sharedVariablesById ?? {};
 
     const resolvedSharedVariablesById: Record<string, unknown> = {};
 
@@ -145,7 +145,7 @@ export class PromptBuilder {
           rawTemplate,
           configVariablePath: tryExtractConfigVariablePath(
             rawTemplate,
-            this._config.llmToIdeParsingAnchors.configVariablePrefix
+            this._config.vitalParsingAnchors.configVariablePrefix
           ),
           errorText,
         });
@@ -172,7 +172,7 @@ export class PromptBuilder {
     sharedVariableId: string,
     resolveIssues: TechPromptResolveIssues
   ): unknown | undefined {
-    const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
+    const configVariablePrefix = this._config.vitalParsingAnchors.configVariablePrefix;
 
     const normalized = (rawTemplate ?? '').trim();
     if (!configVariablePrefix) return undefined;

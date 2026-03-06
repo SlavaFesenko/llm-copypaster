@@ -1,32 +1,32 @@
 import {
+  CoreSettingsConfig,
   IdeToLlmContextConfig,
   LlmCopypasterConfig,
   LlmToIdeContextConfig,
-  LlmToIdeParsingAnchorsConfig,
   LlmToIdeSanitizationRuleConfig,
+  OverrideConfig,
   PostFilePatchActionsConfig,
-  ProfileConfig,
-  ProfileSettingsConfig,
   PromptInstructionConfig,
   PromptInstructionsConfig,
+  VitalParsingAnchorsConfig,
 } from '../../config-service';
 import {
+  CoreSettingsUserConfig,
   IdeToLlmContextUserConfig,
   LlmCopypasterUserConfig,
   LlmToIdeContextUserConfig,
-  LlmToIdeParsingAnchorsUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
+  OverrideUserConfig,
   PostFilePatchActionsUserConfig,
-  ProfileSettingsUserConfig,
-  ProfileUserConfig,
   PromptInstructionsUserConfig,
   PromptInstructionUserConfig,
+  VitalParsingAnchorsUserConfig,
 } from './user-config';
 
 export function mergeConfigs(
   defaultConfig: LlmCopypasterConfig,
   userFileConfig: LlmCopypasterUserConfig | null,
-  buildBaseSettingsFn: () => ProfileSettingsConfig
+  buildBaseSettingsFn: () => CoreSettingsConfig
 ): LlmCopypasterConfig {
   if (!userFileConfig) return defaultConfig;
 
@@ -36,26 +36,23 @@ export function mergeConfigs(
 export function applyUserConfig(
   baseConfig: LlmCopypasterConfig,
   userConfig: LlmCopypasterUserConfig,
-  buildBaseSettingsFn: () => ProfileSettingsConfig
+  buildBaseSettingsFn: () => CoreSettingsConfig
 ): LlmCopypasterConfig {
-  const mergedProfilesById = mergeProfilesById(baseConfig.profilesById, userConfig, buildBaseSettingsFn);
+  const mergedProfilesById = mergeProfilesById(baseConfig.overridesById, userConfig, buildBaseSettingsFn);
 
   const nextConfig: LlmCopypasterConfig = {
-    llmToIdeParsingAnchors: mergeLlmToIdeParsingAnchors(
-      baseConfig.llmToIdeParsingAnchors,
-      userConfig.llmToIdeParsingAnchors
-    ),
-    baseSettings: mergeProfileSettingsConfig(baseConfig.baseSettings, userConfig.baseSettings, buildBaseSettingsFn),
-    ...(mergedProfilesById ? { profilesById: mergedProfilesById } : {}),
+    vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseConfig.vitalParsingAnchors, userConfig.vitalParsingAnchors),
+    coreSettings: mergeProfileSettingsConfig(baseConfig.coreSettings, userConfig.coreSettings, buildBaseSettingsFn),
+    ...(mergedProfilesById ? { overridesById: mergedProfilesById } : {}),
   };
 
   return nextConfig;
 }
 
 export function mergeLlmToIdeParsingAnchors(
-  baseAnchors: LlmToIdeParsingAnchorsConfig,
-  userAnchors?: LlmToIdeParsingAnchorsUserConfig
-): LlmToIdeParsingAnchorsConfig {
+  baseAnchors: VitalParsingAnchorsConfig,
+  userAnchors?: VitalParsingAnchorsUserConfig
+): VitalParsingAnchorsConfig {
   if (!userAnchors) return baseAnchors;
 
   return {
@@ -75,14 +72,14 @@ export function mergeLlmToIdeParsingAnchors(
 }
 
 export function mergeProfileSettingsConfig(
-  baseSettings: ProfileSettingsConfig,
-  userSettings: ProfileSettingsUserConfig | undefined,
-  buildBaseSettingsFn: () => ProfileSettingsConfig
-): ProfileSettingsConfig {
+  baseSettings: CoreSettingsConfig,
+  userSettings: CoreSettingsUserConfig | undefined,
+  buildBaseSettingsFn: () => CoreSettingsConfig
+): CoreSettingsConfig {
   if (!userSettings) return baseSettings;
 
-  const nextSettings: ProfileSettingsConfig = {
-    skipTechPrompt: userSettings.skipTechPrompt ?? baseSettings.skipTechPrompt,
+  const nextSettings: CoreSettingsConfig = {
+    skipInstructions: userSettings.skipInstructions ?? baseSettings.skipInstructions,
     skipCodeListings: userSettings.skipCodeListings ?? baseSettings.skipCodeListings,
     ideToLlmContextConfig: mergeIdeToLlmContextConfig(
       baseSettings.ideToLlmContextConfig,
@@ -213,7 +210,7 @@ export function mapSubInstructionsById(
 
 export function mergeLlmToIdeSanitizationRulesById(
   baseRulesById: Record<string, LlmToIdeSanitizationRuleConfig>,
-  userSettings: ProfileSettingsUserConfig
+  userSettings: CoreSettingsUserConfig
 ): Record<string, LlmToIdeSanitizationRuleConfig> {
   const userRulesById = userSettings.llmToIdeSanitizationRulesById;
   if (!userRulesById) return baseRulesById;
@@ -265,12 +262,12 @@ export function mapLlmToIdeSanitizationRulesById(
 }
 
 function mergeProfileSettingsConfigAsPartial(
-  baseSettings: Partial<ProfileSettingsConfig>,
-  userSettings: ProfileSettingsUserConfig
-): Partial<ProfileSettingsConfig> {
-  const nextSettings: Partial<ProfileSettingsConfig> = { ...baseSettings };
+  baseSettings: Partial<CoreSettingsConfig>,
+  userSettings: CoreSettingsUserConfig
+): Partial<CoreSettingsConfig> {
+  const nextSettings: Partial<CoreSettingsConfig> = { ...baseSettings };
 
-  if (userSettings.skipTechPrompt !== undefined) nextSettings.skipTechPrompt = userSettings.skipTechPrompt;
+  if (userSettings.skipInstructions !== undefined) nextSettings.skipInstructions = userSettings.skipInstructions;
 
   if (userSettings.skipCodeListings !== undefined) nextSettings.skipCodeListings = userSettings.skipCodeListings;
 
@@ -313,25 +310,25 @@ function mergeProfileSettingsConfigAsPartial(
 }
 
 export function mergeProfilesById(
-  baseProfilesById: Record<string, ProfileConfig> | undefined,
+  baseProfilesById: Record<string, OverrideConfig> | undefined,
   userConfig: LlmCopypasterUserConfig,
-  buildBaseSettingsFn: () => ProfileSettingsConfig
-): Record<string, ProfileConfig> | undefined {
-  const userProfilesById = userConfig.profilesById;
+  buildBaseSettingsFn: () => CoreSettingsConfig
+): Record<string, OverrideConfig> | undefined {
+  const userProfilesById = userConfig.overridesById;
 
   if (!userProfilesById) return baseProfilesById;
 
-  if (userConfig.onMergeIgnoreAll_profilesById) return mapProfilesById({}, userProfilesById, buildBaseSettingsFn);
+  if (userConfig.onMergeIgnoreAll_overridesById) return mapProfilesById({}, userProfilesById, buildBaseSettingsFn);
 
   return mapProfilesById(baseProfilesById ?? {}, userProfilesById, buildBaseSettingsFn);
 }
 
 export function mapProfilesById(
-  baseProfilesById: Record<string, ProfileConfig>,
-  userProfilesById: Record<string, ProfileUserConfig>,
-  buildBaseSettingsFn: () => ProfileSettingsConfig
-): Record<string, ProfileConfig> {
-  const nextProfilesById: Record<string, ProfileConfig> = { ...baseProfilesById };
+  baseProfilesById: Record<string, OverrideConfig>,
+  userProfilesById: Record<string, OverrideUserConfig>,
+  buildBaseSettingsFn: () => CoreSettingsConfig
+): Record<string, OverrideConfig> {
+  const nextProfilesById: Record<string, OverrideConfig> = { ...baseProfilesById };
 
   for (const profileId of Object.keys(userProfilesById)) {
     const baseProfile = baseProfilesById[profileId];
@@ -343,9 +340,7 @@ export function mapProfilesById(
       nextProfilesById[profileId] = {
         description: userProfile.description,
         version: userProfile.version ?? '',
-        profileSettingsConfig: userProfile.profileSettingsConfig
-          ? mergeProfileSettingsConfigAsPartial({}, userProfile.profileSettingsConfig)
-          : {},
+        coreSettings: userProfile.coreSettings ? mergeProfileSettingsConfigAsPartial({}, userProfile.coreSettings) : {},
       };
 
       continue;
@@ -354,9 +349,9 @@ export function mapProfilesById(
     nextProfilesById[profileId] = {
       description: userProfile.description ?? baseProfile.description,
       version: userProfile.version ?? baseProfile.version ?? '',
-      profileSettingsConfig: userProfile.profileSettingsConfig
-        ? mergeProfileSettingsConfigAsPartial(baseProfile.profileSettingsConfig ?? {}, userProfile.profileSettingsConfig)
-        : baseProfile.profileSettingsConfig,
+      coreSettings: userProfile.coreSettings
+        ? mergeProfileSettingsConfigAsPartial(baseProfile.coreSettings ?? {}, userProfile.coreSettings)
+        : baseProfile.coreSettings,
     };
   }
 

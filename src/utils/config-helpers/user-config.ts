@@ -3,7 +3,7 @@ export interface PromptInstructionsUserConfig {
   ignore?: boolean;
 }
 
-export interface LlmToIdeParsingAnchorsUserConfig {
+export interface VitalParsingAnchorsUserConfig {
   techPromptDelimiter?: string;
   codeListingHeaderStartFragment?: string;
   fileStatusPrefix?: string;
@@ -51,8 +51,8 @@ export interface PostFilePatchActionsUserConfig {
   enableOpeningPatchedFilesInEditor?: boolean;
 }
 
-export interface ProfileSettingsUserConfig {
-  skipTechPrompt?: boolean;
+export interface CoreSettingsUserConfig {
+  skipInstructions?: boolean;
   skipCodeListings?: boolean;
 
   ideToLlmContextConfig?: IdeToLlmContextUserConfig;
@@ -66,17 +66,17 @@ export interface ProfileSettingsUserConfig {
   llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
-export interface ProfileUserConfig {
+export interface OverrideUserConfig {
   description?: string;
   version?: string;
-  profileSettingsConfig?: ProfileSettingsUserConfig;
+  coreSettings?: CoreSettingsUserConfig;
 }
 
 export interface LlmCopypasterUserConfig {
-  llmToIdeParsingAnchors?: LlmToIdeParsingAnchorsUserConfig;
-  baseSettings?: ProfileSettingsUserConfig;
+  vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
+  coreSettings?: CoreSettingsUserConfig;
 
   // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-  onMergeIgnoreAll_profilesById?: boolean;
-  profilesById?: Record<string, ProfileUserConfig>;
+  onMergeIgnoreAll_overridesById?: boolean;
+  overridesById?: Record<string, OverrideUserConfig>;
 }

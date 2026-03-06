@@ -9,7 +9,7 @@ export interface PromptInstructionsConfig {
   ignore: boolean;
 }
 
-export interface LlmToIdeParsingAnchorsConfig {
+export interface VitalParsingAnchorsConfig {
   techPromptDelimiter: string;
   codeListingHeaderStartFragment: string;
   fileStatusPrefix: string;
@@ -52,8 +52,8 @@ export interface PostFilePatchActionsConfig {
   enableOpeningPatchedFilesInEditor: boolean;
 }
 
-export interface ProfileSettingsConfig {
-  skipTechPrompt: boolean;
+export interface CoreSettingsConfig {
+  skipInstructions: boolean;
   skipCodeListings: boolean;
   ideToLlmContextConfig: IdeToLlmContextConfig;
   llmToIdeContextConfig: LlmToIdeContextConfig;
@@ -62,16 +62,16 @@ export interface ProfileSettingsConfig {
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
-export interface ProfileConfig {
-  description: string;
+export interface OverrideConfig {
+  description?: string;
   version?: string;
-  profileSettingsConfig: Partial<ProfileSettingsConfig>;
+  coreSettings: Partial<CoreSettingsConfig>; // partial because it's override, so not all of the fields have to set
 }
 
 export interface LlmCopypasterConfig {
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
-  baseSettings: ProfileSettingsConfig;
-  profilesById?: Record<string, ProfileConfig>;
+  vitalParsingAnchors: VitalParsingAnchorsConfig; // profile-agnostic settings as they have to be singleton
+  coreSettings: CoreSettingsConfig;
+  overridesById?: Record<string, OverrideConfig>;
 }
 
 export class ConfigService {
@@ -79,7 +79,7 @@ export class ConfigService {
 
   public buildSystemConfig(): LlmCopypasterConfig {
     return {
-      llmToIdeParsingAnchors: {
+      vitalParsingAnchors: {
         techPromptDelimiter: '--' + '-',
         codeListingHeaderStartFragment: '## LLM-CPP-FILE:',
         fileStatusPrefix: '#### FILE WAS ',
@@ -90,21 +90,21 @@ export class ConfigService {
         filePayloadOperationTypeDeleted: 'DELETED',
         configVariablePrefix: 'LLM_CPP_CFG.', // this exact anchor will be parsed by regex (including dot at the end)
       },
-      baseSettings: this._buildBaseSettings(),
-      profilesById: {
+      coreSettings: this._buildCoreSettings(),
+      overridesById: {
         'Drop ALL Instructions': {
           description: 'Runs without any prompt-instructions',
-          profileSettingsConfig: {
-            skipTechPrompt: true,
+          coreSettings: {
+            skipInstructions: true,
           },
         },
       },
     };
   }
 
-  private _buildBaseSettings(): ProfileSettingsConfig {
+  private _buildCoreSettings(): CoreSettingsConfig {
     return {
-      skipTechPrompt: false,
+      skipInstructions: false,
       skipCodeListings: false,
       ideToLlmContextConfig: {
         skipPromptSizeStatsInCopyNotification: false,
@@ -139,11 +139,11 @@ export class ConfigService {
           },
         },
         sharedVariablesById: {
-          CODE_LISTING_HEADER_START_FRAGMENT: 'LLM_CPP_CFG.llmToIdeParsingAnchors.codeListingHeaderStartFragment',
-          FILE_STATUS_PREFIX: 'LLM_CPP_CFG.llmToIdeParsingAnchors.fileStatusPrefix',
-          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull',
-          FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeCreated',
-          FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.llmToIdeParsingAnchors.filePayloadOperationTypeDeleted',
+          CODE_LISTING_HEADER_START_FRAGMENT: 'LLM_CPP_CFG.vitalParsingAnchors.codeListingHeaderStartFragment',
+          FILE_STATUS_PREFIX: 'LLM_CPP_CFG.vitalParsingAnchors.fileStatusPrefix',
+          FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL: 'LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeEditedFull',
+          FILE_PAYLOAD_OPERATION_TYPE_CREATED: 'LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeCreated',
+          FILE_PAYLOAD_OPERATION_TYPE_DELETED: 'LLM_CPP_CFG.vitalParsingAnchors.filePayloadOperationTypeDeleted',
         },
       },
     };
@@ -153,18 +153,18 @@ export class ConfigService {
     const systemConfig = this.buildSystemConfig();
     const userFileConfig = await readWorkspaceJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
 
-    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildBaseSettings());
+    const mergedConfig = mergeConfigs(systemConfig, userFileConfig, () => this._buildCoreSettings());
 
     return mergedConfig;
   }
 
-  public async getProfilesById(config?: LlmCopypasterConfig): Promise<Record<string, ProfileConfig>> {
+  public async getOverridesById(config?: LlmCopypasterConfig): Promise<Record<string, OverrideConfig>> {
     const effectiveConfig = await this._getConfigOrUseOverride(config);
-    return effectiveConfig.profilesById ?? {};
+    return effectiveConfig.overridesById ?? {};
   }
 
   public async hasAvailableProfiles(config?: LlmCopypasterConfig): Promise<boolean> {
-    const profilesById = await this.getProfilesById(config);
+    const profilesById = await this.getOverridesById(config);
     return Object.keys(profilesById).length > 0;
   }
 
@@ -187,22 +187,22 @@ export class ConfigService {
 
     if (!hasAnyNonDefaultProfile) return effectiveConfig;
 
-    const profilesById = effectiveConfig.profilesById ?? {};
+    const profilesById = effectiveConfig.overridesById ?? {};
 
-    let effectiveBaseSettings = effectiveConfig.baseSettings;
+    let effectiveCoreSettings = effectiveConfig.coreSettings;
 
     for (const profileId of normalizedProfileIds) {
       if (profileId === 'Default') continue;
 
       const profile = profilesById[profileId];
-      if (!profile?.profileSettingsConfig) continue;
+      if (!profile?.coreSettings) continue;
 
-      effectiveBaseSettings = this._mergeProfileSettingsConfig(effectiveBaseSettings, profile.profileSettingsConfig);
+      effectiveCoreSettings = this._mergeProfileSettingsConfig(effectiveCoreSettings, profile.coreSettings);
     }
 
     return {
       ...effectiveConfig,
-      baseSettings: effectiveBaseSettings,
+      coreSettings: effectiveCoreSettings,
     };
   }
 
@@ -212,50 +212,50 @@ export class ConfigService {
   }
 
   private _mergeProfileSettingsConfig(
-    baseSettings: ProfileSettingsConfig,
-    profileSettingsConfig: Partial<ProfileSettingsConfig>
-  ): ProfileSettingsConfig {
-    const basePromptInstructionConfig = baseSettings.promptInstructionConfig ?? {};
-    const profilePromptInstructionConfig = profileSettingsConfig.promptInstructionConfig ?? {};
+    coreSettings: CoreSettingsConfig,
+    overrideCoreSettings: Partial<CoreSettingsConfig>
+  ): CoreSettingsConfig {
+    const basePromptInstructionConfig = coreSettings.promptInstructionConfig ?? {};
+    const profilePromptInstructionConfig = overrideCoreSettings.promptInstructionConfig ?? {};
 
     return {
-      skipTechPrompt: profileSettingsConfig.skipTechPrompt ?? baseSettings.skipTechPrompt,
-      skipCodeListings: profileSettingsConfig.skipCodeListings ?? baseSettings.skipCodeListings,
+      skipInstructions: overrideCoreSettings.skipInstructions ?? coreSettings.skipInstructions,
+      skipCodeListings: overrideCoreSettings.skipCodeListings ?? coreSettings.skipCodeListings,
       ideToLlmContextConfig: {
         skipPromptSizeStatsInCopyNotification:
-          profileSettingsConfig.ideToLlmContextConfig?.skipPromptSizeStatsInCopyNotification ??
-          baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification,
+          overrideCoreSettings.ideToLlmContextConfig?.skipPromptSizeStatsInCopyNotification ??
+          coreSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification,
         promptSizeApproxCharsPerToken:
-          profileSettingsConfig.ideToLlmContextConfig?.promptSizeApproxCharsPerToken ??
-          baseSettings.ideToLlmContextConfig.promptSizeApproxCharsPerToken,
+          overrideCoreSettings.ideToLlmContextConfig?.promptSizeApproxCharsPerToken ??
+          coreSettings.ideToLlmContextConfig.promptSizeApproxCharsPerToken,
         maxLinesCountInContext:
-          profileSettingsConfig.ideToLlmContextConfig?.maxLinesCountInContext ??
-          baseSettings.ideToLlmContextConfig.maxLinesCountInContext,
+          overrideCoreSettings.ideToLlmContextConfig?.maxLinesCountInContext ??
+          coreSettings.ideToLlmContextConfig.maxLinesCountInContext,
         maxTokensCountInContext:
-          profileSettingsConfig.ideToLlmContextConfig?.maxTokensCountInContext ??
-          baseSettings.ideToLlmContextConfig.maxTokensCountInContext,
+          overrideCoreSettings.ideToLlmContextConfig?.maxTokensCountInContext ??
+          coreSettings.ideToLlmContextConfig.maxTokensCountInContext,
       },
       llmToIdeContextConfig: {
         promptSizeApproxCharsPerToken:
-          profileSettingsConfig.llmToIdeContextConfig?.promptSizeApproxCharsPerToken ??
-          baseSettings.llmToIdeContextConfig.promptSizeApproxCharsPerToken,
+          overrideCoreSettings.llmToIdeContextConfig?.promptSizeApproxCharsPerToken ??
+          coreSettings.llmToIdeContextConfig.promptSizeApproxCharsPerToken,
         maxLinesCountInContext:
-          profileSettingsConfig.llmToIdeContextConfig?.maxLinesCountInContext ??
-          baseSettings.llmToIdeContextConfig.maxLinesCountInContext,
+          overrideCoreSettings.llmToIdeContextConfig?.maxLinesCountInContext ??
+          coreSettings.llmToIdeContextConfig.maxLinesCountInContext,
         maxTokensCountInContext:
-          profileSettingsConfig.llmToIdeContextConfig?.maxTokensCountInContext ??
-          baseSettings.llmToIdeContextConfig.maxTokensCountInContext,
+          overrideCoreSettings.llmToIdeContextConfig?.maxTokensCountInContext ??
+          coreSettings.llmToIdeContextConfig.maxTokensCountInContext,
       },
       postFilePatchActionsConfig: {
         enableSaveAfterFilePatch:
-          profileSettingsConfig.postFilePatchActionsConfig?.enableSaveAfterFilePatch ??
-          baseSettings.postFilePatchActionsConfig.enableSaveAfterFilePatch,
+          overrideCoreSettings.postFilePatchActionsConfig?.enableSaveAfterFilePatch ??
+          coreSettings.postFilePatchActionsConfig.enableSaveAfterFilePatch,
         enableLintingAfterFilePatch:
-          profileSettingsConfig.postFilePatchActionsConfig?.enableLintingAfterFilePatch ??
-          baseSettings.postFilePatchActionsConfig.enableLintingAfterFilePatch,
+          overrideCoreSettings.postFilePatchActionsConfig?.enableLintingAfterFilePatch ??
+          coreSettings.postFilePatchActionsConfig.enableLintingAfterFilePatch,
         enableOpeningPatchedFilesInEditor:
-          profileSettingsConfig.postFilePatchActionsConfig?.enableOpeningPatchedFilesInEditor ??
-          baseSettings.postFilePatchActionsConfig.enableOpeningPatchedFilesInEditor,
+          overrideCoreSettings.postFilePatchActionsConfig?.enableOpeningPatchedFilesInEditor ??
+          coreSettings.postFilePatchActionsConfig.enableOpeningPatchedFilesInEditor,
       },
       promptInstructionConfig: {
         ...(basePromptInstructionConfig ?? {}),
@@ -270,8 +270,8 @@ export class ConfigService {
         ),
       },
       llmToIdeSanitizationRulesById: {
-        ...(baseSettings.llmToIdeSanitizationRulesById ?? {}),
-        ...(profileSettingsConfig.llmToIdeSanitizationRulesById ?? {}),
+        ...(coreSettings.llmToIdeSanitizationRulesById ?? {}),
+        ...(overrideCoreSettings.llmToIdeSanitizationRulesById ?? {}),
       },
     };
   }

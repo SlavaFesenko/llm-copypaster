@@ -2,7 +2,7 @@
 // NOTE: if you don’t want to “show” the file in git, add `/llm-copypaster.jsonc` to `.git/info/exclude`
 // todo: show warning if config can't be parsed, let's say when required param (profile version) was not defined or so
 {
-  "baseSettings": {
+  "coreSettings": {
     // "skipCodeListings": true, // todo работает только если выбирать профили (даже если выбрать просто debu-optioon), по дефолту не применяется
     "promptInstructionConfig": {
       "subInstructionsById": {
@@ -16,7 +16,7 @@
         },
       },
       "sharedVariablesById": {
-        "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.baseSettings.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore",
+        "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.coreSettings.promptInstructionConfig.subInstructionsById.web-git-prompt.ignore",
         "WEB_GIT_PROMPT_NAME": "Web Git Prompt",
         "BRANCH_NAME": "feature/config-refactor", // [master] TODO: позволить делать некоторые переменные, как эта, на автодетект для удобства
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
@@ -27,11 +27,11 @@
       },
     },
   },
-  "profilesById": {
+  "overridesById": {
     "Disallow REMOTE_FILE_EDIT": {
       "description": "Disallow REMOTE_FILE_EDIT - make them just readonly",
       "version": "1", // todo mark version as optional
-      "profileSettingsConfig": {
+      "coreSettings": {
         "promptInstructionConfig": {
           "sharedVariablesById": {
             "IS_REMOTE_FILE_EDIT_ALLOWED": "false",
@@ -43,7 +43,7 @@
     "Remove web-git-prompt": {
       "description": "Remove web-git-prompt from instructions section",
       "version": "1",
-      "profileSettingsConfig": {
+      "coreSettings": {
         "promptInstructionConfig": {
           "subInstructionsById": {
             "web-git-prompt": {

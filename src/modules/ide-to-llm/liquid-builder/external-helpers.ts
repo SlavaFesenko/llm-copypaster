@@ -21,12 +21,13 @@ export async function buildLlmPromptTextForProfiles(args: {
 
   const effectiveConfig =
     args.forceSkipTechPrompt === true
-      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.baseSettings, skipTechPrompt: true } }
+      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.coreSettings, skipTechPrompt: true } }
       : baseEffectiveConfig;
 
-  const shouldIncludeTechPrompt = args.includeTechPromptFromCommand && effectiveConfig.baseSettings.skipTechPrompt !== true;
+  const shouldIncludeTechPrompt =
+    args.includeTechPromptFromCommand && effectiveConfig.coreSettings.skipInstructions !== true;
 
-  const effectiveFileItems = effectiveConfig.baseSettings.skipCodeListings === true ? [] : args.fileItems;
+  const effectiveFileItems = effectiveConfig.coreSettings.skipCodeListings === true ? [] : args.fileItems;
 
   const techPromptText = shouldIncludeTechPrompt
     ? await new PromptBuilder(args.extensionContext, effectiveConfig).build()
@@ -43,7 +44,7 @@ export async function buildLlmPromptTextForProfiles(args: {
 export async function buildMergedConfigMarkdownReportText(args: {
   baseSettingsConfig: unknown;
   mergedSettingsConfig: unknown;
-  profilesById: Record<string, { profileSettingsConfig?: unknown }>;
+  overridesById: Record<string, { coreSettings?: unknown }>;
   selectedProfileIds: string[];
 }): Promise<string> {
   const normalizedSelectedProfileIds = (args.selectedProfileIds ?? [])
@@ -52,7 +53,7 @@ export async function buildMergedConfigMarkdownReportText(args: {
 
   const mergeChainText =
     normalizedSelectedProfileIds.length > 0
-      ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')} Profile Config(s)`
+      ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')} Override Config(s)`
       : 'Base Config';
 
   const { diff } = await import('json-diff-ts'); // json-diff-ts is ESM-only, dynamic import avoids CommonJS require
@@ -82,9 +83,9 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
-  for (const profileId of Object.keys(args.profilesById ?? {})) {
-    const profile = args.profilesById[profileId];
-    const profileOnlyConfiguredSettings = profile?.profileSettingsConfig ?? {};
+  for (const profileId of Object.keys(args.overridesById ?? {})) {
+    const profile = args.overridesById[profileId];
+    const profileOnlyConfiguredSettings = profile?.coreSettings ?? {};
 
     reportText += `## ${profileId}\n\n`;
     reportText += tripleTicksWithJson;

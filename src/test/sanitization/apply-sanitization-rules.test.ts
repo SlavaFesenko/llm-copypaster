@@ -34,8 +34,8 @@ suite('applySanitizationRules', () => {
 
     const config: LlmCopypasterConfig = {
       ...systemConfig,
-      baseSettings: {
-        ...systemConfig.baseSettings,
+      coreSettings: {
+        ...systemConfig.coreSettings,
         llmToIdeSanitizationRulesById: {
           'invalid-regexp': invalidRule,
         },

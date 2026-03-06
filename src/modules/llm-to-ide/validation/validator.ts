@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig, LlmToIdeParsingAnchorsConfig } from '../../../config-service';
+import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config-service';
 import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
@@ -9,12 +9,9 @@ export function validateClipboardTextToFilesPayload(
   rawClipboardText: string,
   config: LlmCopypasterConfig
 ): ValidationResult<FilesPayload> {
-  const headerRegex = new RegExp(
-    String.raw`^${config.llmToIdeParsingAnchors.codeListingHeaderStartFragment}\s+(.+)\s*$`,
-    'gm'
-  );
+  const headerRegex = new RegExp(String.raw`^${config.vitalParsingAnchors.codeListingHeaderStartFragment}\s+(.+)\s*$`, 'gm');
 
-  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex, config.llmToIdeParsingAnchors);
+  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex, config.vitalParsingAnchors);
 
   if (!parsed.ok) return parsed;
 
@@ -26,7 +23,7 @@ export function validateClipboardTextToFilesPayload(
 function parseConcatenatedFileListings(
   rawText: string,
   headerRegex: RegExp,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig
 ): ParseResult<FilesPayload> {
   const matches = [...rawText.matchAll(headerRegex)];
 
@@ -65,7 +62,7 @@ function parseConcatenatedFileListings(
 function parseFileSection(
   rawSectionText: string,
   fileStatusPrefix: string,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig
 ): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
   const { firstLine, restText } = splitFirstLine(rawSectionText);
 
@@ -100,7 +97,7 @@ function splitFirstLine(text: string): { firstLine: string; restText: string } {
 function tryParseOperationLine(
   line: string,
   fileStatusPrefix: string,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig
 ): FilePayloadOperationType | undefined {
   const trimmedLine = line.trim();
   const trimmedPrefix = fileStatusPrefix.trim();

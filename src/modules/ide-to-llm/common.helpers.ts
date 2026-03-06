@@ -155,16 +155,16 @@ export async function showCopyResultNotification(
     const baseEffectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
 
     const effectiveConfig = isTechPromptErased
-      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.baseSettings, skipTechPrompt: true } }
+      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.coreSettings, skipTechPrompt: true } }
       : baseEffectiveConfig;
 
     const promptStatsResult = buildTextSizeStats({
       promptText: currentPromptText,
-      contextConfig: effectiveConfig.baseSettings.ideToLlmContextConfig,
+      contextConfig: effectiveConfig.coreSettings.ideToLlmContextConfig,
     });
 
     const shouldShowPromptSizeStats =
-      effectiveConfig.baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
+      effectiveConfig.coreSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
 
     const baseMessage =
       unavailableFilesCount === 0
@@ -234,9 +234,9 @@ export async function showCopyResultNotification(
     }
 
     if (selectedAction === applyOrChangeProfilesLabel) {
-      const profilesById = await deps.configService.getProfilesById();
+      const overridesById = await deps.configService.getOverridesById();
 
-      const nextPickResult = await pickProfileIds({ profilesById, selectedProfileIds });
+      const nextPickResult = await pickProfileIds({ overridesById: overridesById, selectedProfileIds });
       if (!nextPickResult) return;
 
       selectedProfileIds = nextPickResult.profileIds;
@@ -263,9 +263,9 @@ export async function showCopyResultNotification(
         );
 
         const mergedConfigReportText = await buildMergedConfigMarkdownReportText({
-          baseSettingsConfig: baseConfig.baseSettings,
-          mergedSettingsConfig: mergedConfigForSelectedProfiles.baseSettings,
-          profilesById: baseConfig.profilesById ?? {},
+          baseSettingsConfig: baseConfig.coreSettings,
+          mergedSettingsConfig: mergedConfigForSelectedProfiles.coreSettings,
+          overridesById: baseConfig.overridesById ?? {},
           selectedProfileIds,
         });
 
@@ -288,7 +288,7 @@ interface PickProfileIdsResult {
 }
 
 async function pickProfileIds(args: {
-  profilesById: Record<string, { description: string; version?: string }>;
+  overridesById: Record<string, { description?: string; version?: string }>;
   selectedProfileIds: string[];
 }): Promise<PickProfileIdsResult | null> {
   const selectedProfileIdsSet = new Set(args.selectedProfileIds);
@@ -302,10 +302,10 @@ async function pickProfileIds(args: {
     },
   ];
 
-  for (const profileId of Object.keys(args.profilesById)) {
-    const profile = args.profilesById[profileId];
-    const descriptionSuffix = profile.description ? `: ${profile.description}` : '';
-    const version = profile.version ? `v${profile.version}` : '';
+  for (const profileId of Object.keys(args.overridesById)) {
+    const profile = args.overridesById[profileId];
+    const descriptionSuffix = profile.description ? `${profile.description}` : '';
+    const version = profile.version ? `v${profile.version}: ` : '';
 
     items.push({
       profileId,
