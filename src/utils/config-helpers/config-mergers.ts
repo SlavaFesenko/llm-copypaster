@@ -157,13 +157,8 @@ export function mergePromptInstructionConfig(
   const baseSharedVariablesById = baseConfig.sharedVariablesById ?? {};
   const baseSubInstructionsById = baseConfig.subInstructionsById ?? {};
 
-  const nextSharedVariablesById = userConfig.onMergeIgnoreAll_sharedVariablesById
-    ? (userConfig.sharedVariablesById ?? {})
-    : { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
-
-  const nextSubInstructionsById = userConfig.onMergeIgnoreAll_subInstructionsById
-    ? mapSubInstructionsById({}, userConfig.subInstructionsById ?? {})
-    : mapSubInstructionsById(baseSubInstructionsById, userConfig.subInstructionsById ?? {});
+  const nextSharedVariablesById = { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
+  const nextSubInstructionsById = mapSubInstructionsById(baseSubInstructionsById, userConfig.subInstructionsById ?? {});
 
   return {
     sharedVariablesById: nextSharedVariablesById,
@@ -214,9 +209,6 @@ export function mergeLlmToIdeSanitizationRulesById(
 ): Record<string, LlmToIdeSanitizationRuleConfig> {
   const userRulesById = userSettings.llmToIdeSanitizationRulesById;
   if (!userRulesById) return baseRulesById;
-
-  if (userSettings.onMergeIgnoreAll_llmToIdeSanitizationRulesById)
-    return mapLlmToIdeSanitizationRulesById({}, userRulesById);
 
   return mapLlmToIdeSanitizationRulesById(baseRulesById, userRulesById);
 }
@@ -317,8 +309,6 @@ export function mergeProfilesById(
   const userProfilesById = userConfig.overridesById;
 
   if (!userProfilesById) return baseProfilesById;
-
-  if (userConfig.onMergeIgnoreAll_overridesById) return mapProfilesById({}, userProfilesById, buildBaseSettingsFn);
 
   return mapProfilesById(baseProfilesById ?? {}, userProfilesById, buildBaseSettingsFn);
 }

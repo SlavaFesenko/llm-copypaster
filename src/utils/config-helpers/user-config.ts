@@ -16,12 +16,7 @@ export interface VitalParsingAnchorsUserConfig {
 }
 
 export interface PromptInstructionUserConfig {
-  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-  onMergeIgnoreAll_sharedVariablesById?: boolean;
   sharedVariablesById?: Record<string, string>;
-
-  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-  onMergeIgnoreAll_subInstructionsById?: boolean;
   subInstructionsById?: Record<string, PromptInstructionsUserConfig>;
 }
 
@@ -60,9 +55,6 @@ export interface CoreSettingsUserConfig {
   postFilePatchActionsConfig?: PostFilePatchActionsUserConfig;
 
   promptInstructionConfig?: PromptInstructionUserConfig;
-
-  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-  onMergeIgnoreAll_llmToIdeSanitizationRulesById?: boolean;
   llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
@@ -75,8 +67,5 @@ export interface OverrideUserConfig {
 export interface LlmCopypasterUserConfig {
   vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
   coreSettings?: CoreSettingsUserConfig;
-
-  // if true - remove all base stuff, then (if needed) add override stuff (to avoid need of manual iteration of all base stuff)
-  onMergeIgnoreAll_overridesById?: boolean;
   overridesById?: Record<string, OverrideUserConfig>;
 }
