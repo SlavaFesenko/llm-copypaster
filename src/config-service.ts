@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
 import { readSystemJsonConfigFile, readWorkspaceJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
 import { LlmCopypasterUserConfig } from './utils/config-helpers/user-config';
@@ -82,7 +83,40 @@ export class ConfigService {
 
     const systemFileConfig = await readSystemJsonConfigFile<LlmCopypasterUserConfig>(this._logger, 'sys-config.jsonc');
 
-    return mergeConfigs(hardcodedFallbackSystemConfig, systemFileConfig, () => this._buildCoreSettings());
+    const mergedSystemConfig = mergeConfigs(hardcodedFallbackSystemConfig, systemFileConfig, () =>
+      this._buildCoreSettings()
+    );
+
+    return this._markSystemBundledPromptAsBundled(mergedSystemConfig);
+  }
+
+  private _markSystemBundledPromptAsBundled(systemConfig: LlmCopypasterConfig): LlmCopypasterConfig {
+    const systemBundledPromptId = 'llm-response-rules-prompt';
+    const targetSubInstruction =
+      systemConfig.coreSettings.promptInstructionConfig.subInstructionsById[systemBundledPromptId];
+
+    if (!targetSubInstruction) {
+      void vscode.window.showWarningMessage(`System prompt "${systemBundledPromptId}" was not found in system config`);
+
+      return systemConfig;
+    }
+
+    return {
+      ...systemConfig,
+      coreSettings: {
+        ...systemConfig.coreSettings,
+        promptInstructionConfig: {
+          ...systemConfig.coreSettings.promptInstructionConfig,
+          subInstructionsById: {
+            ...systemConfig.coreSettings.promptInstructionConfig.subInstructionsById,
+            [systemBundledPromptId]: {
+              ...targetSubInstruction,
+              isSystemBundledFile: true,
+            },
+          },
+        },
+      },
+    };
   }
 
   private _buildHardcodedFallbackSystemConfig(): LlmCopypasterConfig {
