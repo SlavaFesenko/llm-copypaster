@@ -48,8 +48,6 @@ export interface ShowCopyResultNotificationArgs {
   promptSizeStats?: EditorToLlmPromptSizeStats;
 }
 
-export type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
-
 export function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
   if (tab.input instanceof vscode.TabInputText) {
     return tab.input.uri;
@@ -102,37 +100,6 @@ export async function readUrisAsFileItems(
   }
 
   return { fileItems, deletedFileUris };
-}
-
-export async function tryReadFileAsText(
-  uri: vscode.Uri
-): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
-  try {
-    const document = await vscode.workspace.openTextDocument(uri);
-
-    return { text: document.getText(), languageId: document.languageId, isFileNotFound: false };
-  } catch (error) {
-    const message = String(error);
-
-    return { text: null, readError: message, isFileNotFound: isFileNotFoundError(error) };
-  }
-}
-
-export function isFileNotFoundError(error: unknown): boolean {
-  const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
-  const code = String(anyError?.code ?? '');
-  if (code === 'FileNotFound') return true;
-
-  const message = String(anyError?.message ?? error ?? '');
-
-  if (message.includes('FileNotFound')) return true;
-  if (message.includes('ENOENT')) return true;
-  if (message.includes('no such file or directory')) return true;
-
-  const name = String(anyError?.name ?? '');
-  if (name.includes('FileNotFound')) return true;
-
-  return false;
 }
 
 export async function showCopyResultNotification(
@@ -265,6 +232,37 @@ export async function showCopyResultNotification(
       continue;
     }
   }
+}
+
+async function tryReadFileAsText(
+  uri: vscode.Uri
+): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
+  try {
+    const document = await vscode.workspace.openTextDocument(uri);
+
+    return { text: document.getText(), languageId: document.languageId, isFileNotFound: false };
+  } catch (error) {
+    const message = String(error);
+
+    return { text: null, readError: message, isFileNotFound: isFileNotFoundError(error) };
+  }
+}
+
+function isFileNotFoundError(error: unknown): boolean {
+  const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
+  const code = String(anyError?.code ?? '');
+  if (code === 'FileNotFound') return true;
+
+  const message = String(anyError?.message ?? error ?? '');
+
+  if (message.includes('FileNotFound')) return true;
+  if (message.includes('ENOENT')) return true;
+  if (message.includes('no such file or directory')) return true;
+
+  const name = String(anyError?.name ?? '');
+  if (name.includes('FileNotFound')) return true;
+
+  return false;
 }
 
 interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
