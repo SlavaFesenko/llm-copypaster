@@ -12,6 +12,7 @@ const JSON_DIFF_STATUS = '[JSON DIFF]';
 export interface ConfigStateReportBuilderArgs {
   configService: ConfigService;
   logger: OutputChannelLogger;
+  activeOverrideIds?: string[];
 }
 
 export class ConfigStateReportBuilder {
@@ -26,8 +27,14 @@ export class ConfigStateReportBuilder {
 
     let reportText = '';
 
+    reportText += '# Config Report\n\n';
+    reportText += this._buildStatusOverviewMarkdown({
+      hasUserConfig: !!userConfig,
+      overrideOptions,
+      activeOverrideIds: this._args.activeOverrideIds,
+    });
+
     if (userConfig) {
-      reportText += '# Config Report\n\n';
       reportText += `## ${NORMALIZED_CONFIG_STATUS} Base Config: ${GLOB_CONSTS.SYS_CONFIG_FILE_NAME} + ${GLOB_CONSTS.USER_CONFIG_FILE_NAME}\n\n`;
       reportText += 'Base Config is applied by default (when no override manually selected)\n\n';
       reportText += this._buildJsonCodeBlock(basePublicConfig.coreSettings);
@@ -87,6 +94,41 @@ export class ConfigStateReportBuilder {
     sectionText += this._buildJsonCodeBlock(overridePublicConfig.coreSettings);
 
     return sectionText;
+  }
+
+  private _buildStatusOverviewMarkdown(args: {
+    hasUserConfig: boolean;
+    overrideOptions: OverrideOptionMetadata[];
+    activeOverrideIds?: string[];
+  }): string {
+    const currentCoreSettingsSource = args.hasUserConfig ? 'System + User Config' : 'System Config';
+    const activeOverrideIdsSet = new Set(args.activeOverrideIds ?? []);
+    const isBaseConfigCurrentlyApplied = activeOverrideIdsSet.size === 0;
+
+    let statusOverviewText = '';
+
+    statusOverviewText += '## Status Overview\n\n';
+    statusOverviewText += '### Config Sources\n\n';
+    statusOverviewText += `🟢 System Config (${GLOB_CONSTS.SYS_CONFIG_FILE_NAME}): Loaded\n`;
+    statusOverviewText += `${args.hasUserConfig ? '🟢' : '🟡'} User Config (${GLOB_CONSTS.USER_CONFIG_FILE_NAME}): ${args.hasUserConfig ? 'Loaded' : 'Not Found'}\n\n`;
+    statusOverviewText += '### Core Settings Current Source\n\n';
+
+    statusOverviewText += `${isBaseConfigCurrentlyApplied ? '🟢' : '🟡'} ${currentCoreSettingsSource}\n`;
+
+    if (args.overrideOptions.length) {
+      for (let overrideOptionIndex = 0; overrideOptionIndex < args.overrideOptions.length; overrideOptionIndex++) {
+        const overrideOption = args.overrideOptions[overrideOptionIndex];
+        const isOverrideCurrentlyApplied = activeOverrideIdsSet.has(overrideOption.id);
+
+        statusOverviewText += `${isOverrideCurrentlyApplied ? '🟢' : '🟡'} "${overrideOption.id}" Override Config\n`;
+      }
+
+      statusOverviewText += '\n';
+    } else {
+      statusOverviewText += '⚪ Override Config: None was detected.\n\n';
+    }
+
+    return statusOverviewText;
   }
 
   private async _buildJsonDiffChangeset(previousValue: unknown, nextValue: unknown): Promise<unknown> {
