@@ -310,11 +310,9 @@ export function mapProfilesById(
     const baseProfileCoreSettings = baseProfile?.coreSettings ?? baseCoreSettings;
 
     if (!baseProfile) {
-      if (!userProfile.description || !userProfile.version) continue;
-
       nextProfilesById[profileId] = {
         description: userProfile.description,
-        version: userProfile.version ?? '',
+        version: userProfile.version,
         shouldBeSkipped: userProfile.shouldBeSkipped ?? false,
         coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
       };
