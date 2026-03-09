@@ -122,7 +122,7 @@ async function collectExplorerItemsFileItems(
     }
   }
 
-  return await readUrisAsFileItems(deps, allFileUris);
+  return await readUrisAsFileItems(allFileUris);
 }
 
 async function collectAllFilesInFolderRecursively(

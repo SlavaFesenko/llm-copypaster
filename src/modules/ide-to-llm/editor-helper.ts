@@ -136,7 +136,7 @@ export class EditorHelper {
       tabUris.push(tabUri);
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -162,7 +162,7 @@ export class EditorHelper {
       }
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -190,7 +190,7 @@ export class EditorHelper {
       }
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -218,7 +218,7 @@ export class EditorHelper {
       tabUris.push(tabUri);
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }

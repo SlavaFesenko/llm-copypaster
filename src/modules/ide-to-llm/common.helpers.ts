@@ -66,10 +66,7 @@ export function buildUriKey(uri: vscode.Uri): string {
   return uri.toString();
 }
 
-export async function readUrisAsFileItems(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  uris: vscode.Uri[]
-): Promise<ReadUrisAsFileItemsResult> {
+export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisAsFileItemsResult> {
   const dedupedByPathMap = new Map<string, vscode.Uri>();
 
   for (const uri of uris) {
