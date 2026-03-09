@@ -5,8 +5,9 @@ import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-hel
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
+import { ConfigStateReportBuilder } from './utils/config-state-report-builder';
+import { ensureReadonlyVirtualMarkdownDocOpened } from './utils/editor-virtual-doc-helpers';
 import { OutputChannelLogger } from './utils/output-channel-logger';
-import { createReadonlyTextView } from './utils/text-view-helpers';
 
 export const commandIds = {
   helloWorld: 'llm-copypaster.helloWorld',
@@ -47,8 +48,6 @@ export interface RegisterCommandsDeps {
 }
 
 export function registerCommands(context: vscode.ExtensionContext, deps: RegisterCommandsDeps) {
-  const lsConfigReadonlyView = createReadonlyTextView(context, 'llm-copypaster-lsconfig', 'current-config-state', 'json');
-
   const commandDisposables: vscode.Disposable[] = [
     // #region Editor 2 LLM
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContext, async () => {
@@ -119,10 +118,16 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
-      const config = await deps.configService.getInternalConfig();
-      const configJson = JSON.stringify(config, null, 2);
+      const reportText = await new ConfigStateReportBuilder({
+        configService: deps.configService,
+        logger: deps.logger,
+      }).build();
 
-      await lsConfigReadonlyView.open(configJson);
+      await ensureReadonlyVirtualMarkdownDocOpened({
+        extensionContext: context,
+        docId: 'ls-config',
+        markdownText: reportText,
+      });
     }),
 
     // #endregion
