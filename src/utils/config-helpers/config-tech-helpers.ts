@@ -1,17 +1,14 @@
+import { parse, ParseError } from 'jsonc-parser';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { GLOB_CONSTS } from '../../global-constants';
 import { OutputChannelLogger } from '../output-channel-logger';
 
-// TODO: get rid of custom JSONC-parsing logic, use npm-package
-
 export async function readUserConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
-  if (!workspaceFolder) {
-    return null;
-  }
+  if (!workspaceFolder) return null;
 
   const configUri = vscode.Uri.joinPath(workspaceFolder.uri, GLOB_CONSTS.USER_CONFIG_FILE_NAME);
 
@@ -34,9 +31,12 @@ export async function readSystemJsonConfigFile<TConfig>(logger: OutputChannelLog
 
   try {
     const jsonText = await fs.readFile(extensionConfigPath, 'utf8');
-    const jsonTextWithoutComments = stripJsoncComments(jsonText);
-    const jsonTextWithoutTrailingCommas = stripJsoncTrailingCommas(jsonTextWithoutComments);
-    const parsed = JSON.parse(jsonTextWithoutTrailingCommas) as TConfig;
+    const parseErrors: ParseError[] = [];
+    const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
+
+    if (parseErrors.length > 0) {
+      throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
+    }
 
     return parsed;
   } catch (error) {
@@ -57,9 +57,12 @@ export async function readJsoncConfigFile<TConfig>(
   try {
     const bytes = await vscode.workspace.fs.readFile(configUri);
     const jsonText = Buffer.from(bytes).toString('utf8');
-    const jsonTextWithoutComments = stripJsoncComments(jsonText);
-    const jsonTextWithoutTrailingCommas = stripJsoncTrailingCommas(jsonTextWithoutComments);
-    const parsed = JSON.parse(jsonTextWithoutTrailingCommas) as TConfig;
+    const parseErrors: ParseError[] = [];
+    const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
+
+    if (parseErrors.length > 0) {
+      throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
+    }
 
     return parsed;
   } catch (error) {
@@ -89,95 +92,4 @@ export async function findFileUpwards(startDirectoryPath: string, fileName: stri
 
     currentDirectoryPath = parentDirectoryPath;
   }
-}
-
-export function stripJsoncComments(jsonText: string): string {
-  let result = '';
-
-  let isInsideString = false;
-  let isEscaped = false;
-
-  let isInsideLineComment = false;
-  let isInsideBlockComment = false;
-
-  for (let index = 0; index < jsonText.length; index++) {
-    const currentChar = jsonText[index];
-    const nextChar = index + 1 < jsonText.length ? jsonText[index + 1] : '';
-
-    if (isInsideLineComment) {
-      if (currentChar === '\n') {
-        isInsideLineComment = false;
-        result += currentChar;
-      }
-
-      continue;
-    }
-
-    if (isInsideBlockComment) {
-      if (currentChar === '*' && nextChar === '/') {
-        isInsideBlockComment = false;
-        index++;
-      }
-
-      continue;
-    }
-
-    if (!isInsideString && currentChar === '/' && nextChar === '/') {
-      isInsideLineComment = true;
-      index++;
-      continue;
-    }
-
-    if (!isInsideString && currentChar === '/' && nextChar === '*') {
-      isInsideBlockComment = true;
-      index++;
-      continue;
-    }
-
-    if (currentChar === '"' && !isEscaped) isInsideString = !isInsideString;
-
-    if (currentChar === '\\' && isInsideString) isEscaped = !isEscaped;
-    else isEscaped = false;
-
-    result += currentChar;
-  }
-
-  return result;
-}
-
-export function stripJsoncTrailingCommas(jsonText: string): string {
-  let result = '';
-
-  let isInsideString = false;
-  let isEscaped = false;
-
-  for (let index = 0; index < jsonText.length; index++) {
-    const currentChar = jsonText[index];
-
-    if (currentChar === '"' && !isEscaped) isInsideString = !isInsideString;
-
-    if (currentChar === '\\' && isInsideString) isEscaped = !isEscaped;
-    else isEscaped = false;
-
-    if (isInsideString) {
-      result += currentChar;
-      continue;
-    }
-
-    if (currentChar !== ',') {
-      result += currentChar;
-      continue;
-    }
-
-    let lookAheadIndex = index + 1;
-    while (lookAheadIndex < jsonText.length && /\s/.test(jsonText[lookAheadIndex])) lookAheadIndex++;
-
-    const nextNonSpaceChar = lookAheadIndex < jsonText.length ? jsonText[lookAheadIndex] : '';
-
-    if (nextNonSpaceChar === '}' || nextNonSpaceChar === ']') continue;
-
-    result += currentChar;
-  }
-
-  return result;
 }
