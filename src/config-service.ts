@@ -112,16 +112,19 @@ export class ConfigService {
 
     if (normalizedOverrideIds.length === 0) return llmCopypasterConfig.coreSettings;
 
-    let mergedCoreSettingsConfig = llmCopypasterConfig.coreSettings;
+    let mergedOverridesIntoBaseConfig = llmCopypasterConfig.coreSettings;
 
     for (const overrideId of normalizedOverrideIds) {
       const overrideCoreSettingsConfig = llmCopypasterConfig.overridesById?.[overrideId]?.coreSettings;
       if (!overrideCoreSettingsConfig) continue;
 
-      mergedCoreSettingsConfig = this._mergeCoreSettingsConfigs(mergedCoreSettingsConfig, overrideCoreSettingsConfig);
+      mergedOverridesIntoBaseConfig = this._mergeCoreSettingsConfigs(
+        mergedOverridesIntoBaseConfig,
+        overrideCoreSettingsConfig
+      );
     }
 
-    return mergedCoreSettingsConfig;
+    return mergedOverridesIntoBaseConfig;
   }
 
   public async getVitalParsingAnchorsConfig(): Promise<VitalParsingAnchorsConfig> {
