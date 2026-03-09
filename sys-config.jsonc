@@ -53,12 +53,4 @@
       },
     },
   },
-  "overridesById": {
-    "Skip code-listings in final prompt": {
-      "shouldBeSkipped": false,
-      "coreSettings": {
-        "skipCodeListings": true,
-      },
-    },
-  },
 }
