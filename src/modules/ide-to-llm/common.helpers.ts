@@ -254,13 +254,13 @@ export async function showCopyResultNotification(
 
       if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
         const selectedOverrideIdForReport = getSelectedOverrideId(selectedProfileIds);
-        const baseCoreSettingsConfig = await deps.configService.getCoreSettingsConfig();
-        const mergedCoreSettingsConfig = await deps.configService.getCoreSettingsConfig(selectedOverrideIdForReport);
+        const basePublicConfig = await deps.configService.getLlmCopypasterPublicConfig();
+        const mergedPublicConfig = await deps.configService.getLlmCopypasterPublicConfig(selectedOverrideIdForReport);
 
         const mergedConfigReportText = await buildMergedConfigMarkdownReportText({
           configService: deps.configService,
-          baseSettingsConfig: baseCoreSettingsConfig,
-          mergedSettingsConfig: mergedCoreSettingsConfig,
+          baseSettingsConfig: basePublicConfig.coreSettings,
+          mergedSettingsConfig: mergedPublicConfig.coreSettings,
           overrideOptions,
           selectedProfileIds,
         });

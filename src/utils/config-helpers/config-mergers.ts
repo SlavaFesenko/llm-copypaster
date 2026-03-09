@@ -27,7 +27,7 @@ export function mergeConfigs(
   systemConfig: LlmCopypasterInternalConfig,
   userConfig: LlmCopypasterUserConfig | null
 ): LlmCopypasterInternalConfig {
-  if (!userConfig) return systemConfig;
+  if (!userConfig) return normalizeInternalConfig(systemConfig);
 
   return applyUserConfig(systemConfig, userConfig);
 }
@@ -36,15 +36,46 @@ export function applyUserConfig(
   systemConfig: LlmCopypasterInternalConfig,
   userConfig: LlmCopypasterUserConfig
 ): LlmCopypasterInternalConfig {
-  const mergedProfilesById = mergeProfilesById(systemConfig.overridesById, userConfig, systemConfig.coreSettings);
+  const mergedCoreSettings = mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings);
+  const mergedProfilesById = mergeProfilesById(systemConfig.overridesById, userConfig, mergedCoreSettings);
 
   const nextConfig: LlmCopypasterInternalConfig = {
     vitalParsingAnchors: mergeLlmToIdeParsingAnchors(systemConfig.vitalParsingAnchors, userConfig.vitalParsingAnchors),
-    coreSettings: mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings),
+    coreSettings: mergedCoreSettings,
     ...(mergedProfilesById ? { overridesById: mergedProfilesById } : {}),
   };
 
   return nextConfig;
+}
+
+export function normalizeInternalConfig(config: LlmCopypasterInternalConfig): LlmCopypasterInternalConfig {
+  const normalizedOverridesById = normalizeProfilesById(config.overridesById, config.coreSettings);
+
+  return {
+    vitalParsingAnchors: config.vitalParsingAnchors,
+    coreSettings: config.coreSettings,
+    ...(normalizedOverridesById ? { overridesById: normalizedOverridesById } : {}),
+  };
+}
+
+export function normalizeProfilesById(
+  profilesById: Record<string, OverrideConfig> | undefined,
+  baseCoreSettings: CoreSettingsConfig
+): Record<string, OverrideConfig> | undefined {
+  if (!profilesById) return profilesById;
+
+  const normalizedProfilesById: Record<string, OverrideConfig> = {};
+
+  for (const profileId of Object.keys(profilesById)) {
+    const profileConfig = profilesById[profileId];
+
+    normalizedProfilesById[profileId] = {
+      ...profileConfig,
+      coreSettings: mergeCoreSettingsConfig(baseCoreSettings, profileConfig.coreSettings),
+    };
+  }
+
+  return normalizedProfilesById;
 }
 
 export function mergeLlmToIdeParsingAnchors(
@@ -249,7 +280,7 @@ export function mergeProfilesById(
 ): Record<string, OverrideConfig> | undefined {
   const userProfilesById = userConfig.overridesById;
 
-  if (!userProfilesById) return baseProfilesById;
+  if (!userProfilesById) return normalizeProfilesById(baseProfilesById, baseCoreSettings);
 
   return mapProfilesById(baseProfilesById ?? {}, userProfilesById, baseCoreSettings);
 }
@@ -259,12 +290,11 @@ export function mapProfilesById(
   userProfilesById: Record<string, OverrideUserConfig>,
   baseCoreSettings: CoreSettingsConfig
 ): Record<string, OverrideConfig> {
-  const nextProfilesById: Record<string, OverrideConfig> = { ...baseProfilesById };
+  const nextProfilesById = normalizeProfilesById(baseProfilesById, baseCoreSettings) ?? {};
 
   for (const profileId of Object.keys(userProfilesById)) {
-    const baseProfile = baseProfilesById[profileId];
+    const baseProfile = nextProfilesById[profileId];
     const userProfile = userProfilesById[profileId];
-    const baseProfileCoreSettings = baseProfile?.coreSettings ?? baseCoreSettings;
 
     if (!baseProfile) {
       if (!userProfile.description || !userProfile.version) continue;
@@ -273,7 +303,7 @@ export function mapProfilesById(
         description: userProfile.description,
         version: userProfile.version ?? '',
         shouldBeSkipped: userProfile.shouldBeSkipped ?? false,
-        coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
+        coreSettings: mergeCoreSettingsConfig(baseCoreSettings, userProfile.coreSettings),
       };
 
       continue;
@@ -283,7 +313,7 @@ export function mapProfilesById(
       description: userProfile.description ?? baseProfile.description,
       version: userProfile.version ?? baseProfile.version ?? '',
       shouldBeSkipped: userProfile.shouldBeSkipped ?? baseProfile.shouldBeSkipped ?? false,
-      coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
+      coreSettings: mergeCoreSettingsConfig(baseProfile.coreSettings, userProfile.coreSettings),
     };
   }
 

@@ -68,24 +68,15 @@ export async function buildMergedConfigMarkdownReportText(args: {
   reportText += `${JSON.stringify(humanReadableChangeset, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
-  reportText += '## Merged Config\n\n';
+  reportText += '## Merged Config = Base Config + Override Diffs\n\n';
   reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(args.mergedSettingsConfig, null, 2)}\n`;
   reportText += tripleTicksThen2N;
 
-  reportText += '## Base Config\n\n';
+  reportText += '## Base Config (the one used by default if no override was manually picked)\n\n';
   reportText += tripleTicksWithJson;
   reportText += `${JSON.stringify(args.baseSettingsConfig, null, 2)}\n`;
   reportText += tripleTicksThen2N;
-
-  for (const overrideOption of args.overrideOptions) {
-    const overrideCoreSettingsConfig = await args.configService.getCoreSettingsConfig(overrideOption.id);
-
-    reportText += `## ${overrideOption.id}\n\n`;
-    reportText += tripleTicksWithJson;
-    reportText += `${JSON.stringify(overrideCoreSettingsConfig, null, 2)}\n`;
-    reportText += tripleTicksThen2N;
-  }
 
   return reportText.trimEnd();
 }
