@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { GLOB_CONSTS } from '../../global-constants';
 import { OutputChannelLogger } from '../output-channel-logger';
 
-export async function readUserConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
+export async function readUserJsonConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) return null;

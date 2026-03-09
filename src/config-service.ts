@@ -1,6 +1,6 @@
 import { LlmCopypasterUserConfig } from './contracts/user-config';
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
-import { readSystemJsonConfigFile, readUserConfigFile } from './utils/config-helpers/config-tech-helpers';
+import { readSystemJsonConfigFile, readUserJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export interface PromptInstructionsConfig {
@@ -137,7 +137,7 @@ export class ConfigService {
 
   private async _buildLlmCopypasterConfig(): Promise<LlmCopypasterInternalConfig> {
     const systemConfig = await this.getSystemConfig();
-    const userFileConfig = await readUserConfigFile<LlmCopypasterUserConfig>(this._logger);
+    const userFileConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
 
     return mergeConfigs(systemConfig, userFileConfig);
   }
