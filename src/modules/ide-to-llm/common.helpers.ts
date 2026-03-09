@@ -8,7 +8,6 @@ import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
-import { closeUnavailableTabs } from './utils/uncategorized-helpers';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
@@ -108,9 +107,6 @@ export async function showCopyResultNotification(
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
-  const closeUnavailableActionLabel =
-    unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
-
   await deps.configService.getCoreSettingsConfig();
 
   const overrideOptions = deps.configService.overrideOptions;
@@ -153,7 +149,6 @@ export async function showCopyResultNotification(
       openPromptInEditor,
       ...(isTechPromptErased ? [] : [eraseInstructions]),
       ...(hasProfiles ? [applyOrChangeProfilesLabel] : []),
-      ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
     ];
 
     let selectedAction: string | undefined;
@@ -188,15 +183,6 @@ export async function showCopyResultNotification(
       currentPromptText = rebuiltPrompt;
 
       await vscode.env.clipboard.writeText(currentPromptText);
-
-      continue;
-    }
-
-    if (selectedAction === closeUnavailableActionLabel) {
-      await closeUnavailableTabs(deps, {
-        deletedFileUris: args.deletedFileUris,
-        unresolvedTabs: args.unresolvedTabs,
-      });
 
       continue;
     }

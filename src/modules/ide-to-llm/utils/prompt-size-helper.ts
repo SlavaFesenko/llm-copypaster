@@ -1,7 +1,5 @@
 import { IdeToLlmContextConfig, LlmToIdeContextConfig } from '../../../config-service';
 
-import { formatCountInThousands } from './uncategorized-helpers';
-
 export interface TextSizeStatsInput {
   promptText: string;
   contextConfig: IdeToLlmContextConfig | LlmToIdeContextConfig;
@@ -97,4 +95,15 @@ function estimateTokensCount(text: string, contextConfig: { promptSizeApproxChar
   const safeApproxCharsPerToken = Math.max(1, approxCharsPerToken);
 
   return Math.ceil(text.length / safeApproxCharsPerToken);
+}
+
+function formatCountInThousands(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  if (Math.abs(safeValue) < 1000) return String(Math.trunc(safeValue));
+
+  const roundedK = Math.round((safeValue / 1000) * 10) / 10;
+  const text = roundedK % 1 === 0 ? roundedK.toFixed(0) : roundedK.toFixed(1);
+
+  return `${text}K`;
 }
