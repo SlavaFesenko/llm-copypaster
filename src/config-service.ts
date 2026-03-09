@@ -1,7 +1,6 @@
 import { LlmCopypasterUserConfig } from './contracts/user-config';
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
-import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export interface PromptInstructionsConfig {
   relativePathToSubInstruction: string;
@@ -84,8 +83,6 @@ export interface OverrideOptionMetadata {
 }
 
 export class ConfigService {
-  public constructor(private readonly _logger: OutputChannelLogger) {}
-
   public get overrideOptions(): OverrideOptionMetadata[] {
     return this._overrideOptions;
   }
