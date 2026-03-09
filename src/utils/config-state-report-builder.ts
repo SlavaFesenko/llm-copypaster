@@ -5,8 +5,9 @@ import { mergeConfigs } from './config-helpers/config-mergers';
 import { readUserJsonConfigFile } from './config-helpers/config-tech-helpers';
 import { OutputChannelLogger } from './output-channel-logger';
 
-const NORMALIZED_CONFIG_STATUS = '(Normalized Config)';
-const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '(Raw Config Before Normalization)';
+const NORMALIZED_CONFIG_STATUS = '[NORMALIZED CONFIG]';
+const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '[RAW CONFIG BEFORE NORMALIZATION]';
+const JSON_DIFF_STATUS = '[JSON DIFF]';
 
 export interface ConfigStateReportBuilderArgs {
   configService: ConfigService;
@@ -27,17 +28,17 @@ export class ConfigStateReportBuilder {
 
     if (userConfig) {
       reportText += '# Config Report\n\n';
-      reportText += `## Base Config: ${GLOB_CONSTS.SYS_CONFIG_FILE_NAME} + ${GLOB_CONSTS.USER_CONFIG_FILE_NAME} ${NORMALIZED_CONFIG_STATUS} \n\n`;
-      reportText += 'Base Config applied by default (when no override manually selected)\n\n';
+      reportText += `## ${NORMALIZED_CONFIG_STATUS} Base Config: ${GLOB_CONSTS.SYS_CONFIG_FILE_NAME} + ${GLOB_CONSTS.USER_CONFIG_FILE_NAME}\n\n`;
+      reportText += 'Base Config is applied by default (when no override manually selected)\n\n';
       reportText += this._buildJsonCodeBlock(basePublicConfig.coreSettings);
 
-      reportText += `## User Config: ${GLOB_CONSTS.USER_CONFIG_FILE_NAME} ${RAW_CONFIG_BEFORE_NORMALIZATION_STATUS}\n\n`;
+      reportText += `## ${RAW_CONFIG_BEFORE_NORMALIZATION_STATUS} User Config: ${GLOB_CONSTS.USER_CONFIG_FILE_NAME}\n\n`;
       reportText += this._buildJsonCodeBlock(userConfig.coreSettings);
     } else {
       reportText += `## No User Config was found (${GLOB_CONSTS.USER_CONFIG_FILE_NAME})\n\n`;
     }
 
-    reportText += `## System Config: ${GLOB_CONSTS.SYS_CONFIG_FILE_NAME} ${RAW_CONFIG_BEFORE_NORMALIZATION_STATUS}\n\n`;
+    reportText += `## ${RAW_CONFIG_BEFORE_NORMALIZATION_STATUS} System Config: ${GLOB_CONSTS.SYS_CONFIG_FILE_NAME}\n\n`;
     reportText += this._buildJsonCodeBlock(systemConfig.coreSettings);
 
     for (const overrideOption of overrideOptions) {
@@ -66,12 +67,12 @@ export class ConfigStateReportBuilder {
 
     let sectionText = '';
 
-    sectionText += `## Override: ${args.overrideOption.id}\n\n`;
+    sectionText += `## ${NORMALIZED_CONFIG_STATUS} Override: ${args.overrideOption.id}\n\n`;
 
-    sectionText += `### Override Diffs ${RAW_CONFIG_BEFORE_NORMALIZATION_STATUS}\n\n`;
+    sectionText += `### ${RAW_CONFIG_BEFORE_NORMALIZATION_STATUS} Override Diffs\n\n`;
     sectionText += this._buildJsonCodeBlock(args.rawMergedOverrideCoreSettingsConfig);
 
-    sectionText += '### Json Diff: Normalized Override vs Base Config\n\n';
+    sectionText += `### ${JSON_DIFF_STATUS} Normalized Override vs Base Config\n\n`;
     sectionText += this._buildJsonCodeBlock(overrideDiffHumanReadable);
 
     if (args.overrideOption.description || args.overrideOption.version) {
@@ -82,7 +83,7 @@ export class ConfigStateReportBuilder {
       if (detailsText) sectionText += `${detailsText}\n\n`;
     }
 
-    sectionText += '### Normalized Override\n\n';
+    sectionText += `### ${NORMALIZED_CONFIG_STATUS} Override\n\n`;
     sectionText += this._buildJsonCodeBlock(overridePublicConfig.coreSettings);
 
     return sectionText;
