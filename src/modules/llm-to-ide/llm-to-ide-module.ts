@@ -33,7 +33,7 @@ export class LlmToIdeModule {
       return;
     }
 
-    const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
+    const sanitizedPayload = sanitizeFilesPayload(validation.value, config);
 
     const applyResult = await applyFilesPayloadToWorkspace(
       sanitizedPayload,
@@ -107,7 +107,7 @@ export class LlmToIdeModule {
       return;
     }
 
-    const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
+    const sanitizedPayload = sanitizeFilesPayload(validation.value, config);
 
     const ronParkClipboardText = sanitizedPayload.files
       .map(file => {
