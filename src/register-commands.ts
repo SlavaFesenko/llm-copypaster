@@ -120,7 +120,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
       const reportText = await new ConfigStateReportBuilder({
         configService: deps.configService,
-        logger: deps.logger,
       }).build();
 
       await ensureReadonlyVirtualMarkdownDocOpened({

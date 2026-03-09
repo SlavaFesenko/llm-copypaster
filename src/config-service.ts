@@ -137,7 +137,7 @@ export class ConfigService {
 
   private async _buildLlmCopypasterConfig(): Promise<LlmCopypasterInternalConfig> {
     const systemConfig = await this.getSystemConfig();
-    const userFileConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>(this._logger);
+    const userFileConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
 
     return mergeConfigs(systemConfig, userFileConfig);
   }

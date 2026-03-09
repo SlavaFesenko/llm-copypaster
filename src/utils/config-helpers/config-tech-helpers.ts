@@ -3,16 +3,15 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { GLOB_CONSTS } from '../../global-constants';
-import { OutputChannelLogger } from '../output-channel-logger';
 
-export async function readUserJsonConfigFile<TConfig>(logger: OutputChannelLogger): Promise<TConfig | null> {
+export async function readUserJsonConfigFile<TConfig>(): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 
   if (!workspaceFolder) return null;
 
   const configUri = vscode.Uri.joinPath(workspaceFolder.uri, GLOB_CONSTS.USER_CONFIG_FILE_NAME);
 
-  return await readJsoncConfigFile<TConfig>(configUri, logger, 'Workspace config not loaded');
+  return await readJsoncConfigFile<TConfig>(configUri);
 }
 
 export async function readSystemJsonConfigFile<TConfig>(): Promise<TConfig> {
@@ -29,11 +28,7 @@ export async function readSystemJsonConfigFile<TConfig>(): Promise<TConfig> {
   return parsed;
 }
 
-export async function readJsoncConfigFile<TConfig>(
-  configUri: vscode.Uri,
-  logger: OutputChannelLogger,
-  notLoadedMessagePrefix: string
-): Promise<TConfig | null> {
+export async function readJsoncConfigFile<TConfig>(configUri: vscode.Uri): Promise<TConfig | null> {
   try {
     const bytes = await vscode.workspace.fs.readFile(configUri);
     const jsonText = Buffer.from(bytes).toString('utf8');
@@ -46,7 +41,6 @@ export async function readJsoncConfigFile<TConfig>(
 
     return parsed;
   } catch (error) {
-    logger.debug(`${notLoadedMessagePrefix}: ${String(error)}`);
     return null;
   }
 }

@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 
 import { ConfigService, OverrideOptionMetadata } from '../../config-service';
 import { CollectedFileItem } from '../../contracts/files-payload';
+import { ConfigStateReportBuilder } from '../../utils/config-state-report-builder';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './liquid-builder/external-helpers';
+import { PromptBuilder } from './liquid-builder/prompt-builder';
+import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
 import { closeUnavailableTabs } from './utils/uncategorized-helpers';
 
@@ -257,7 +259,7 @@ export async function showCopyResultNotification(
         const basePublicConfig = await deps.configService.getLlmCopypasterPublicConfig();
         const mergedPublicConfig = await deps.configService.getLlmCopypasterPublicConfig(selectedOverrideIdForReport);
 
-        const mergedConfigReportText = await buildMergedConfigMarkdownReportText({
+        const mergedConfigReportText = await ConfigStateReportBuilder.buildMergedConfigMarkdownReportText({
           configService: deps.configService,
           baseSettingsConfig: basePublicConfig.coreSettings,
           mergedSettingsConfig: mergedPublicConfig.coreSettings,
@@ -326,6 +328,36 @@ async function pickProfileIds(args: {
     .filter((profileId): profileId is string => Boolean(profileId));
 
   return { profileIds, shouldAdditionallyOpenMergedConfigInEditor };
+}
+
+async function buildLlmPromptTextForProfiles(args: {
+  extensionContext: vscode.ExtensionContext;
+  configService: ConfigService;
+  profileIds: string[];
+  includeTechPromptFromCommand: boolean;
+  fileItems: CollectedFileItem[];
+  forceSkipTechPrompt?: boolean;
+}): Promise<string> {
+  const selectedOverrideId = getSelectedOverrideId(args.profileIds);
+  const effectiveConfig = await args.configService.getLlmCopypasterPublicConfig(selectedOverrideId);
+
+  const shouldIncludeTechPrompt =
+    args.includeTechPromptFromCommand &&
+    args.forceSkipTechPrompt !== true &&
+    effectiveConfig.coreSettings.skipInstructions !== true;
+
+  const effectiveFileItems = effectiveConfig.coreSettings.skipCodeListings === true ? [] : args.fileItems;
+
+  const techPromptText = shouldIncludeTechPrompt
+    ? await new PromptBuilder(args.extensionContext, effectiveConfig).build()
+    : '';
+
+  return buildLlmContextText({
+    fileItems: effectiveFileItems,
+    ignorePromptInstructions: !shouldIncludeTechPrompt,
+    config: effectiveConfig,
+    techPromptText,
+  });
 }
 
 async function openPromptTextInEditor(extensionContext: vscode.ExtensionContext, promptText: string): Promise<void> {
