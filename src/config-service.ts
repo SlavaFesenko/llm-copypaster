@@ -97,7 +97,7 @@ export class ConfigService {
   public async getSystemConfig(): Promise<LlmCopypasterInternalConfig> {
     if (this._systemConfig) return this._systemConfig;
 
-    this._systemConfig = await this._buildSystemConfig();
+    this._systemConfig = await readSystemJsonConfigFile<LlmCopypasterInternalConfig>();
 
     return this._systemConfig;
   }
@@ -124,12 +124,6 @@ export class ConfigService {
       coreSettings,
       vitalParsingAnchors,
     };
-  }
-
-  private async _buildSystemConfig(): Promise<LlmCopypasterInternalConfig> {
-    const systemConfig = await readSystemJsonConfigFile<LlmCopypasterInternalConfig>(this._logger);
-
-    return systemConfig!;
   }
 
   private async _getLlmCopypasterConfig(): Promise<LlmCopypasterInternalConfig> {
