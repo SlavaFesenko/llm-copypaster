@@ -104,8 +104,6 @@ export async function showCopyResultNotification(
 ): Promise<void> {
   const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
-  await deps.configService.getCoreSettingsConfig();
-
   const overrideOptions = deps.configService.overrideOptions;
   const hasProfiles = overrideOptions.length > 0;
 

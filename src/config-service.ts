@@ -101,12 +101,6 @@ export class ConfigService {
     return this._systemConfig;
   }
 
-  public async getCoreSettingsConfig(): Promise<CoreSettingsConfig> {
-    const llmCopypasterConfig = await this._getLlmCopypasterConfig();
-
-    return llmCopypasterConfig.coreSettings;
-  }
-
   public async getLlmCopypasterPublicConfig(overrideId?: string): Promise<LlmCopypasterConfig> {
     return this.getMergedConfigByOverrideIds(overrideId ? [overrideId] : []);
   }
