@@ -157,8 +157,7 @@ export async function showCopyResultNotification(
   let isTechPromptErased = false;
 
   while (true) {
-    const selectedOverrideId = getSelectedOverrideId(selectedProfileIds);
-    const effectiveConfig = await deps.configService.getLlmCopypasterPublicConfig(selectedOverrideId);
+    const effectiveConfig = await deps.configService.getMergedConfigByOverrideIds(selectedProfileIds);
 
     const promptStatsResult = buildTextSizeStats({
       promptText: currentPromptText,
@@ -255,15 +254,8 @@ export async function showCopyResultNotification(
       await vscode.env.clipboard.writeText(currentPromptText);
 
       if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-        const selectedOverrideIdForReport = getSelectedOverrideId(selectedProfileIds);
-        const basePublicConfig = await deps.configService.getLlmCopypasterPublicConfig();
-        const mergedPublicConfig = await deps.configService.getLlmCopypasterPublicConfig(selectedOverrideIdForReport);
-
         const mergedConfigReportText = await ConfigStateReportBuilder.buildMergedConfigMarkdownReportText({
           configService: deps.configService,
-          baseSettingsConfig: basePublicConfig.coreSettings,
-          mergedSettingsConfig: mergedPublicConfig.coreSettings,
-          overrideOptions,
           selectedProfileIds,
         });
 
@@ -338,8 +330,7 @@ async function buildLlmPromptTextForProfiles(args: {
   fileItems: CollectedFileItem[];
   forceSkipTechPrompt?: boolean;
 }): Promise<string> {
-  const selectedOverrideId = getSelectedOverrideId(args.profileIds);
-  const effectiveConfig = await args.configService.getLlmCopypasterPublicConfig(selectedOverrideId);
+  const effectiveConfig = await args.configService.getMergedConfigByOverrideIds(args.profileIds);
 
   const shouldIncludeTechPrompt =
     args.includeTechPromptFromCommand &&
@@ -373,8 +364,4 @@ async function openMergedConfigInEditor(
     docId: 'merged-config',
     markdownText: mergedConfigReportText,
   });
-}
-
-function getSelectedOverrideId(profileIds: string[]): string | undefined {
-  return [...(profileIds ?? [])].reverse().find(profileId => profileId !== 'Default');
 }

@@ -103,11 +103,25 @@ export class ConfigService {
   }
 
   public async getCoreSettingsConfig(overrideId?: string): Promise<CoreSettingsConfig> {
+    return this.getCoreSettingsConfigByOverrideIds(overrideId ? [overrideId] : []);
+  }
+
+  public async getCoreSettingsConfigByOverrideIds(overrideIds?: string[]): Promise<CoreSettingsConfig> {
     const llmCopypasterConfig = await this._getLlmCopypasterConfig();
+    const normalizedOverrideIds = this._normalizeOverrideIds(overrideIds);
 
-    if (!overrideId) return llmCopypasterConfig.coreSettings;
+    if (normalizedOverrideIds.length === 0) return llmCopypasterConfig.coreSettings;
 
-    return llmCopypasterConfig.overridesById?.[overrideId]?.coreSettings ?? llmCopypasterConfig.coreSettings;
+    let mergedCoreSettingsConfig = llmCopypasterConfig.coreSettings;
+
+    for (const overrideId of normalizedOverrideIds) {
+      const overrideCoreSettingsConfig = llmCopypasterConfig.overridesById?.[overrideId]?.coreSettings;
+      if (!overrideCoreSettingsConfig) continue;
+
+      mergedCoreSettingsConfig = this._mergeCoreSettingsConfigs(mergedCoreSettingsConfig, overrideCoreSettingsConfig);
+    }
+
+    return mergedCoreSettingsConfig;
   }
 
   public async getVitalParsingAnchorsConfig(): Promise<VitalParsingAnchorsConfig> {
@@ -117,7 +131,11 @@ export class ConfigService {
   }
 
   public async getLlmCopypasterPublicConfig(overrideId?: string): Promise<LlmCopypasterPublicConfig> {
-    const coreSettings = await this.getCoreSettingsConfig(overrideId);
+    return this.getMergedConfigByOverrideIds(overrideId ? [overrideId] : []);
+  }
+
+  public async getMergedConfigByOverrideIds(overrideIds?: string[]): Promise<LlmCopypasterPublicConfig> {
+    const coreSettings = await this.getCoreSettingsConfigByOverrideIds(overrideIds);
     const vitalParsingAnchors = await this.getVitalParsingAnchorsConfig();
 
     return {
@@ -158,5 +176,20 @@ export class ConfigService {
         version: overrideConfig.version,
       });
     }
+  }
+
+  private _normalizeOverrideIds(overrideIds?: string[]): string[] {
+    return [...(overrideIds ?? [])].filter(Boolean);
+  }
+
+  private _mergeCoreSettingsConfigs(
+    previousCoreSettingsConfig: CoreSettingsConfig,
+    nextCoreSettingsConfig: CoreSettingsConfig
+  ): CoreSettingsConfig {
+    const previousConfigWrapper = { coreSettings: previousCoreSettingsConfig } as LlmCopypasterInternalConfig;
+    const nextConfigWrapper = { coreSettings: nextCoreSettingsConfig } as unknown as LlmCopypasterUserConfig;
+    const mergedConfigWrapper = mergeConfigs(previousConfigWrapper, nextConfigWrapper);
+
+    return mergedConfigWrapper.coreSettings;
   }
 }

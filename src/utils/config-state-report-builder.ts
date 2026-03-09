@@ -15,9 +15,6 @@ export interface ConfigStateReportBuilderArgs {
 
 export interface BuildMergedConfigMarkdownReportTextArgs {
   configService: ConfigService;
-  baseSettingsConfig: unknown;
-  mergedSettingsConfig: unknown;
-  overrideOptions: OverrideOptionMetadata[];
   selectedProfileIds: string[];
 }
 
@@ -36,7 +33,7 @@ interface BuildConfigReportMarkdownArgs {
   baseCoreSettingsConfig: CoreSettingsConfig;
   rawUserCoreSettingsConfig: unknown;
   rawSystemCoreSettingsConfig: unknown;
-  rawMergedOverridesById: Record<string, RawMergedOverrideConfigEntry> | null | undefined;
+  rawMergedOverridesById?: Record<string, RawMergedOverrideConfigEntry> | null;
   leadingSectionsMarkdown?: string;
 }
 
@@ -72,6 +69,9 @@ export class ConfigStateReportBuilder {
     const normalizedSelectedProfileIds = (args.selectedProfileIds ?? [])
       .filter(Boolean)
       .filter(profileId => profileId !== 'Default');
+    const basePublicConfig = await args.configService.getLlmCopypasterPublicConfig();
+    const mergedPublicConfig = await args.configService.getMergedConfigByOverrideIds(normalizedSelectedProfileIds);
+    const overrideOptions = args.configService.overrideOptions;
 
     const mergeChainText =
       normalizedSelectedProfileIds.length > 0
@@ -79,8 +79,8 @@ export class ConfigStateReportBuilder {
         : 'Base Config';
 
     const diffChangeset = await ConfigStateReportBuilder._buildJsonDiffChangeset(
-      args.baseSettingsConfig,
-      args.mergedSettingsConfig
+      basePublicConfig.coreSettings,
+      mergedPublicConfig.coreSettings
     );
 
     const humanReadableDiffChangeset = ConfigStateReportBuilder._buildHumanReadableJsonDiffChangeset(
@@ -97,12 +97,12 @@ export class ConfigStateReportBuilder {
     return ConfigStateReportBuilder._buildConfigReportMarkdown({
       configService: args.configService,
       hasUserConfig: !!userConfig,
-      overrideOptions: args.overrideOptions,
+      overrideOptions,
       activeOverrideIds: normalizedSelectedProfileIds,
       currentNormalizedConfigLabel: `Merged Config: ${mergeChainText}`,
       currentNormalizedConfigDescription: 'Merged Config is currently applied because one or more overrides were selected',
-      currentNormalizedConfigValue: args.mergedSettingsConfig,
-      baseCoreSettingsConfig: args.baseSettingsConfig as CoreSettingsConfig,
+      currentNormalizedConfigValue: mergedPublicConfig.coreSettings,
+      baseCoreSettingsConfig: basePublicConfig.coreSettings,
       rawUserCoreSettingsConfig: userConfig?.coreSettings ?? null,
       rawSystemCoreSettingsConfig: systemConfig.coreSettings,
       rawMergedOverridesById: rawMergedConfig.overridesById ?? null,
@@ -235,7 +235,7 @@ export class ConfigStateReportBuilder {
   }
 
   private static async _buildJsonDiffChangeset(previousValue: unknown, nextValue: unknown): Promise<unknown> {
-    const { diff } = await import('json-diff-ts'); // json-diff-ts is ESM-only, dynamic import avoids CommonJS require
+    const { diff } = await import('json-diff-ts');
 
     return diff(previousValue, nextValue);
   }
@@ -262,17 +262,17 @@ export class ConfigStateReportBuilder {
     const nextObject: Record<string, unknown> = {};
 
     for (const [key, childValue] of Object.entries(anyObject)) {
-      if (key === 'type') continue; // Drop json-diff-ts change type (it's always UPDATE in our use-case)
+      if (key === 'type') continue;
 
       let nextKey = key;
 
       switch (key) {
         case 'key':
-          nextKey = 'fieldOrSectionName'; // key -> fieldOrSectionName
+          nextKey = 'fieldOrSectionName';
           break;
 
         case 'changes':
-          nextKey = 'diff'; // changes -> diff
+          nextKey = 'diff';
           break;
 
         case 'value':
@@ -285,7 +285,7 @@ export class ConfigStateReportBuilder {
           break;
 
         default:
-          nextKey = key; // Keep other keys as-is
+          nextKey = key;
           break;
       }
 
