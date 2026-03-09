@@ -1,4 +1,4 @@
-import { LlmCopypasterInternalConfig, VitalParsingAnchorsConfig } from '../../../config-service';
+import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config-service';
 import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../contracts/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
@@ -7,7 +7,7 @@ type ParseResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string
 
 export function validateClipboardTextToFilesPayload(
   rawClipboardText: string,
-  config: LlmCopypasterInternalConfig
+  config: LlmCopypasterConfig
 ): ValidationResult<FilesPayload> {
   const headerRegex = new RegExp(String.raw`^${config.vitalParsingAnchors.codeListingHeaderStartFragment}\s+(.+)\s*$`, 'gm');
 

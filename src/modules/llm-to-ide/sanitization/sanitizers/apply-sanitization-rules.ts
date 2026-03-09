@@ -1,5 +1,4 @@
-import { LlmCopypasterInternalConfig } from '../../../../config-service';
-import { OutputChannelLogger } from '../../../../utils/output-channel-logger';
+import { LlmCopypasterConfig } from '../../../../config-service';
 
 export interface ApplySanitizationRulesFileMeta {
   path: string;
@@ -9,8 +8,7 @@ export interface ApplySanitizationRulesFileMeta {
 export function applySanitizationRules(
   inputText: string,
   fileMeta: ApplySanitizationRulesFileMeta,
-  config: LlmCopypasterInternalConfig,
-  logger: OutputChannelLogger
+  config: LlmCopypasterConfig
 ): string {
   let outputText = inputText;
 
@@ -19,12 +17,8 @@ export function applySanitizationRules(
   for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
     if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;
 
-    try {
-      const regexp = new RegExp(ruleConfig.pattern, 'g');
-      outputText = outputText.replace(regexp, ruleConfig.replaceWith);
-    } catch (error) {
-      logger.warn(`Sanitization rule failed (${ruleId}) for ${fileMeta.path}: ${String(error)}`);
-    }
+    const regexp = new RegExp(ruleConfig.pattern, 'g');
+    outputText = outputText.replace(regexp, ruleConfig.replaceWith);
   }
 
   return outputText;

@@ -5,7 +5,7 @@ import { Liquid } from 'liquidjs';
 import get from 'lodash/get';
 
 import {
-  type LlmCopypasterPublicConfig,
+  type LlmCopypasterConfig,
   type PromptInstructionConfig,
   type PromptInstructionsConfig,
 } from '../../../config-service';
@@ -24,7 +24,7 @@ export class PromptBuilder {
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
-    private readonly _config: LlmCopypasterPublicConfig
+    private readonly _config: LlmCopypasterConfig
   ) {
     this._liquidStrict = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
     this._liquidLight = new Liquid({ cache: false, strictVariables: false, strictFilters: false });

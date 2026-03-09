@@ -1,15 +1,10 @@
-import { LlmCopypasterInternalConfig } from '../../../config-service';
+import { LlmCopypasterConfig } from '../../../config-service';
 import { FilesPayload } from '../../../contracts/files-payload';
-import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { applySanitizationRules } from './sanitizers/apply-sanitization-rules';
 
-export function sanitizeFilesPayload(
-  payload: FilesPayload,
-  config: LlmCopypasterInternalConfig,
-  logger: OutputChannelLogger
-): FilesPayload {
+export function sanitizeFilesPayload(payload: FilesPayload, config: LlmCopypasterConfig): FilesPayload {
   const sanitizedFiles = payload.files.map(file => {
-    const nextContent = applySanitizationRules(file.content, { path: file.path }, config, logger);
+    const nextContent = applySanitizationRules(file.content, { path: file.path }, config);
 
     return { ...file, content: nextContent };
   });

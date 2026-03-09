@@ -1,10 +1,9 @@
 import {
   CoreSettingsConfig,
   IdeToLlmContextConfig,
-  LlmCopypasterInternalConfig,
+  LlmCopypasterConfig,
   LlmToIdeContextConfig,
   LlmToIdeSanitizationRuleConfig,
-  OverrideConfig,
   PostFilePatchActionsConfig,
   PromptInstructionConfig,
   PromptInstructionsConfig,
@@ -16,78 +15,31 @@ import {
   LlmCopypasterUserConfig,
   LlmToIdeContextUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
-  OverrideUserConfig,
   PostFilePatchActionsUserConfig,
   PromptInstructionsUserConfig,
   PromptInstructionUserConfig,
   VitalParsingAnchorsUserConfig,
 } from '../../contracts/user-config';
 
-export interface MergeConfigsOptions {
-  normalizeOverrides?: boolean;
-}
-
 export function mergeConfigs(
-  systemConfig: LlmCopypasterInternalConfig,
-  userConfig: LlmCopypasterUserConfig | null,
-  options?: MergeConfigsOptions
-): LlmCopypasterInternalConfig {
-  if (!userConfig) {
-    if (options?.normalizeOverrides === false) return systemConfig;
+  systemConfig: LlmCopypasterConfig,
+  userConfig: LlmCopypasterUserConfig | null
+): LlmCopypasterConfig {
+  if (!userConfig) return systemConfig;
 
-    return normalizeInternalConfig(systemConfig);
-  }
-
-  return applyUserConfig(systemConfig, userConfig, options);
+  return applyUserConfig(systemConfig, userConfig);
 }
 
 export function applyUserConfig(
-  systemConfig: LlmCopypasterInternalConfig,
-  userConfig: LlmCopypasterUserConfig,
-  options?: MergeConfigsOptions
-): LlmCopypasterInternalConfig {
-  const mergedCoreSettings = mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings);
-  const mergedProfilesById = mergeProfilesById(systemConfig.overridesById, userConfig, mergedCoreSettings);
-
-  const nextConfig: LlmCopypasterInternalConfig = {
+  systemConfig: LlmCopypasterConfig,
+  userConfig: LlmCopypasterUserConfig
+): LlmCopypasterConfig {
+  const nextConfig: LlmCopypasterConfig = {
     vitalParsingAnchors: mergeLlmToIdeParsingAnchors(systemConfig.vitalParsingAnchors, userConfig.vitalParsingAnchors),
-    coreSettings: mergedCoreSettings,
-    ...(mergedProfilesById ? { overridesById: mergedProfilesById } : {}),
+    coreSettings: mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings),
   };
 
-  if (options?.normalizeOverrides === false) return nextConfig;
-
-  return normalizeInternalConfig(nextConfig);
-}
-
-export function normalizeInternalConfig(config: LlmCopypasterInternalConfig): LlmCopypasterInternalConfig {
-  const normalizedOverridesById = normalizeProfilesById(config.overridesById, config.coreSettings);
-
-  return {
-    vitalParsingAnchors: config.vitalParsingAnchors,
-    coreSettings: config.coreSettings,
-    ...(normalizedOverridesById ? { overridesById: normalizedOverridesById } : {}),
-  };
-}
-
-export function normalizeProfilesById(
-  profilesById: Record<string, OverrideConfig> | undefined,
-  baseCoreSettings: CoreSettingsConfig
-): Record<string, OverrideConfig> | undefined {
-  if (!profilesById) return profilesById;
-
-  const normalizedProfilesById: Record<string, OverrideConfig> = {};
-
-  for (const profileId of Object.keys(profilesById)) {
-    const profileConfig = profilesById[profileId];
-
-    normalizedProfilesById[profileId] = {
-      ...profileConfig,
-      coreSettings: mergeCoreSettingsConfig(baseCoreSettings, profileConfig.coreSettings),
-    };
-  }
-
-  return normalizedProfilesById;
+  return nextConfig;
 }
 
 export function mergeLlmToIdeParsingAnchors(
@@ -283,50 +235,4 @@ export function mapLlmToIdeSanitizationRulesById(
   }
 
   return nextRulesById;
-}
-
-export function mergeProfilesById(
-  baseProfilesById: Record<string, OverrideConfig> | undefined,
-  userConfig: LlmCopypasterUserConfig,
-  baseCoreSettings: CoreSettingsConfig
-): Record<string, OverrideConfig> | undefined {
-  const userProfilesById = userConfig.overridesById;
-
-  if (!userProfilesById) return baseProfilesById;
-
-  return mapProfilesById(baseProfilesById ?? {}, userProfilesById, baseCoreSettings);
-}
-
-export function mapProfilesById(
-  baseProfilesById: Record<string, OverrideConfig>,
-  userProfilesById: Record<string, OverrideUserConfig>,
-  baseCoreSettings: CoreSettingsConfig
-): Record<string, OverrideConfig> {
-  const nextProfilesById: Record<string, OverrideConfig> = { ...baseProfilesById };
-
-  for (const profileId of Object.keys(userProfilesById)) {
-    const baseProfile = baseProfilesById[profileId];
-    const userProfile = userProfilesById[profileId];
-    const baseProfileCoreSettings = baseProfile?.coreSettings ?? baseCoreSettings;
-
-    if (!baseProfile) {
-      nextProfilesById[profileId] = {
-        description: userProfile.description,
-        version: userProfile.version,
-        shouldBeSkipped: userProfile.shouldBeSkipped ?? false,
-        coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
-      };
-
-      continue;
-    }
-
-    nextProfilesById[profileId] = {
-      description: userProfile.description ?? baseProfile.description,
-      version: userProfile.version ?? baseProfile.version ?? '',
-      shouldBeSkipped: userProfile.shouldBeSkipped ?? baseProfile.shouldBeSkipped ?? false,
-      coreSettings: mergeCoreSettingsConfig(baseProfileCoreSettings, userProfile.coreSettings),
-    };
-  }
-
-  return nextProfilesById;
 }

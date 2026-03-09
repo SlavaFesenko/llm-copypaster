@@ -11,7 +11,7 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 // This method is called when your extension is activated, extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
-  const configService = new ConfigService(logger);
+  const configService = new ConfigService();
   const guidedRetryStore = new GuidedRetryStore(context, logger);
 
   const editorToLlmModule = new IdeToLlmModule(context, configService, logger);
