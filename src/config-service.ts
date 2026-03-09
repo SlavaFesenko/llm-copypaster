@@ -107,18 +107,6 @@ export class ConfigService {
     return llmCopypasterConfig.coreSettings;
   }
 
-  public async getCoreSettingsConfigByOverrideIds(overrideIds?: string[]): Promise<CoreSettingsConfig> {
-    const mergedConfig = await this.getMergedConfigByOverrideIds(overrideIds);
-
-    return mergedConfig.coreSettings;
-  }
-
-  public async getVitalParsingAnchorsConfig(): Promise<VitalParsingAnchorsConfig> {
-    const llmCopypasterConfig = await this._getLlmCopypasterConfig();
-
-    return llmCopypasterConfig.vitalParsingAnchors;
-  }
-
   public async getLlmCopypasterPublicConfig(overrideId?: string): Promise<LlmCopypasterConfig> {
     return this.getMergedConfigByOverrideIds(overrideId ? [overrideId] : []);
   }
