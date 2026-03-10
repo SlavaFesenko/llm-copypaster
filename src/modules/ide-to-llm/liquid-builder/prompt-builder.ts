@@ -8,7 +8,7 @@ import {
   type InstructionConfig,
   type InstructionsAndVariablesConfig,
   type LlmCopypasterConfig,
-} from '../../../config-service';
+} from '../../../config/config-service';
 import { GLOB_CONSTS } from '../../../global-constants';
 import {
   collapseEmptyLines,

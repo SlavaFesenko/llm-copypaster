@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config-service';
+import { ConfigService } from '../../config/config-service';
 import { CollectedFileItem } from '../../contracts/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { ShowCopyResultNotificationArgs } from './copy-result-notificator';

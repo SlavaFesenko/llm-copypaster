@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config-service';
+import { ConfigService } from '../../config/config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/utils/prompt-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';

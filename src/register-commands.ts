@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ConfigService } from './config-service';
+import { ConfigService } from './config/config-service';
 import { AdvancedTabOptionsModule } from './modules/advanced-tab-options/advanced-file-options-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';

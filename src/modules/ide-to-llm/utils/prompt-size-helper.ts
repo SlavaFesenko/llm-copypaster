@@ -1,4 +1,4 @@
-import { IdeToLlmConfig, LlmToIdeConfig } from '../../../config-service';
+import { IdeToLlmConfig, LlmToIdeConfig } from '../../../config/config-service';
 
 export interface TextSizeStatsInput {
   promptText: string;

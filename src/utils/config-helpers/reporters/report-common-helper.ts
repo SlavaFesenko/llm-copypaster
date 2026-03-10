@@ -1,5 +1,5 @@
-import { MergedConfigDebugData, OverrideOptionMetadata } from '../../../config-service';
-import { LlmCopypasterUserConfig } from '../../../contracts/user-config';
+import { MergedConfigDebugData, OverrideOptionMetadata } from '../../../config/config-service';
+import { LlmCopypasterUserConfig } from '../../../config/user-config';
 import { GLOB_CONSTS } from '../../../global-constants';
 
 export const NORMALIZED_CONFIG_STATUS = '[NORMALIZED CONFIG]';

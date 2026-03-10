@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from './config-service';
+import { ConfigService } from './config/config-service';
 import { AdvancedTabOptionsModule } from './modules/advanced-tab-options/advanced-file-options-module';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';

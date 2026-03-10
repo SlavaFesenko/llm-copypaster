@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfig, OverrideOptionMetadata } from '../../config-service';
+import { LlmCopypasterConfig, OverrideOptionMetadata } from '../../config/config-service';
 import { CollectedFileItem } from '../../contracts/files-payload';
 import { ConfigReportFacade } from '../../utils/config-helpers/reporters/config-report-facade';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';

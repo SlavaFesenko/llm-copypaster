@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import assert from 'node:assert/strict';
 
-import { ConfigService, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config-service';
+import { ConfigService, LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config/config-service';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 

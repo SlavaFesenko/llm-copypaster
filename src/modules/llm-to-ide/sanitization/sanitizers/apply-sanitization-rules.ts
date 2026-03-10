@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../../config-service';
+import { LlmCopypasterConfig } from '../../../../config/config-service';
 
 export interface ApplySanitizationRulesFileMeta {
   path: string;

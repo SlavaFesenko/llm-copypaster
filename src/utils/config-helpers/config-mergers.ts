@@ -8,7 +8,7 @@ import {
   LlmToIdeSanitizationRuleConfig,
   PostFilePatchActionsConfig,
   VitalParsingAnchorsConfig,
-} from '../../config-service';
+} from '../../config/config-service';
 import {
   CoreSettingsUserConfig,
   IdeToLlmUserConfig,
@@ -19,7 +19,7 @@ import {
   LlmToIdeUserConfig,
   PostFilePatchActionsUserConfig,
   VitalParsingAnchorsUserConfig,
-} from '../../contracts/user-config';
+} from '../../config/user-config';
 
 export function mergeConfigs(
   systemConfig: LlmCopypasterConfig,
