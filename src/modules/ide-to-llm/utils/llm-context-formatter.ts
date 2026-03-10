@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../config/config-service';
+import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
 import { EditorToLlmFileItem } from './file-selection';
 
 export interface BuildLlmContextTextArgs {

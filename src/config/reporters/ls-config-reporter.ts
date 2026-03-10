@@ -1,6 +1,7 @@
 import { GLOB_CONSTS } from '../../global-constants';
 import { readUserJsonConfigFile } from '../config-helpers/config-tech-helpers';
-import { ConfigService, CoreSettingsConfig, OverrideOptionMetadata } from '../config-service';
+import { ConfigService, OverrideOptionMetadata } from '../config-service';
+import { CoreSettingsConfig } from '../system-config-contracts';
 import { LlmCopypasterUserConfig } from '../user-config-contracts';
 import {
   BuildConfigReportMarkdownArgs,

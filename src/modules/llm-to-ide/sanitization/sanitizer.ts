@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../config/config-service';
+import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
 import { FilesPayload } from '../../../contracts/files-payload';
 import { applySanitizationRules } from './sanitizers/apply-sanitization-rules';
 

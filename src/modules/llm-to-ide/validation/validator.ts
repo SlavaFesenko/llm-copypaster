@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/config-service';
+import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
 import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../contracts/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };

@@ -5,10 +5,10 @@ import { Liquid } from 'liquidjs';
 import get from 'lodash/get';
 
 import {
-  type InstructionConfig,
-  type InstructionsAndVariablesConfig,
-  type LlmCopypasterConfig,
-} from '../../../config/config-service';
+  InstructionConfig,
+  InstructionsAndVariablesConfig,
+  LlmCopypasterConfig,
+} from '../../../config/system-config-contracts';
 import { GLOB_CONSTS } from '../../../global-constants';
 import {
   collapseEmptyLines,

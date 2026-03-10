@@ -8,7 +8,7 @@ import {
   LlmToIdeSanitizationRuleConfig,
   PostFilePatchActionsConfig,
   VitalParsingAnchorsConfig,
-} from '../../config/config-service';
+} from '../system-config-contracts';
 import {
   CoreSettingsUserConfig,
   IdeToLlmUserConfig,

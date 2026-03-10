@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { PostFilePatchActionsConfig, VitalParsingAnchorsConfig } from '../../../config/config-service';
+import { PostFilePatchActionsConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
 import { FilesPayload } from '../../../contracts/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
