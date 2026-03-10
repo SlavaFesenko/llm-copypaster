@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 
-import { ConfigService, MergedConfigDebugData } from '../config-service';
-import { buildLsConfigReportText } from './config-helpers/reporters/ls-config-reporter';
-import { buildOverridesAppliedReportText } from './config-helpers/reporters/overrides-apply-reporter';
-import { ensureReadonlyVirtualMarkdownDocOpened } from './editor-virtual-doc-helpers';
+import { ConfigService, MergedConfigDebugData } from '../../../config-service';
+import { ensureReadonlyVirtualMarkdownDocOpened } from '../../editor-virtual-doc-helpers';
+import { buildLsConfigReportText } from './ls-config-reporter';
+import { buildOverridesAppliedReportText } from './overrides-apply-reporter';
 
-export interface ConfigStateReportBuilderArgs {
+export interface ConfigReportFacadeArgs {
   extensionContext: vscode.ExtensionContext;
   configService: ConfigService;
   activeOverrideIds?: string[];
 }
 
-export class ConfigStateReportBuilder {
-  public constructor(private readonly _args: ConfigStateReportBuilderArgs) {}
+export class ConfigReportFacade {
+  public constructor(private readonly _args: ConfigReportFacadeArgs) {}
 
   public async displayLsConfigReport(): Promise<void> {
     const reportText = await buildLsConfigReportText({

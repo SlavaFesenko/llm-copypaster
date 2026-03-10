@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { LlmCopypasterConfig, OverrideOptionMetadata } from '../../config-service';
 import { CollectedFileItem } from '../../contracts/files-payload';
-import { ConfigStateReportBuilder } from '../../utils/config-state-report-builder';
+import { ConfigReportFacade } from '../../utils/config-helpers/reporters/config-report-facade';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { EditorToLlmModulePrivateHelpersDependencies, EditorToLlmPromptSizeStats } from './common.helpers';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
@@ -122,7 +122,7 @@ export class CopyResultNotificator {
         await vscode.env.clipboard.writeText(currentPromptText);
 
         if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-          await new ConfigStateReportBuilder({
+          await new ConfigReportFacade({
             extensionContext: this._deps.extensionContext,
             configService: this._deps.configService,
             activeOverrideIds: selectedProfileIds,

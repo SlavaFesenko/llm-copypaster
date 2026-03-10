@@ -5,7 +5,7 @@ import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-hel
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
-import { ConfigStateReportBuilder } from './utils/config-state-report-builder';
+import { ConfigReportFacade } from './utils/config-helpers/reporters/config-report-facade';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {
@@ -117,7 +117,7 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
-      await new ConfigStateReportBuilder({
+      await new ConfigReportFacade({
         extensionContext: context,
         configService: deps.configService,
       }).displayLsConfigReport();

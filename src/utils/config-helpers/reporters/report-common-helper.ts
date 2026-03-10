@@ -146,10 +146,10 @@ export function buildStatusOverviewMarkdown(args: BuildStatusOverviewMarkdownArg
   let statusOverviewText = '';
 
   statusOverviewText += '## Status Overview\n\n';
-  statusOverviewText += '### Config Sources\n\n';
+  statusOverviewText += '### Base Config Sources\n\n';
   statusOverviewText += `${STATUS_ICON_APPLIED} System Config (${GLOB_CONSTS.SYS_CONFIG_FILE_NAME}): Loaded\n`;
   statusOverviewText += `${args.hasUserConfig ? STATUS_ICON_APPLIED : STATUS_ICON_AVAILABLE} User Config (${GLOB_CONSTS.USER_CONFIG_FILE_NAME}): ${args.hasUserConfig ? 'Loaded' : 'Not Found'}\n\n`;
-  statusOverviewText += '### Core Settings Current Source\n\n';
+  statusOverviewText += '### Core Settings Sources\n\n';
   statusOverviewText += `${currentSourceStatusIcon} ${currentCoreSettingsSource}\n`;
 
   if (args.overrideOptions.length > 0) {
