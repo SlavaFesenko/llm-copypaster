@@ -82,9 +82,28 @@ export interface LlmCopypasterConfig {
   coreSettings: CoreSettingsConfig;
 }
 
+export interface OverrideReportEntryData {
+  overrideOption: OverrideOptionMetadata;
+  rawOverrideCoreSettingsConfig: unknown;
+  normalizedOverrideCoreSettingsConfig: CoreSettingsConfig;
+}
+
+export interface MergedConfigDebugData {
+  hasUserConfig: boolean;
+  overrideOptions: OverrideOptionMetadata[];
+  activeOverrideIds: string[];
+  mergeChainText: string;
+  baseCoreSettingsConfig: CoreSettingsConfig;
+  mergedCoreSettingsConfig: CoreSettingsConfig;
+  rawUserCoreSettingsConfig: unknown;
+  rawSystemCoreSettingsConfig: unknown;
+  overrideReportEntries: OverrideReportEntryData[];
+  overridesInBaseConfig: OverridesInBaseConfigReport;
+}
+
 export interface MergedConfigWithOverrideIdResult {
   mergedConfig: LlmCopypasterConfig;
-  overridesInBaseConfig: OverridesInBaseConfigReport;
+  debugData: MergedConfigDebugData;
 }
 
 export class ConfigService {
@@ -112,6 +131,7 @@ export class ConfigService {
   public async getMergedConfigByOverrideIds(overrideIds?: string[]): Promise<MergedConfigWithOverrideIdResult> {
     const baseConfig = await this._getLlmCopypasterConfig();
     const userConfig = await this._getUserConfig();
+    const systemConfig = await this.getSystemConfig();
     const normalizedOverrideIds = this._normalizeOverrideIds(overrideIds);
 
     let mergedConfig: LlmCopypasterConfig = {
@@ -145,7 +165,14 @@ export class ConfigService {
 
     return {
       mergedConfig,
-      overridesInBaseConfig,
+      debugData: this._buildMergedConfigDebugData({
+        normalizedOverrideIds,
+        systemConfig,
+        userConfig,
+        baseConfig,
+        mergedConfig,
+        overridesInBaseConfig,
+      }),
     };
   }
 
@@ -186,6 +213,55 @@ export class ConfigService {
     return {
       coreSettings: overrideUserConfig.coreSettings,
     };
+  }
+
+  private _buildMergedConfigDebugData(args: {
+    normalizedOverrideIds: string[];
+    systemConfig: LlmCopypasterConfig;
+    userConfig: LlmCopypasterUserConfig | null;
+    baseConfig: LlmCopypasterConfig;
+    mergedConfig: LlmCopypasterConfig;
+    overridesInBaseConfig: OverridesInBaseConfigReport;
+  }): MergedConfigDebugData {
+    const mergeChainText =
+      args.normalizedOverrideIds.length > 0
+        ? `Base Config + ${args.normalizedOverrideIds.join(' + ')} Overrides Config(s)`
+        : 'Base Config';
+
+    return {
+      hasUserConfig: !!args.userConfig,
+      overrideOptions: this.overrideOptions,
+      activeOverrideIds: args.normalizedOverrideIds,
+      mergeChainText,
+      baseCoreSettingsConfig: args.baseConfig.coreSettings,
+      mergedCoreSettingsConfig: args.mergedConfig.coreSettings,
+      rawUserCoreSettingsConfig: args.userConfig?.coreSettings ?? null,
+      rawSystemCoreSettingsConfig: args.systemConfig.coreSettings,
+      overrideReportEntries: this._buildOverrideReportEntries({
+        userConfig: args.userConfig,
+        baseConfig: args.baseConfig,
+      }),
+      overridesInBaseConfig: args.overridesInBaseConfig,
+    };
+  }
+
+  private _buildOverrideReportEntries(args: {
+    userConfig: LlmCopypasterUserConfig | null;
+    baseConfig: LlmCopypasterConfig;
+  }): OverrideReportEntryData[] {
+    return this.overrideOptions.map(overrideOption => {
+      const overrideUserConfig = this._buildOverrideWrapperUserConfig(args.userConfig?.overridesById?.[overrideOption.id]);
+
+      const normalizedOverrideCoreSettingsConfig = overrideUserConfig
+        ? mergeConfigs(args.baseConfig, overrideUserConfig).coreSettings
+        : args.baseConfig.coreSettings;
+
+      return {
+        overrideOption,
+        rawOverrideCoreSettingsConfig: args.userConfig?.overridesById?.[overrideOption.id]?.coreSettings ?? null,
+        normalizedOverrideCoreSettingsConfig,
+      };
+    });
   }
 
   private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): void {

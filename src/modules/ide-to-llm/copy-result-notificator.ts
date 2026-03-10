@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { OverrideOptionMetadata } from '../../config-service';
+import { LlmCopypasterConfig, OverrideOptionMetadata } from '../../config-service';
 import { CollectedFileItem } from '../../contracts/files-payload';
 import { ConfigStateReportBuilder } from '../../utils/config-state-report-builder';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
@@ -62,12 +62,12 @@ export class CopyResultNotificator {
 
       const hasNoSelectedProfiles = selectedProfileIds.length === 0;
 
-      const applyOrChangeProfilesLabel = hasNoSelectedProfiles ? 'Apply Profiles' : 'Change Profiles';
+      const applyOrChangeOverridesCommand = hasNoSelectedProfiles ? 'Apply Profiles' : 'Change Profiles';
 
       const actionLabels = [
         openPromptInEditor,
         ...(isTechPromptErased ? [] : [eraseInstructions]),
-        ...(hasProfiles ? [applyOrChangeProfilesLabel] : []),
+        ...(hasProfiles ? [applyOrChangeOverridesCommand] : []),
       ];
 
       let selectedAction: string | undefined;
@@ -92,34 +92,32 @@ export class CopyResultNotificator {
       if (selectedAction === eraseInstructions) {
         isTechPromptErased = true;
 
-        const rebuiltPrompt = await this._buildLlmPromptTextForProfiles({
-          profileIds: selectedProfileIds,
+        currentPromptText = await this._buildLlmPromptText({
+          effectiveConfig,
           includeTechPromptFromCommand: args.includeTechPrompt,
           fileItems: args.fileItems,
           forceSkipTechPrompt: true,
         });
-
-        currentPromptText = rebuiltPrompt;
 
         await vscode.env.clipboard.writeText(currentPromptText);
 
         continue;
       }
 
-      if (selectedAction === applyOrChangeProfilesLabel) {
+      if (selectedAction === applyOrChangeOverridesCommand) {
         const nextPickResult = await this._pickProfileIds({ overrideOptions, selectedProfileIds });
         if (!nextPickResult) return;
 
         selectedProfileIds = nextPickResult.profileIds;
 
-        const rebuiltPrompt = await this._buildLlmPromptTextForProfiles({
-          profileIds: selectedProfileIds,
+        const nextMergedConfigResult = await this._deps.configService.getMergedConfigByOverrideIds(selectedProfileIds);
+
+        currentPromptText = await this._buildLlmPromptText({
+          effectiveConfig: nextMergedConfigResult.mergedConfig,
           includeTechPromptFromCommand: args.includeTechPrompt,
           fileItems: args.fileItems,
           forceSkipTechPrompt: isTechPromptErased,
         });
-
-        currentPromptText = rebuiltPrompt;
 
         await vscode.env.clipboard.writeText(currentPromptText);
 
@@ -128,7 +126,7 @@ export class CopyResultNotificator {
             extensionContext: this._deps.extensionContext,
             configService: this._deps.configService,
             activeOverrideIds: selectedProfileIds,
-          }).displayOverridesAppliedReport(selectedProfileIds);
+          }).displayOverridesAppliedReportFromData(nextMergedConfigResult.debugData);
         }
 
         continue;
@@ -181,30 +179,27 @@ export class CopyResultNotificator {
     return { profileIds, shouldAdditionallyOpenMergedConfigInEditor };
   }
 
-  private async _buildLlmPromptTextForProfiles(args: {
-    profileIds: string[];
+  private async _buildLlmPromptText(args: {
+    effectiveConfig: LlmCopypasterConfig;
     includeTechPromptFromCommand: boolean;
     fileItems: CollectedFileItem[];
     forceSkipTechPrompt?: boolean;
   }): Promise<string> {
-    const mergedConfigResult = await this._deps.configService.getMergedConfigByOverrideIds(args.profileIds);
-    const effectiveConfig = mergedConfigResult.mergedConfig;
-
     const shouldIncludeTechPrompt =
       args.includeTechPromptFromCommand &&
       args.forceSkipTechPrompt !== true &&
-      effectiveConfig.coreSettings.skipInstructions !== true;
+      args.effectiveConfig.coreSettings.skipInstructions !== true;
 
-    const effectiveFileItems = effectiveConfig.coreSettings.skipCodeListings === true ? [] : args.fileItems;
+    const effectiveFileItems = args.effectiveConfig.coreSettings.skipCodeListings === true ? [] : args.fileItems;
 
     const techPromptText = shouldIncludeTechPrompt
-      ? await new PromptBuilder(this._deps.extensionContext, effectiveConfig).build()
+      ? await new PromptBuilder(this._deps.extensionContext, args.effectiveConfig).build()
       : '';
 
     return buildLlmContextText({
       fileItems: effectiveFileItems,
       ignorePromptInstructions: !shouldIncludeTechPrompt,
-      config: effectiveConfig,
+      config: args.effectiveConfig,
       techPromptText,
     });
   }

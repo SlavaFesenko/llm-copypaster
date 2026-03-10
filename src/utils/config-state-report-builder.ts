@@ -3,7 +3,8 @@ import * as vscode from 'vscode';
 import {
   ConfigService,
   CoreSettingsConfig,
-  MergedConfigWithOverrideIdResult,
+  MergedConfigDebugData,
+  OverrideMergeIterationReport,
   OverrideOptionMetadata,
 } from '../config-service';
 import { LlmCopypasterUserConfig } from '../contracts/user-config';
@@ -75,25 +76,16 @@ export class ConfigStateReportBuilder {
     await this._openReportInEditor({ docId: 'full-config', reportText });
   }
 
-  public async displayOverridesAppliedReport(selectedProfileIds: string[]): Promise<void> {
-    const systemConfig = await this._args.configService.getSystemConfig();
-    const userConfig = await this._readUserConfig();
-    const basePublicConfig = await this._args.configService.getLlmCopypasterPublicConfig();
-    const mergedConfigResult = await this._args.configService.getMergedConfigByOverrideIds(selectedProfileIds);
-    const overrideOptions = this._args.configService.overrideOptions;
-
-    const preparedOverrideReportEntries = await this._buildPreparedOverrideReportEntries({
-      overrideOptions,
-      baseCoreSettingsConfig: basePublicConfig.coreSettings,
-      rawOverridesById: ConfigStateReportBuilder._buildRawOverridesById(userConfig),
+  public async displayOverridesAppliedReportFromData(debugData: MergedConfigDebugData): Promise<void> {
+    const preparedOverrideReportEntries = await this._buildPreparedOverrideReportEntriesFromData({
+      overrideOptions: debugData.overrideOptions,
+      baseCoreSettingsConfig: debugData.baseCoreSettingsConfig,
+      overrideReportDataEntries: debugData.overrideReportEntries,
     });
 
-    const mergeChainText =
-      selectedProfileIds.length > 0 ? `Base Config + ${selectedProfileIds.join(' + ')} Overrides Config(s)` : 'Base Config';
-
     const diffChangeset = await ConfigStateReportBuilder._buildJsonDiffChangeset(
-      basePublicConfig.coreSettings,
-      mergedConfigResult.mergedConfig.coreSettings
+      debugData.baseCoreSettingsConfig,
+      debugData.mergedCoreSettingsConfig
     );
 
     const humanReadableDiffChangeset = ConfigStateReportBuilder._buildHumanReadableJsonDiffChangeset(
@@ -104,19 +96,19 @@ export class ConfigStateReportBuilder {
 
     const leadingSectionsMarkdown =
       `## ${JSON_DIFF_STATUS} Base Config vs Merged Override Config\n\n` +
-      `${mergeChainText}\n\n` +
+      `${debugData.mergeChainText}\n\n` +
       ConfigStateReportBuilder._buildJsonCodeBlock(humanReadableDiffChangeset) +
-      ConfigStateReportBuilder._buildMergeIterationsMarkdown(mergedConfigResult);
+      ConfigStateReportBuilder._buildMergeIterationsMarkdown(debugData.overridesInBaseConfig.iterations);
 
     const reportText = ConfigStateReportBuilder._buildConfigReportMarkdown({
-      hasUserConfig: !!userConfig,
-      overrideOptions,
-      activeOverrideIds: selectedProfileIds,
-      currentNormalizedConfigLabel: `Merged Config: ${mergeChainText}`,
+      hasUserConfig: debugData.hasUserConfig,
+      overrideOptions: debugData.overrideOptions,
+      activeOverrideIds: debugData.activeOverrideIds,
+      currentNormalizedConfigLabel: `Merged Config: ${debugData.mergeChainText}`,
       currentNormalizedConfigDescription: 'Merged Config is currently applied because one or more overrides were selected',
-      currentNormalizedConfigValue: mergedConfigResult.mergedConfig.coreSettings,
-      rawUserCoreSettingsConfig: userConfig?.coreSettings ?? null,
-      rawSystemCoreSettingsConfig: systemConfig.coreSettings,
+      currentNormalizedConfigValue: debugData.mergedCoreSettingsConfig,
+      rawUserCoreSettingsConfig: debugData.rawUserCoreSettingsConfig,
+      rawSystemCoreSettingsConfig: debugData.rawSystemCoreSettingsConfig,
       preparedOverrideReportEntries,
       leadingSectionsMarkdown,
     });
@@ -161,6 +153,40 @@ export class ConfigStateReportBuilder {
         return {
           overrideOption,
           rawOverrideCoreSettingsConfig: args.rawOverridesById?.[overrideOption.id]?.coreSettings ?? null,
+          normalizedOverrideCoreSettingsConfig,
+          normalizedOverrideDiffHumanReadable,
+        };
+      })
+    );
+  }
+
+  private async _buildPreparedOverrideReportEntriesFromData(args: {
+    overrideOptions: OverrideOptionMetadata[];
+    baseCoreSettingsConfig: CoreSettingsConfig;
+    overrideReportDataEntries: MergedConfigDebugData['overrideReportEntries'];
+  }): Promise<PreparedOverrideReportEntry[]> {
+    return await Promise.all(
+      args.overrideOptions.map(async overrideOption => {
+        const overrideReportDataEntry = args.overrideReportDataEntries.find(
+          candidateEntry => candidateEntry.overrideOption.id === overrideOption.id
+        );
+
+        const normalizedOverrideCoreSettingsConfig = overrideReportDataEntry?.normalizedOverrideCoreSettingsConfig ?? null;
+
+        const normalizedOverrideDiffChangeset = await ConfigStateReportBuilder._buildJsonDiffChangeset(
+          args.baseCoreSettingsConfig,
+          normalizedOverrideCoreSettingsConfig
+        );
+
+        const normalizedOverrideDiffHumanReadable = ConfigStateReportBuilder._buildHumanReadableJsonDiffChangeset(
+          normalizedOverrideDiffChangeset,
+          'previousConfigValue',
+          'nextConfigValue'
+        );
+
+        return {
+          overrideOption,
+          rawOverrideCoreSettingsConfig: overrideReportDataEntry?.rawOverrideCoreSettingsConfig ?? null,
           normalizedOverrideCoreSettingsConfig,
           normalizedOverrideDiffHumanReadable,
         };
@@ -251,8 +277,7 @@ export class ConfigStateReportBuilder {
     return sectionText;
   }
 
-  private static _buildMergeIterationsMarkdown(mergedConfigResult: MergedConfigWithOverrideIdResult): string {
-    const mergeIterations = mergedConfigResult.overridesInBaseConfig.iterations;
+  private static _buildMergeIterationsMarkdown(mergeIterations: OverrideMergeIterationReport[]): string {
     if (mergeIterations.length === 0) return '';
 
     let mergeIterationsText = '';
