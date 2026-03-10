@@ -7,7 +7,7 @@ import { readUserJsonConfigFile } from './config-helpers/config-tech-helpers';
 import { ensureReadonlyVirtualMarkdownDocOpened } from './editor-virtual-doc-helpers';
 
 const NORMALIZED_CONFIG_STATUS = '[NORMALIZED CONFIG]';
-const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '[RAW CONFIG BEFORE NORMALIZATION]';
+const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '[RAW CONFIG]';
 const JSON_DIFF_STATUS = '[JSON DIFF]';
 
 export interface ConfigStateReportBuilderArgs {
