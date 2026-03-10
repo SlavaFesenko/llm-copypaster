@@ -202,12 +202,11 @@ export async function showCopyResultNotification(
       await vscode.env.clipboard.writeText(currentPromptText);
 
       if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-        const mergedConfigReportText = await ConfigStateReportBuilder.buildMergedConfigMarkdownReportText({
+        await new ConfigStateReportBuilder({
+          extensionContext: deps.extensionContext,
           configService: deps.configService,
-          selectedProfileIds,
-        });
-
-        await openMergedConfigInEditor(deps.extensionContext, mergedConfigReportText);
+          activeOverrideIds: selectedProfileIds,
+        }).displayOverridesAppliedReport(selectedProfileIds);
       }
 
       continue;
@@ -332,15 +331,4 @@ async function buildLlmPromptTextForProfiles(args: {
 
 async function openPromptTextInEditor(extensionContext: vscode.ExtensionContext, promptText: string): Promise<void> {
   await ensureReadonlyVirtualMarkdownDocOpened({ extensionContext, docId: 'prompt', markdownText: promptText });
-}
-
-async function openMergedConfigInEditor(
-  extensionContext: vscode.ExtensionContext,
-  mergedConfigReportText: string
-): Promise<void> {
-  await ensureReadonlyVirtualMarkdownDocOpened({
-    extensionContext,
-    docId: 'merged-config',
-    markdownText: mergedConfigReportText,
-  });
 }

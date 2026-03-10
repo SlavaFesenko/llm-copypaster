@@ -6,7 +6,6 @@ import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
 import { ConfigStateReportBuilder } from './utils/config-state-report-builder';
-import { ensureReadonlyVirtualMarkdownDocOpened } from './utils/editor-virtual-doc-helpers';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {
@@ -118,15 +117,10 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
-      const reportText = await new ConfigStateReportBuilder({
-        configService: deps.configService,
-      }).build();
-
-      await ensureReadonlyVirtualMarkdownDocOpened({
+      await new ConfigStateReportBuilder({
         extensionContext: context,
-        docId: 'ls-config',
-        markdownText: reportText,
-      });
+        configService: deps.configService,
+      }).displayLsConfigReport();
     }),
 
     // #endregion

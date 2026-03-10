@@ -1,20 +1,19 @@
+import * as vscode from 'vscode';
+
 import { ConfigService, CoreSettingsConfig, LlmCopypasterConfig, OverrideOptionMetadata } from '../config-service';
 import { LlmCopypasterUserConfig } from '../contracts/user-config';
 import { GLOB_CONSTS } from '../global-constants';
 import { readUserJsonConfigFile } from './config-helpers/config-tech-helpers';
+import { ensureReadonlyVirtualMarkdownDocOpened } from './editor-virtual-doc-helpers';
 
 const NORMALIZED_CONFIG_STATUS = '[NORMALIZED CONFIG]';
 const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '[RAW CONFIG BEFORE NORMALIZATION]';
 const JSON_DIFF_STATUS = '[JSON DIFF]';
 
 export interface ConfigStateReportBuilderArgs {
+  extensionContext: vscode.ExtensionContext;
   configService: ConfigService;
   activeOverrideIds?: string[];
-}
-
-export interface BuildMergedConfigMarkdownReportTextArgs {
-  configService: ConfigService;
-  selectedProfileIds: string[];
 }
 
 interface RawMergedOverrideConfigEntry {
@@ -39,13 +38,13 @@ interface BuildConfigReportMarkdownArgs {
 export class ConfigStateReportBuilder {
   public constructor(private readonly _args: ConfigStateReportBuilderArgs) {}
 
-  public async build(): Promise<string> {
+  public async displayLsConfigReport(): Promise<void> {
     const systemConfig = await this._args.configService.getSystemConfig();
     const userConfig = await this._readUserConfig();
     const basePublicConfig = await this._args.configService.getLlmCopypasterPublicConfig();
     const overrideOptions = this._args.configService.overrideOptions;
 
-    return ConfigStateReportBuilder._buildConfigReportMarkdown({
+    const reportText = await ConfigStateReportBuilder._buildConfigReportMarkdown({
       configService: this._args.configService,
       hasUserConfig: !!userConfig,
       overrideOptions,
@@ -58,22 +57,19 @@ export class ConfigStateReportBuilder {
       rawSystemCoreSettingsConfig: systemConfig.coreSettings,
       rawOverridesById: ConfigStateReportBuilder._buildRawOverridesById(userConfig),
     });
+
+    await this._openReportInEditor({ docId: 'full-config', reportText });
   }
 
-  public static async buildMergedConfigMarkdownReportText(args: BuildMergedConfigMarkdownReportTextArgs): Promise<string> {
-    const systemConfig = await args.configService.getSystemConfig();
+  public async displayOverridesAppliedReport(selectedProfileIds: string[]): Promise<void> {
+    const systemConfig = await this._args.configService.getSystemConfig();
     const userConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
-    const normalizedSelectedProfileIds = (args.selectedProfileIds ?? [])
-      .filter(Boolean)
-      .filter(profileId => profileId !== 'Default');
-    const basePublicConfig = await args.configService.getLlmCopypasterPublicConfig();
-    const mergedPublicConfig = await args.configService.getMergedConfigByOverrideIds(normalizedSelectedProfileIds);
-    const overrideOptions = args.configService.overrideOptions;
+    const basePublicConfig = await this._args.configService.getLlmCopypasterPublicConfig();
+    const mergedPublicConfig = await this._args.configService.getMergedConfigByOverrideIds(selectedProfileIds);
+    const overrideOptions = this._args.configService.overrideOptions;
 
     const mergeChainText =
-      normalizedSelectedProfileIds.length > 0
-        ? `Base Config + ${normalizedSelectedProfileIds.join(' + ')} Override Config(s)`
-        : 'Base Config';
+      selectedProfileIds.length > 0 ? `Base Config + ${selectedProfileIds.join(' + ')} Overrides Config(s)` : 'Base Config';
 
     const diffChangeset = await ConfigStateReportBuilder._buildJsonDiffChangeset(
       basePublicConfig.coreSettings,
@@ -92,11 +88,11 @@ export class ConfigStateReportBuilder {
       ConfigStateReportBuilder._buildJsonCodeBlock(humanReadableDiffChangeset) +
       ConfigStateReportBuilder._buildMergeIterationsMarkdown(mergedPublicConfig);
 
-    return ConfigStateReportBuilder._buildConfigReportMarkdown({
-      configService: args.configService,
+    const reportText = await ConfigStateReportBuilder._buildConfigReportMarkdown({
+      configService: this._args.configService,
       hasUserConfig: !!userConfig,
       overrideOptions,
-      activeOverrideIds: normalizedSelectedProfileIds,
+      activeOverrideIds: selectedProfileIds,
       currentNormalizedConfigLabel: `Merged Config: ${mergeChainText}`,
       currentNormalizedConfigDescription: 'Merged Config is currently applied because one or more overrides were selected',
       currentNormalizedConfigValue: mergedPublicConfig.coreSettings,
@@ -106,10 +102,20 @@ export class ConfigStateReportBuilder {
       rawOverridesById: ConfigStateReportBuilder._buildRawOverridesById(userConfig),
       leadingSectionsMarkdown,
     });
+
+    await this._openReportInEditor({ docId: 'overrides-config', reportText });
   }
 
   private async _readUserConfig(): Promise<LlmCopypasterUserConfig | null> {
     return readUserJsonConfigFile<LlmCopypasterUserConfig>();
+  }
+
+  private async _openReportInEditor(args: { docId: string; reportText: string }): Promise<void> {
+    await ensureReadonlyVirtualMarkdownDocOpened({
+      extensionContext: this._args.extensionContext,
+      docId: args.docId,
+      markdownText: args.reportText,
+    });
   }
 
   private static _buildRawOverridesById(
@@ -134,13 +140,13 @@ export class ConfigStateReportBuilder {
 
     reportText += '# Config Report\n\n';
 
-    if (args.leadingSectionsMarkdown) reportText += args.leadingSectionsMarkdown;
-
     reportText += ConfigStateReportBuilder._buildStatusOverviewMarkdown({
       hasUserConfig: args.hasUserConfig,
       overrideOptions: args.overrideOptions,
       activeOverrideIds: args.activeOverrideIds,
     });
+
+    if (args.leadingSectionsMarkdown) reportText += args.leadingSectionsMarkdown;
 
     reportText += `## ${NORMALIZED_CONFIG_STATUS} ${args.currentNormalizedConfigLabel}\n\n`;
     reportText += `${args.currentNormalizedConfigDescription}\n\n`;
