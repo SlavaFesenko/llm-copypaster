@@ -5,8 +5,8 @@ import {
   ReadUrisAsFileItemsResult,
   buildUriKey,
   readUrisAsFileItems,
-  showCopyResultNotification,
 } from './common.helpers';
+import { CopyResultNotificator } from './copy-result-notificator';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
@@ -59,7 +59,7 @@ export class ExplorerHelper {
 
       await vscode.env.clipboard.writeText(contextText);
 
-      await showCopyResultNotification(this._deps, {
+      await new CopyResultNotificator(this._deps).showCopyResultNotification({
         commandName: 'Copy Explorer Items',
         includeTechPrompt: true,
         copiedFilesCount: selection.fileItems.length,

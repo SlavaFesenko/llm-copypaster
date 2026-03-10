@@ -3,10 +3,10 @@ import * as vscode from 'vscode';
 import {
   EditorToLlmModulePrivateHelpersDependencies,
   readUrisAsFileItems,
-  showCopyResultNotification,
   TabBasedFileItemsResult,
   tryGetUriFromTab,
 } from './common.helpers';
+import { CopyResultNotificator } from './copy-result-notificator';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
@@ -279,7 +279,7 @@ export class EditorHelper {
 
     await vscode.env.clipboard.writeText(contextText);
 
-    await showCopyResultNotification(this._deps, {
+    await new CopyResultNotificator(this._deps).showCopyResultNotification({
       commandName: args.commandName,
       includeTechPrompt: true,
       copiedFilesCount: args.copiedFilesCount,
