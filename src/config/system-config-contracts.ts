@@ -3,12 +3,6 @@ export interface LlmCopypasterConfig {
   coreSettings: CoreSettingsConfig;
 }
 
-// ex PromptInstructionsConfig
-export interface InstructionConfig {
-  path: string; // ex relativePathToSubInstruction
-  skip: boolean; // ex ignore
-}
-
 export interface VitalParsingAnchorsConfig {
   PROMPT_DELIMITER_ANCHOR: string; // ex techPromptDelimiter
   CODE_LISTING_HEADER_ANCHOR: string; // ex codeListingHeaderStartFragment
@@ -19,16 +13,14 @@ export interface VitalParsingAnchorsConfig {
   CONFIG_REF_VAR_ANCHOR: string; // ex configVariablePrefix
 }
 
-export interface InstructionsAndVariablesConfig {
-  instructionsById: Record<string, InstructionConfig>; // ex subInstructionsById
-  sharedVariablesById: Record<string, string>;
-}
-
-export interface LlmToIdeSanitizationRuleConfig {
-  regexPattern: string; // ex pattern
-  replaceWith: string;
-  skipForLanguages: string[]; // ex disableForLanguages
-  skipForPaths: string[]; // ex disableForPaths
+export interface CoreSettingsConfig {
+  skipInstructions: boolean;
+  skipCodeListings: boolean;
+  ideToLlm: IdeToLlmConfig; // ex ideToLlmContextConfig
+  llmToIde: LlmToIdeConfig; // ex llmToIdeContextConfig
+  postFilePatchActions: PostFilePatchActionsConfig; // ex postFilePatchActionsConfig
+  instructionsAndVariables: InstructionsAndVariablesConfig; // ex promptInstructionConfig
+  llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
 export interface PromptLimitsConfig {
@@ -50,12 +42,20 @@ export interface PostFilePatchActionsConfig {
   enableOpeningPatchedFilesInEditor: boolean;
 }
 
-export interface CoreSettingsConfig {
-  skipInstructions: boolean;
-  skipCodeListings: boolean;
-  ideToLlm: IdeToLlmConfig; // ex ideToLlmContextConfig
-  llmToIde: LlmToIdeConfig; // ex llmToIdeContextConfig
-  postFilePatchActions: PostFilePatchActionsConfig; // ex postFilePatchActionsConfig
-  instructionsAndVariables: InstructionsAndVariablesConfig; // ex promptInstructionConfig
-  llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
+export interface InstructionsAndVariablesConfig {
+  instructionsById: Record<string, InstructionConfig>; // ex subInstructionsById
+  sharedVariablesById: Record<string, string>;
+}
+
+// ex PromptInstructionsConfig
+export interface InstructionConfig {
+  path: string; // ex relativePathToSubInstruction
+  skip: boolean; // ex ignore
+}
+
+export interface LlmToIdeSanitizationRuleConfig {
+  regexPattern: string; // ex pattern
+  replaceWith: string;
+  skipForLanguages: string[]; // ex disableForLanguages
+  skipForPaths: string[]; // ex disableForPaths
 }
