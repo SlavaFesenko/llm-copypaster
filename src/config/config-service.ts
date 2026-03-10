@@ -1,5 +1,5 @@
-import { mergeConfigs } from '../utils/config-helpers/config-mergers';
-import { readSystemJsonConfigFile, readUserJsonConfigFile } from '../utils/config-helpers/config-tech-helpers';
+import { mergeConfigs } from './config-helpers/config-mergers';
+import { readSystemJsonConfigFile, readUserJsonConfigFile } from './config-helpers/config-tech-helpers';
 import { LlmCopypasterUserConfig, OverrideUserConfig } from './user-config';
 
 // ex PromptInstructionsConfig
