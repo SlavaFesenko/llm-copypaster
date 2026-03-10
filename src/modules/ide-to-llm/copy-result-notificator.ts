@@ -43,11 +43,10 @@ export class CopyResultNotificator {
 
       const promptStatsResult = buildTextSizeStats({
         promptText: currentPromptText,
-        contextConfig: effectiveConfig.coreSettings.ideToLlmContextConfig,
+        contextConfig: effectiveConfig.coreSettings.ideToLlm,
       });
 
-      const shouldShowPromptSizeStats =
-        effectiveConfig.coreSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
+      const shouldShowPromptSizeStats = effectiveConfig.coreSettings.ideToLlm.skipPromptSizeStatsInCopyNotification !== true;
 
       const baseMessage =
         unavailableFilesCount === 0

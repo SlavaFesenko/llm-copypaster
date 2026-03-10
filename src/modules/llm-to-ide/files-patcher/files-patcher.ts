@@ -79,9 +79,9 @@ export async function applyFilesPayloadToWorkspace(
 
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
 
-      const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
+      const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
 
-      if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
+      if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) {
         workspaceEdit.deleteFile(targetUri, { ignoreIfNotExists: true });
         hasWorkspaceEdits = true;
         appliedFilesCount++;
@@ -116,9 +116,9 @@ export async function applyFilesPayloadToWorkspace(
       const isConfirmed = await confirmOutOfWorkspaceFileOperation(externalTargetUri);
       if (!isConfirmed) return { ok: false, errorMessage: `Cancelled by user: ${file.path}` };
 
-      const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
+      const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
 
-      if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
+      if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) {
         try {
           await vscode.workspace.fs.delete(externalTargetUri, { recursive: false, useTrash: true });
         } catch (error) {
@@ -254,8 +254,8 @@ export async function tryApplyToFilesPayloadDocuments(
   action: (document: vscode.TextDocument, targetUri: vscode.Uri) => Promise<void>
 ): Promise<void> {
   for (const file of payload.files) {
-    const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
-    if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) continue;
+    const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
+    if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) continue;
 
     const targetUri = resolveTargetUri(file.path);
     if (!targetUri) continue;

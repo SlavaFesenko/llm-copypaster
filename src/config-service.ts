@@ -2,47 +2,46 @@ import { LlmCopypasterUserConfig, OverrideUserConfig } from './contracts/user-co
 import { mergeConfigs } from './utils/config-helpers/config-mergers';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './utils/config-helpers/config-tech-helpers';
 
-export interface PromptInstructionsConfig {
-  relativePathToSubInstruction: string;
-  ignore: boolean;
+// ex PromptInstructionsConfig
+export interface InstructionConfig {
+  path: string; // ex relativePathToSubInstruction
+  skip: boolean; // ex ignore
 }
 
 export interface VitalParsingAnchorsConfig {
-  techPromptDelimiter: string;
-  codeListingHeaderStartFragment: string;
-  fileStatusPrefix: string;
-  placeholderStartFragment: string;
-  placeholderEndFragment: string;
-  filePayloadOperationTypeEditedFull: string;
-  filePayloadOperationTypeCreated: string;
-  filePayloadOperationTypeDeleted: string;
-  configVariablePrefix: string;
+  PROMPT_DELIMITER_ANCHOR: string; // ex techPromptDelimiter
+  CODE_LISTING_HEADER_ANCHOR: string; // ex codeListingHeaderStartFragment
+  FILE_STATUS_ANCHOR: string; // ex fileStatusPrefix
+  FILE_EDITED_FULL_ANCHOR: string; // ex filePayloadOperationTypeEditedFull
+  FILE_CREATED_ANCHOR: string; // ex filePayloadOperationTypeCreated
+  FILE_DELETED_ANCHOR: string; // ex filePayloadOperationTypeDeleted
+  CONFIG_REF_VAR_ANCHOR: string; // ex configVariablePrefix
 }
 
-export interface PromptInstructionConfig {
+export interface InstructionsAndVariablesConfig {
+  instructionsById: Record<string, InstructionConfig>; // ex subInstructionsById
   sharedVariablesById: Record<string, string>;
-  subInstructionsById: Record<string, PromptInstructionsConfig>;
 }
 
 export interface LlmToIdeSanitizationRuleConfig {
-  pattern: string;
+  regexPattern: string; // ex pattern
   replaceWith: string;
-  disabledForLanguages: string[];
-  disabledForPaths: string[];
+  skipForLanguages: string[]; // ex disableForLanguages
+  skipForPaths: string[]; // ex disableForPaths
 }
 
-export interface IdeToLlmContextConfig {
+export interface PromptLimitsConfig {
   skipPromptSizeStatsInCopyNotification: boolean;
-  promptSizeApproxCharsPerToken: number;
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
+  charsPerToken: number;
+  linesMaxToShowWarning: number;
+  tokensMaxToShowWarning: number;
 }
 
-export interface LlmToIdeContextConfig {
-  promptSizeApproxCharsPerToken: number;
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
-}
+// ex IdeToLlmContextConfig
+export interface IdeToLlmConfig extends PromptLimitsConfig {}
+
+// ex LlmToIdeContextConfig
+export interface LlmToIdeConfig extends PromptLimitsConfig {}
 
 export interface PostFilePatchActionsConfig {
   enableSaveAfterFilePatch: boolean;
@@ -53,10 +52,10 @@ export interface PostFilePatchActionsConfig {
 export interface CoreSettingsConfig {
   skipInstructions: boolean;
   skipCodeListings: boolean;
-  ideToLlmContextConfig: IdeToLlmContextConfig;
-  llmToIdeContextConfig: LlmToIdeContextConfig;
-  postFilePatchActionsConfig: PostFilePatchActionsConfig;
-  promptInstructionConfig: PromptInstructionConfig;
+  ideToLlm: IdeToLlmConfig; // ex ideToLlmContextConfig
+  llmToIde: LlmToIdeConfig; // ex llmToIdeContextConfig
+  postFilePatchActions: PostFilePatchActionsConfig; // ex postFilePatchActionsConfig
+  instructionsAndVariables: InstructionsAndVariablesConfig; // ex promptInstructionConfig
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 

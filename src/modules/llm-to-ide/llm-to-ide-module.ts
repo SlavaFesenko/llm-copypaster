@@ -37,7 +37,7 @@ export class LlmToIdeModule {
 
     const applyResult = await applyFilesPayloadToWorkspace(
       sanitizedPayload,
-      config.coreSettings.postFilePatchActionsConfig,
+      config.coreSettings.postFilePatchActions,
       config.vitalParsingAnchors,
       this._logger
     );
@@ -57,7 +57,7 @@ export class LlmToIdeModule {
 
     const promptStatsResult = buildTextSizeStats({
       promptText: clipboardText,
-      contextConfig: config.coreSettings.llmToIdeContextConfig,
+      contextConfig: config.coreSettings.llmToIde,
     });
     const promptSizeStatsSuffix = buildPromptSizeStatsSuffix(promptStatsResult);
     const message = promptSizeStatsSuffix

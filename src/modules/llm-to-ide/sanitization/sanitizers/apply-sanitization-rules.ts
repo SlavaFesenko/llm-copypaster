@@ -17,7 +17,7 @@ export function applySanitizationRules(
   for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
     if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;
 
-    const regexp = new RegExp(ruleConfig.pattern, 'g');
+    const regexp = new RegExp(ruleConfig.regexPattern, 'g');
     outputText = outputText.replace(regexp, ruleConfig.replaceWith);
   }
 
@@ -25,16 +25,16 @@ export function applySanitizationRules(
 }
 
 function isRuleDisabledForFile(
-  rule: { disabledForLanguages?: string[]; disabledForPaths?: string[] },
+  rule: { skipForLanguages?: string[]; skipForPaths?: string[] },
   fileMeta: ApplySanitizationRulesFileMeta
 ): boolean {
-  const disabledForLanguages = rule.disabledForLanguages ?? [];
-  const disabledForPaths = rule.disabledForPaths ?? [];
+  const skipForLanguages = rule.skipForLanguages ?? [];
+  const skipForPaths = rule.skipForPaths ?? [];
 
-  if (fileMeta.languageId && disabledForLanguages.includes(fileMeta.languageId)) return true;
+  if (fileMeta.languageId && skipForLanguages.includes(fileMeta.languageId)) return true;
 
-  for (const disabledPathPrefix of disabledForPaths) {
-    if (fileMeta.path.startsWith(disabledPathPrefix)) return true;
+  for (const skipPathPrefix of skipForPaths) {
+    if (fileMeta.path.startsWith(skipPathPrefix)) return true;
   }
 
   return false;

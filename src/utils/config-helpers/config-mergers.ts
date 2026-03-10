@@ -1,23 +1,23 @@
 import {
   CoreSettingsConfig,
-  IdeToLlmContextConfig,
+  IdeToLlmConfig,
+  InstructionConfig,
+  InstructionsAndVariablesConfig,
   LlmCopypasterConfig,
-  LlmToIdeContextConfig,
+  LlmToIdeConfig,
   LlmToIdeSanitizationRuleConfig,
   PostFilePatchActionsConfig,
-  PromptInstructionConfig,
-  PromptInstructionsConfig,
   VitalParsingAnchorsConfig,
 } from '../../config-service';
 import {
   CoreSettingsUserConfig,
-  IdeToLlmContextUserConfig,
+  IdeToLlmUserConfig,
+  InstructionUserConfig,
+  InstructionsAndVariablesUserConfig,
   LlmCopypasterUserConfig,
-  LlmToIdeContextUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
+  LlmToIdeUserConfig,
   PostFilePatchActionsUserConfig,
-  PromptInstructionsUserConfig,
-  PromptInstructionUserConfig,
   VitalParsingAnchorsUserConfig,
 } from '../../contracts/user-config';
 
@@ -49,18 +49,13 @@ export function mergeLlmToIdeParsingAnchors(
   if (!userAnchors) return baseAnchors;
 
   return {
-    techPromptDelimiter: userAnchors.techPromptDelimiter ?? baseAnchors.techPromptDelimiter,
-    codeListingHeaderStartFragment: userAnchors.codeListingHeaderStartFragment ?? baseAnchors.codeListingHeaderStartFragment,
-    fileStatusPrefix: userAnchors.fileStatusPrefix ?? baseAnchors.fileStatusPrefix,
-    placeholderStartFragment: userAnchors.placeholderStartFragment ?? baseAnchors.placeholderStartFragment,
-    placeholderEndFragment: userAnchors.placeholderEndFragment ?? baseAnchors.placeholderEndFragment,
-    filePayloadOperationTypeEditedFull:
-      userAnchors.filePayloadOperationTypeEditedFull ?? baseAnchors.filePayloadOperationTypeEditedFull,
-    filePayloadOperationTypeCreated:
-      userAnchors.filePayloadOperationTypeCreated ?? baseAnchors.filePayloadOperationTypeCreated,
-    filePayloadOperationTypeDeleted:
-      userAnchors.filePayloadOperationTypeDeleted ?? baseAnchors.filePayloadOperationTypeDeleted,
-    configVariablePrefix: userAnchors.configVariablePrefix ?? baseAnchors.configVariablePrefix,
+    PROMPT_DELIMITER_ANCHOR: userAnchors.PROMPT_DELIMITER_ANCHOR ?? baseAnchors.PROMPT_DELIMITER_ANCHOR,
+    CODE_LISTING_HEADER_ANCHOR: userAnchors.CODE_LISTING_HEADER_ANCHOR ?? baseAnchors.CODE_LISTING_HEADER_ANCHOR,
+    FILE_STATUS_ANCHOR: userAnchors.FILE_STATUS_ANCHOR ?? baseAnchors.FILE_STATUS_ANCHOR,
+    FILE_EDITED_FULL_ANCHOR: userAnchors.FILE_EDITED_FULL_ANCHOR ?? baseAnchors.FILE_EDITED_FULL_ANCHOR,
+    FILE_CREATED_ANCHOR: userAnchors.FILE_CREATED_ANCHOR ?? baseAnchors.FILE_CREATED_ANCHOR,
+    FILE_DELETED_ANCHOR: userAnchors.FILE_DELETED_ANCHOR ?? baseAnchors.FILE_DELETED_ANCHOR,
+    CONFIG_REF_VAR_ANCHOR: userAnchors.CONFIG_REF_VAR_ANCHOR ?? baseAnchors.CONFIG_REF_VAR_ANCHOR,
   };
 }
 
@@ -73,21 +68,15 @@ export function mergeCoreSettingsConfig(
   return {
     skipInstructions: userSettings.skipInstructions ?? baseSettings.skipInstructions,
     skipCodeListings: userSettings.skipCodeListings ?? baseSettings.skipCodeListings,
-    ideToLlmContextConfig: mergeIdeToLlmContextConfig(
-      baseSettings.ideToLlmContextConfig,
-      userSettings.ideToLlmContextConfig
+    ideToLlm: mergeIdeToLlmContextConfig(baseSettings.ideToLlm, userSettings.ideToLlm),
+    llmToIde: mergeLlmToIdeContextConfig(baseSettings.llmToIde, userSettings.llmToIde),
+    postFilePatchActions: mergePostFilePatchActionsConfig(
+      baseSettings.postFilePatchActions,
+      userSettings.postFilePatchActions
     ),
-    llmToIdeContextConfig: mergeLlmToIdeContextConfig(
-      baseSettings.llmToIdeContextConfig,
-      userSettings.llmToIdeContextConfig
-    ),
-    postFilePatchActionsConfig: mergePostFilePatchActionsConfig(
-      baseSettings.postFilePatchActionsConfig,
-      userSettings.postFilePatchActionsConfig
-    ),
-    promptInstructionConfig: mergePromptInstructionConfig(
-      baseSettings.promptInstructionConfig,
-      userSettings.promptInstructionConfig
+    instructionsAndVariables: mergeInstructionsAndVariablesConfig(
+      baseSettings.instructionsAndVariables,
+      userSettings.instructionsAndVariables
     ),
     llmToIdeSanitizationRulesById: mergeLlmToIdeSanitizationRulesById(
       baseSettings.llmToIdeSanitizationRulesById,
@@ -97,30 +86,32 @@ export function mergeCoreSettingsConfig(
 }
 
 export function mergeIdeToLlmContextConfig(
-  baseConfig: IdeToLlmContextConfig,
-  userConfig: IdeToLlmContextUserConfig | undefined
-): IdeToLlmContextConfig {
+  baseConfig: IdeToLlmConfig,
+  userConfig: IdeToLlmUserConfig | undefined
+): IdeToLlmConfig {
   if (!userConfig) return baseConfig;
 
   return {
     skipPromptSizeStatsInCopyNotification:
       userConfig.skipPromptSizeStatsInCopyNotification ?? baseConfig.skipPromptSizeStatsInCopyNotification,
-    promptSizeApproxCharsPerToken: userConfig.promptSizeApproxCharsPerToken ?? baseConfig.promptSizeApproxCharsPerToken,
-    maxLinesCountInContext: userConfig.maxLinesCountInContext ?? baseConfig.maxLinesCountInContext,
-    maxTokensCountInContext: userConfig.maxTokensCountInContext ?? baseConfig.maxTokensCountInContext,
+    charsPerToken: userConfig.charsPerToken ?? baseConfig.charsPerToken,
+    linesMaxToShowWarning: userConfig.linesMaxToShowWarning ?? baseConfig.linesMaxToShowWarning,
+    tokensMaxToShowWarning: userConfig.tokensMaxToShowWarning ?? baseConfig.tokensMaxToShowWarning,
   };
 }
 
 export function mergeLlmToIdeContextConfig(
-  baseConfig: LlmToIdeContextConfig,
-  userConfig: LlmToIdeContextUserConfig | undefined
-): LlmToIdeContextConfig {
+  baseConfig: LlmToIdeConfig,
+  userConfig: LlmToIdeUserConfig | undefined
+): LlmToIdeConfig {
   if (!userConfig) return baseConfig;
 
   return {
-    promptSizeApproxCharsPerToken: userConfig.promptSizeApproxCharsPerToken ?? baseConfig.promptSizeApproxCharsPerToken,
-    maxLinesCountInContext: userConfig.maxLinesCountInContext ?? baseConfig.maxLinesCountInContext,
-    maxTokensCountInContext: userConfig.maxTokensCountInContext ?? baseConfig.maxTokensCountInContext,
+    skipPromptSizeStatsInCopyNotification:
+      userConfig.skipPromptSizeStatsInCopyNotification ?? baseConfig.skipPromptSizeStatsInCopyNotification,
+    charsPerToken: userConfig.charsPerToken ?? baseConfig.charsPerToken,
+    linesMaxToShowWarning: userConfig.linesMaxToShowWarning ?? baseConfig.linesMaxToShowWarning,
+    tokensMaxToShowWarning: userConfig.tokensMaxToShowWarning ?? baseConfig.tokensMaxToShowWarning,
   };
 }
 
@@ -138,53 +129,52 @@ export function mergePostFilePatchActionsConfig(
   };
 }
 
-export function mergePromptInstructionConfig(
-  baseConfig: PromptInstructionConfig,
-  userConfig: PromptInstructionUserConfig | undefined
-): PromptInstructionConfig {
+export function mergeInstructionsAndVariablesConfig(
+  baseConfig: InstructionsAndVariablesConfig,
+  userConfig: InstructionsAndVariablesUserConfig | undefined
+): InstructionsAndVariablesConfig {
   if (!userConfig) return baseConfig;
 
   const baseSharedVariablesById = baseConfig.sharedVariablesById;
-  const baseSubInstructionsById = baseConfig.subInstructionsById;
+  const baseInstructionsById = baseConfig.instructionsById;
 
   const nextSharedVariablesById = { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
-  const nextSubInstructionsById = mapSubInstructionsById(baseSubInstructionsById, userConfig.subInstructionsById ?? {});
+  const nextInstructionsById = mapInstructionsById(baseInstructionsById, userConfig.instructionsById ?? {});
 
   return {
     sharedVariablesById: nextSharedVariablesById,
-    subInstructionsById: nextSubInstructionsById,
+    instructionsById: nextInstructionsById,
   };
 }
 
-export function mapSubInstructionsById(
-  baseSubInstructionsById: Record<string, PromptInstructionsConfig>,
-  userSubInstructionsById: Record<string, PromptInstructionsUserConfig>
-): Record<string, PromptInstructionsConfig> {
-  const nextSubInstructionsById: Record<string, PromptInstructionsConfig> = { ...baseSubInstructionsById };
+export function mapInstructionsById(
+  baseInstructionsById: Record<string, InstructionConfig>,
+  userInstructionsById: Record<string, InstructionUserConfig>
+): Record<string, InstructionConfig> {
+  const nextInstructionsById: Record<string, InstructionConfig> = { ...baseInstructionsById };
 
-  for (const subInstructionId of Object.keys(userSubInstructionsById)) {
-    const baseSubInstruction = baseSubInstructionsById[subInstructionId];
-    const userSubInstruction = userSubInstructionsById[subInstructionId];
+  for (const instructionId of Object.keys(userInstructionsById)) {
+    const baseInstruction = baseInstructionsById[instructionId];
+    const userInstruction = userInstructionsById[instructionId];
 
-    if (!baseSubInstruction) {
-      if (!userSubInstruction.relativePathToSubInstruction || userSubInstruction.ignore === undefined) continue;
+    if (!baseInstruction) {
+      if (!userInstruction.path || userInstruction.skip === undefined) continue;
 
-      nextSubInstructionsById[subInstructionId] = {
-        relativePathToSubInstruction: userSubInstruction.relativePathToSubInstruction,
-        ignore: userSubInstruction.ignore,
+      nextInstructionsById[instructionId] = {
+        path: userInstruction.path,
+        skip: userInstruction.skip,
       };
 
       continue;
     }
 
-    nextSubInstructionsById[subInstructionId] = {
-      relativePathToSubInstruction:
-        userSubInstruction.relativePathToSubInstruction ?? baseSubInstruction.relativePathToSubInstruction,
-      ignore: userSubInstruction.ignore ?? baseSubInstruction.ignore,
+    nextInstructionsById[instructionId] = {
+      path: userInstruction.path ?? baseInstruction.path,
+      skip: userInstruction.skip ?? baseInstruction.skip,
     };
   }
 
-  return nextSubInstructionsById;
+  return nextInstructionsById;
 }
 
 export function mergeLlmToIdeSanitizationRulesById(
@@ -209,28 +199,28 @@ export function mapLlmToIdeSanitizationRulesById(
 
     if (!baseRule) {
       if (
-        !userRule.pattern ||
+        !userRule.regexPattern ||
         userRule.replaceWith === undefined ||
-        !userRule.disabledForLanguages ||
-        !userRule.disabledForPaths
+        !userRule.skipForLanguages ||
+        !userRule.skipForPaths
       )
         continue;
 
       nextRulesById[ruleId] = {
-        pattern: userRule.pattern,
+        regexPattern: userRule.regexPattern,
         replaceWith: userRule.replaceWith,
-        disabledForLanguages: userRule.disabledForLanguages,
-        disabledForPaths: userRule.disabledForPaths,
+        skipForLanguages: userRule.skipForLanguages,
+        skipForPaths: userRule.skipForPaths,
       };
 
       continue;
     }
 
     nextRulesById[ruleId] = {
-      pattern: userRule.pattern ?? baseRule.pattern,
+      regexPattern: userRule.regexPattern ?? baseRule.regexPattern,
       replaceWith: userRule.replaceWith ?? baseRule.replaceWith,
-      disabledForLanguages: userRule.disabledForLanguages ?? baseRule.disabledForLanguages,
-      disabledForPaths: userRule.disabledForPaths ?? baseRule.disabledForPaths,
+      skipForLanguages: userRule.skipForLanguages ?? baseRule.skipForLanguages,
+      skipForPaths: userRule.skipForPaths ?? baseRule.skipForPaths,
     };
   }
 

@@ -274,7 +274,7 @@ export class EditorHelper {
 
     const promptStatsResult = buildTextSizeStats({
       promptText: contextText,
-      contextConfig: config.coreSettings.ideToLlmContextConfig,
+      contextConfig: config.coreSettings.ideToLlm,
     });
 
     await vscode.env.clipboard.writeText(contextText);
@@ -291,8 +291,8 @@ export class EditorHelper {
       promptSizeStats: {
         linesCount: promptStatsResult.linesCount,
         approxTokensCount: promptStatsResult.approxTokensCount,
-        maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
-        maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
+        maxLinesCountInContext: promptStatsResult.linesMaxToShowWarning,
+        maxTokensCountInContext: promptStatsResult.tokensMaxToShowWarning,
         isExceeded: promptStatsResult.isExceeded,
         exceededBy: promptStatsResult.exceededBy,
       },

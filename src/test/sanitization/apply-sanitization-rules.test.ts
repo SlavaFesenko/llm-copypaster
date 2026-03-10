@@ -37,10 +37,10 @@ suite('applySanitizationRules', () => {
     const systemConfig = await new ConfigService().getSystemConfig();
 
     const invalidRule: LlmToIdeSanitizationRuleConfig = {
-      pattern: '[',
+      regexPattern: '[',
       replaceWith: '',
-      disabledForLanguages: [],
-      disabledForPaths: [],
+      skipForLanguages: [],
+      skipForPaths: [],
     };
 
     const config: LlmCopypasterConfig = {
