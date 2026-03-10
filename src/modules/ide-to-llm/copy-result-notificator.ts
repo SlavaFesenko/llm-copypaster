@@ -72,11 +72,13 @@ export class CopyResultNotificator {
       let selectedAction: string | undefined;
 
       if (actionLabels.length > 0) {
-        if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message, ...actionLabels);
-        else selectedAction = await vscode.window.showInformationMessage(message, ...actionLabels);
+        selectedAction = shouldWarn
+          ? await vscode.window.showWarningMessage(message, ...actionLabels)
+          : await vscode.window.showInformationMessage(message, ...actionLabels);
       } else {
-        if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message);
-        else selectedAction = await vscode.window.showInformationMessage(message);
+        selectedAction = shouldWarn
+          ? await vscode.window.showWarningMessage(message)
+          : await vscode.window.showInformationMessage(message);
       }
 
       if (!selectedAction) return;
