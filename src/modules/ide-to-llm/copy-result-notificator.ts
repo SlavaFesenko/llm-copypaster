@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
 import { LlmCopypasterConfig, OverrideOptionMetadata } from '../../config/config-service';
+import { ConfigReportFacade } from '../../config/reporters/config-report-facade';
 import { CollectedFileItem } from '../../contracts/files-payload';
-import { ConfigReportFacade } from '../../utils/config-helpers/reporters/config-report-facade';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { EditorToLlmModulePrivateHelpersDependencies, EditorToLlmPromptSizeStats } from './common.helpers';
 import { PromptBuilder } from './liquid-builder/prompt-builder';

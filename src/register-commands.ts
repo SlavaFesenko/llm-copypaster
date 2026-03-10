@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { ConfigService } from './config/config-service';
+import { ConfigReportFacade } from './config/reporters/config-report-facade';
 import { AdvancedTabOptionsModule } from './modules/advanced-tab-options/advanced-file-options-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
-import { ConfigReportFacade } from './utils/config-helpers/reporters/config-report-facade';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {

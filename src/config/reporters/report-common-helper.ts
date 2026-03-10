@@ -1,6 +1,6 @@
-import { MergedConfigDebugData, OverrideOptionMetadata } from '../../../config/config-service';
-import { LlmCopypasterUserConfig } from '../../../config/user-config';
-import { GLOB_CONSTS } from '../../../global-constants';
+import { GLOB_CONSTS } from '../../global-constants';
+import { MergedConfigDebugData, OverrideOptionMetadata } from '../config-service';
+import { LlmCopypasterUserConfig } from '../user-config-contracts';
 
 export const NORMALIZED_CONFIG_STATUS = '[NORMALIZED CONFIG]';
 export const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '[RAW CONFIG]';

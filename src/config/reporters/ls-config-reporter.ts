@@ -1,7 +1,7 @@
-import { ConfigService, CoreSettingsConfig, OverrideOptionMetadata } from '../../../config/config-service';
-import { LlmCopypasterUserConfig } from '../../../config/user-config';
-import { GLOB_CONSTS } from '../../../global-constants';
-import { readUserJsonConfigFile } from '../config-tech-helpers';
+import { GLOB_CONSTS } from '../../global-constants';
+import { readUserJsonConfigFile } from '../config-helpers/config-tech-helpers';
+import { ConfigService, CoreSettingsConfig, OverrideOptionMetadata } from '../config-service';
+import { LlmCopypasterUserConfig } from '../user-config-contracts';
 import {
   BuildConfigReportMarkdownArgs,
   PreparedOverrideReportEntry,

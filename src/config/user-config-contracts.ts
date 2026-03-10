@@ -1,6 +1,7 @@
-export interface InstructionUserConfig {
-  path?: string;
-  skip?: boolean;
+export interface LlmCopypasterUserConfig {
+  vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
+  coreSettings?: CoreSettingsUserConfig;
+  overridesById?: Record<string, OverrideUserConfig>;
 }
 
 export interface VitalParsingAnchorsUserConfig {
@@ -13,16 +14,14 @@ export interface VitalParsingAnchorsUserConfig {
   CONFIG_REF_VAR_ANCHOR?: string;
 }
 
-export interface InstructionsAndVariablesUserConfig {
-  instructionsById?: Record<string, InstructionUserConfig>;
-  sharedVariablesById?: Record<string, string>;
-}
-
-export interface LlmToIdeSanitizationRuleUserConfig {
-  regexPattern?: string;
-  replaceWith?: string;
-  skipForLanguages?: string[];
-  skipForPaths?: string[];
+export interface CoreSettingsUserConfig {
+  skipInstructions?: boolean;
+  skipCodeListings?: boolean;
+  ideToLlm?: IdeToLlmUserConfig;
+  llmToIde?: LlmToIdeUserConfig;
+  postFilePatchActions?: PostFilePatchActionsUserConfig;
+  instructionsAndVariables?: InstructionsAndVariablesUserConfig;
+  llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
 export interface PromptLimitsUserConfig {
@@ -42,15 +41,21 @@ export interface PostFilePatchActionsUserConfig {
   enableOpeningPatchedFilesInEditor?: boolean;
 }
 
-export interface CoreSettingsUserConfig {
-  skipInstructions?: boolean;
-  skipCodeListings?: boolean;
+export interface InstructionsAndVariablesUserConfig {
+  instructionsById?: Record<string, InstructionUserConfig>;
+  sharedVariablesById?: Record<string, string>;
+}
 
-  ideToLlm?: IdeToLlmUserConfig;
-  llmToIde?: LlmToIdeUserConfig;
-  postFilePatchActions?: PostFilePatchActionsUserConfig;
-  instructionsAndVariables?: InstructionsAndVariablesUserConfig;
-  llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
+export interface InstructionUserConfig {
+  path?: string;
+  skip?: boolean;
+}
+
+export interface LlmToIdeSanitizationRuleUserConfig {
+  regexPattern?: string;
+  replaceWith?: string;
+  skipForLanguages?: string[];
+  skipForPaths?: string[];
 }
 
 export interface OverrideUserConfig {
@@ -58,10 +63,4 @@ export interface OverrideUserConfig {
   version?: string;
   shouldBeSkipped?: boolean;
   coreSettings?: CoreSettingsUserConfig;
-}
-
-export interface LlmCopypasterUserConfig {
-  vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
-  coreSettings?: CoreSettingsUserConfig;
-  overridesById?: Record<string, OverrideUserConfig>;
 }

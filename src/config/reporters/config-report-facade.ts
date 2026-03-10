@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { ConfigService, MergedConfigDebugData } from '../../../config/config-service';
-import { ensureReadonlyVirtualMarkdownDocOpened } from '../../editor-virtual-doc-helpers';
+import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
+import { ConfigService, MergedConfigDebugData } from '../config-service';
 import { buildLsConfigReportText } from './ls-config-reporter';
 import { buildOverridesAppliedReportText } from './overrides-apply-reporter';
 
