@@ -19,7 +19,7 @@ import {
   LlmToIdeUserConfig,
   PostFilePatchActionsUserConfig,
   VitalParsingAnchorsUserConfig,
-} from '../../config/user-config';
+} from '../user-config-contracts';
 
 export function mergeConfigs(
   systemConfig: LlmCopypasterConfig,

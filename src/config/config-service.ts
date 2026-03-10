@@ -1,6 +1,6 @@
 import { mergeConfigs } from './config-helpers/config-mergers';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './config-helpers/config-tech-helpers';
-import { LlmCopypasterUserConfig, OverrideUserConfig } from './user-config';
+import { LlmCopypasterUserConfig, OverrideUserConfig } from './user-config-contracts';
 
 // ex PromptInstructionsConfig
 export interface InstructionConfig {
