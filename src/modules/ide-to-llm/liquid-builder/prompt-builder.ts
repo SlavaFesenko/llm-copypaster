@@ -1,17 +1,18 @@
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
 import get from 'lodash/get';
 
 import {
-  type LlmCopypasterConfig,
-  type PromptInstructionConfig,
-  type PromptInstructionsConfig,
-} from '../../../config-service';
+  InstructionConfig,
+  InstructionsAndVariablesConfig,
+  LlmCopypasterConfig,
+} from '../../../config/system-config-contracts';
+import { GLOB_CONSTS } from '../../../global-constants';
 import {
   collapseEmptyLines,
   normalizeDirectPlaceholderValue,
-  tryBuildPromptUri,
   tryExtractConfigVariablePath,
   tryParseScalarLiquidValue,
 } from './liquid-tech-prompt-builder-helpers';
@@ -30,9 +31,9 @@ export class PromptBuilder {
   }
 
   public async build(): Promise<string> {
-    const promptInstructionConfig: Partial<PromptInstructionConfig> =
-      this._config.baseSettings.promptInstructionConfig ?? {};
-    const subInstructionsById = promptInstructionConfig.subInstructionsById ?? {};
+    const promptInstructionConfig: Partial<InstructionsAndVariablesConfig> =
+      this._config.coreSettings.instructionsAndVariables ?? {};
+    const subInstructionsById = promptInstructionConfig.instructionsById ?? {};
     const promptIdsInConfig = Object.keys(subInstructionsById);
 
     if (promptIdsInConfig.length === 0) return '';
@@ -48,9 +49,10 @@ export class PromptBuilder {
     const builtPrompts: string[] = [];
 
     for (const promptId of promptIdsInConfig) {
-      const promptInstructionsConfig = subInstructionsById[promptId] as PromptInstructionsConfig | undefined;
+      const promptInstructionsConfig = subInstructionsById[promptId] as InstructionConfig | undefined;
+
       if (!promptInstructionsConfig) continue;
-      if (promptInstructionsConfig.ignore) continue;
+      if (promptInstructionsConfig.skip) continue;
 
       const builtPromptText = await this._tryBuildPromptText({
         promptId,
@@ -68,18 +70,18 @@ export class PromptBuilder {
 
     if (builtPrompts.length === 0) return '';
 
-    const delimiterLine = `\n${this._config.llmToIdeParsingAnchors.techPromptDelimiter}\n`;
+    const delimiterLine = `\n${this._config.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
 
     return builtPrompts.join(delimiterLine);
   }
 
   private async _tryBuildPromptText(args: {
     promptId: string;
-    promptInstructionsConfig: PromptInstructionsConfig;
+    promptInstructionsConfig: InstructionConfig;
     resolvedSharedVariablesById: Record<string, unknown>;
     resolveIssues: TechPromptResolveIssues;
   }): Promise<string | null> {
-    if (args.promptInstructionsConfig.ignore) return null;
+    if (args.promptInstructionsConfig.skip) return null;
 
     const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId, args.resolveIssues);
     if (!promptText) return null;
@@ -114,7 +116,7 @@ export class PromptBuilder {
   }
 
   private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, unknown>> {
-    const rawSharedVariablesById = this._config.baseSettings.promptInstructionConfig.sharedVariablesById ?? {};
+    const rawSharedVariablesById = this._config.coreSettings.instructionsAndVariables.sharedVariablesById ?? {};
 
     const resolvedSharedVariablesById: Record<string, unknown> = {};
 
@@ -145,7 +147,7 @@ export class PromptBuilder {
           rawTemplate,
           configVariablePath: tryExtractConfigVariablePath(
             rawTemplate,
-            this._config.llmToIdeParsingAnchors.configVariablePrefix
+            this._config.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR
           ),
           errorText,
         });
@@ -172,7 +174,7 @@ export class PromptBuilder {
     sharedVariableId: string,
     resolveIssues: TechPromptResolveIssues
   ): unknown | undefined {
-    const configVariablePrefix = this._config.llmToIdeParsingAnchors.configVariablePrefix;
+    const configVariablePrefix = this._config.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
 
     const normalized = (rawTemplate ?? '').trim();
     if (!configVariablePrefix) return undefined;
@@ -197,20 +199,19 @@ export class PromptBuilder {
   }
 
   private async _tryReadPromptText(
-    promptInstructionsConfig: PromptInstructionsConfig,
+    promptInstructionsConfig: InstructionConfig,
     promptId: string,
     resolveIssues: TechPromptResolveIssues
   ): Promise<string | null> {
-    const promptUri = tryBuildPromptUri({
-      promptInstructionsConfig,
-      extensionContext: this._extensionContext,
-    });
+    const promptUri = this._tryBuildPromptUri(promptInstructionsConfig.path);
+    const isSystemBundledPromptFile = this._isSystemBundledPromptFile(promptInstructionsConfig.path);
+    const promptSource = isSystemBundledPromptFile ? 'extension' : 'workspace';
 
     if (!promptUri) {
       resolveIssues.filePromptsIssues.push({
         promptId,
-        source: promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace',
-        relativePathToSubInstruction: promptInstructionsConfig.relativePathToSubInstruction,
+        source: promptSource,
+        relativePathToSubInstruction: promptInstructionsConfig.path,
         errorText: 'Workspace folder not found',
       });
 
@@ -226,13 +227,33 @@ export class PromptBuilder {
 
       resolveIssues.filePromptsIssues.push({
         promptId,
-        source: promptInstructionsConfig.isSystemBundledFile ? 'extension' : 'workspace',
-        relativePathToSubInstruction: promptInstructionsConfig.relativePathToSubInstruction,
+        source: promptSource,
+        relativePathToSubInstruction: promptInstructionsConfig.path,
         errorText,
         promptUriString: promptUri.toString(),
       });
 
       return null;
     }
+  }
+
+  private _tryBuildPromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
+    if (this._isSystemBundledPromptFile(relativePathToSubInstruction))
+      return vscode.Uri.joinPath(this._extensionContext.extensionUri, relativePathToSubInstruction);
+
+    if (relativePathToSubInstruction.startsWith('file:')) return vscode.Uri.parse(relativePathToSubInstruction);
+
+    if (path.isAbsolute(relativePathToSubInstruction)) return vscode.Uri.file(relativePathToSubInstruction);
+
+    const workspaceRootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!workspaceRootUri) return null;
+
+    return vscode.Uri.joinPath(workspaceRootUri, relativePathToSubInstruction);
+  }
+
+  private _isSystemBundledPromptFile(relativePathToSubInstruction: string): boolean {
+    const normalizedRelativePathToSubInstruction = (relativePathToSubInstruction ?? '').replaceAll('\\', '/');
+
+    return normalizedRelativePathToSubInstruction === GLOB_CONSTS.LLM_RESPONSE_RULES_PROMPT_RELATIVE_PATH;
   }
 }

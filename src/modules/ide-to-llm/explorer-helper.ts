@@ -5,8 +5,8 @@ import {
   ReadUrisAsFileItemsResult,
   buildUriKey,
   readUrisAsFileItems,
-  showCopyResultNotification,
 } from './common.helpers';
+import { CopyResultNotificator } from './copy-result-notificator';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { buildLlmContextText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
@@ -42,7 +42,7 @@ export class ExplorerHelper {
     }
 
     if (selection.fileItems.length > 0) {
-      const config = await this._deps.configService.getConfig();
+      const config = await this._deps.configService.getLlmCopypasterPublicConfig();
 
       const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
 
@@ -54,12 +54,12 @@ export class ExplorerHelper {
 
       const promptStatsResult = buildTextSizeStats({
         promptText: contextText,
-        contextConfig: config.baseSettings.ideToLlmContextConfig,
+        contextConfig: config.coreSettings.ideToLlm,
       });
 
       await vscode.env.clipboard.writeText(contextText);
 
-      await showCopyResultNotification(this._deps, {
+      await new CopyResultNotificator(this._deps).showCopyResultNotification({
         commandName: 'Copy Explorer Items',
         includeTechPrompt: true,
         copiedFilesCount: selection.fileItems.length,
@@ -71,8 +71,8 @@ export class ExplorerHelper {
         promptSizeStats: {
           linesCount: promptStatsResult.linesCount,
           approxTokensCount: promptStatsResult.approxTokensCount,
-          maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
-          maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
+          maxLinesCountInContext: promptStatsResult.linesMaxToShowWarning,
+          maxTokensCountInContext: promptStatsResult.tokensMaxToShowWarning,
           isExceeded: promptStatsResult.isExceeded,
           exceededBy: promptStatsResult.exceededBy,
         },
@@ -122,7 +122,7 @@ async function collectExplorerItemsFileItems(
     }
   }
 
-  return await readUrisAsFileItems(deps, allFileUris);
+  return await readUrisAsFileItems(allFileUris);
 }
 
 async function collectAllFilesInFolderRecursively(

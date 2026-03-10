@@ -1,0 +1,55 @@
+{
+  "vitalParsingAnchors": {
+    "PROMPT_DELIMITER_ANCHOR": "---",
+    "CODE_LISTING_HEADER_ANCHOR": "## LLM-CPP-FILE:",
+    "FILE_STATUS_ANCHOR": "#### FILE WAS ",
+    "FILE_EDITED_FULL_ANCHOR": "EDITED_FULL",
+    "FILE_CREATED_ANCHOR": "CREATED",
+    "FILE_DELETED_ANCHOR": "DELETED",
+    "CONFIG_REF_VAR_ANCHOR": "LLM_CPP_CFG.",
+  },
+  "coreSettings": {
+    "skipInstructions": false,
+    "skipCodeListings": false,
+    "ideToLlm": {
+      "skipPromptSizeStatsInCopyNotification": false,
+      "charsPerToken": 3.5,
+      "linesMaxToShowWarning": 1000,
+      "tokensMaxToShowWarning": 12000,
+    },
+    "llmToIde": {
+      "skipPromptSizeStatsInCopyNotification": false,
+      "charsPerToken": 3.5,
+      "linesMaxToShowWarning": 1000,
+      "tokensMaxToShowWarning": 12000,
+    },
+    "llmToIdeSanitizationRulesById": {
+      "strip-codefence": {
+        "regexPattern": "`{3}[^\\r\\n]*",
+        "replaceWith": "",
+        "skipForLanguages": ["markdown"],
+        "skipForPaths": ["docs/"],
+      },
+    },
+    "postFilePatchActions": {
+      "enableSaveAfterFilePatch": true,
+      "enableLintingAfterFilePatch": false,
+      "enableOpeningPatchedFilesInEditor": true,
+    },
+    "instructionsAndVariables": {
+      "instructionsById": {
+        "llm-response-rules-prompt": {
+          "path": ".sys-prompts/llm-response-rules-prompt.txt",
+          "skip": false,
+        },
+      },
+      "sharedVariablesById": {
+        "CODE_LISTING_HEADER_START_FRAGMENT": "LLM_CPP_CFG.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
+        "FILE_STATUS_PREFIX": "LLM_CPP_CFG.vitalParsingAnchors.FILE_STATUS_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "LLM_CPP_CFG.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "LLM_CPP_CFG.vitalParsingAnchors.FILE_CREATED_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "LLM_CPP_CFG.vitalParsingAnchors.FILE_DELETED_ANCHOR",
+      },
+    },
+  },
+}

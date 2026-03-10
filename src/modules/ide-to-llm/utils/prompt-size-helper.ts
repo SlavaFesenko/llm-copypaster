@@ -1,10 +1,8 @@
-import { IdeToLlmContextConfig, LlmToIdeContextConfig } from '../../../config-service';
-
-import { formatCountInThousands } from './uncategorized-helpers';
+import { IdeToLlmConfig, LlmToIdeConfig } from '../../../config/system-config-contracts';
 
 export interface TextSizeStatsInput {
   promptText: string;
-  contextConfig: IdeToLlmContextConfig | LlmToIdeContextConfig;
+  contextConfig: IdeToLlmConfig | LlmToIdeConfig;
 }
 
 export enum PromptSizeExceededBy {
@@ -15,15 +13,15 @@ export enum PromptSizeExceededBy {
 export interface TextSizeStatsOutput {
   linesCount: number;
   approxTokensCount: number;
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
+  linesMaxToShowWarning: number;
+  tokensMaxToShowWarning: number;
   isExceeded: boolean;
   exceededBy: PromptSizeExceededBy[];
 }
 
 interface LlmContextLimits {
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
+  linesMaxToShowWarning: number;
+  tokensMaxToShowWarning: number;
 }
 
 export function buildTextSizeStats(input: TextSizeStatsInput): TextSizeStatsOutput {
@@ -36,10 +34,10 @@ export function buildTextSizeStats(input: TextSizeStatsInput): TextSizeStatsOutp
 
   const exceededBy: PromptSizeExceededBy[] = [];
 
-  if (limits.maxLinesCountInContext !== 0 && linesCount > limits.maxLinesCountInContext)
+  if (limits.linesMaxToShowWarning !== 0 && linesCount > limits.linesMaxToShowWarning)
     exceededBy.push(PromptSizeExceededBy.LINES);
 
-  if (limits.maxTokensCountInContext !== 0 && approxTokensCount > limits.maxTokensCountInContext)
+  if (limits.tokensMaxToShowWarning !== 0 && approxTokensCount > limits.tokensMaxToShowWarning)
     exceededBy.push(PromptSizeExceededBy.TOKENS);
 
   const isExceeded = exceededBy.length > 0;
@@ -47,8 +45,8 @@ export function buildTextSizeStats(input: TextSizeStatsInput): TextSizeStatsOutp
   return {
     linesCount,
     approxTokensCount,
-    maxLinesCountInContext: limits.maxLinesCountInContext,
-    maxTokensCountInContext: limits.maxTokensCountInContext,
+    linesMaxToShowWarning: limits.linesMaxToShowWarning,
+    tokensMaxToShowWarning: limits.tokensMaxToShowWarning,
     isExceeded,
     exceededBy,
   };
@@ -61,25 +59,25 @@ export function buildPromptSizeStatsSuffix(promptSizeStats: TextSizeStatsOutput 
   const isTokensExceeded = promptSizeStats.exceededBy.includes(PromptSizeExceededBy.TOKENS);
 
   const linesPart = `${isLinesExceeded ? 'Lines!:' : 'Lines:'} ~${formatCountInThousands(promptSizeStats.linesCount)}/${formatCountInThousands(
-    promptSizeStats.maxLinesCountInContext
+    promptSizeStats.linesMaxToShowWarning
   )}`;
 
   const tokensPart = `${isTokensExceeded ? 'Tokens!:' : 'Tokens:'} ~${formatCountInThousands(
     promptSizeStats.approxTokensCount
-  )}/${formatCountInThousands(promptSizeStats.maxTokensCountInContext)}`;
+  )}/${formatCountInThousands(promptSizeStats.tokensMaxToShowWarning)}`;
 
   return `${linesPart}; ${tokensPart};`;
 }
 
-function normalizeLimits(limits: { maxLinesCountInContext: number; maxTokensCountInContext: number }): LlmContextLimits {
-  const maxLinesCountInContext = Number.isFinite(limits.maxLinesCountInContext)
-    ? Math.max(0, limits.maxLinesCountInContext)
+function normalizeLimits(limits: { linesMaxToShowWarning: number; tokensMaxToShowWarning: number }): LlmContextLimits {
+  const linesMaxToShowWarning = Number.isFinite(limits.linesMaxToShowWarning)
+    ? Math.max(0, limits.linesMaxToShowWarning)
     : 0;
-  const maxTokensCountInContext = Number.isFinite(limits.maxTokensCountInContext)
-    ? Math.max(0, limits.maxTokensCountInContext)
+  const tokensMaxToShowWarning = Number.isFinite(limits.tokensMaxToShowWarning)
+    ? Math.max(0, limits.tokensMaxToShowWarning)
     : 0;
 
-  return { maxLinesCountInContext, maxTokensCountInContext };
+  return { linesMaxToShowWarning, tokensMaxToShowWarning };
 }
 
 function countLines(text: string): number {
@@ -89,12 +87,23 @@ function countLines(text: string): number {
   return parts.length;
 }
 
-function estimateTokensCount(text: string, contextConfig: { promptSizeApproxCharsPerToken: number }): number {
+function estimateTokensCount(text: string, contextConfig: { charsPerToken: number }): number {
   if (!text) return 0;
 
-  const configuredApproxCharsPerToken = Number(contextConfig.promptSizeApproxCharsPerToken);
-  const approxCharsPerToken = Number.isFinite(configuredApproxCharsPerToken) ? configuredApproxCharsPerToken : 4;
+  const configuredCharsPerToken = Number(contextConfig.charsPerToken);
+  const approxCharsPerToken = Number.isFinite(configuredCharsPerToken) ? configuredCharsPerToken : 4;
   const safeApproxCharsPerToken = Math.max(1, approxCharsPerToken);
 
   return Math.ceil(text.length / safeApproxCharsPerToken);
+}
+
+function formatCountInThousands(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  if (Math.abs(safeValue) < 1000) return String(Math.trunc(safeValue));
+
+  const roundedK = Math.round((safeValue / 1000) * 10) / 10;
+  const text = roundedK % 1 === 0 ? roundedK.toFixed(0) : roundedK.toFixed(1);
+
+  return `${text}K`;
 }

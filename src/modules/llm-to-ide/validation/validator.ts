@@ -1,5 +1,5 @@
-import { LlmCopypasterConfig, LlmToIdeParsingAnchorsConfig } from '../../../config-service';
-import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../types/files-payload';
+import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
+import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../contracts/files-payload';
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
 
@@ -9,12 +9,9 @@ export function validateClipboardTextToFilesPayload(
   rawClipboardText: string,
   config: LlmCopypasterConfig
 ): ValidationResult<FilesPayload> {
-  const headerRegex = new RegExp(
-    String.raw`^${config.llmToIdeParsingAnchors.codeListingHeaderStartFragment}\s+(.+)\s*$`,
-    'gm'
-  );
+  const headerRegex = new RegExp(String.raw`^${config.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR}\s+(.+)\s*$`, 'gm');
 
-  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex, config.llmToIdeParsingAnchors);
+  const parsed = parseConcatenatedFileListings(rawClipboardText, headerRegex, config.vitalParsingAnchors);
 
   if (!parsed.ok) return parsed;
 
@@ -26,7 +23,7 @@ export function validateClipboardTextToFilesPayload(
 function parseConcatenatedFileListings(
   rawText: string,
   headerRegex: RegExp,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig
 ): ParseResult<FilesPayload> {
   const matches = [...rawText.matchAll(headerRegex)];
 
@@ -47,7 +44,11 @@ function parseConcatenatedFileListings(
     const sectionEndIndex = next?.index ?? rawText.length;
 
     const sectionRawText = rawText.slice(sectionStartIndex, sectionEndIndex).replace(/^\r?\n/, '');
-    const parsedSection = parseFileSection(sectionRawText, llmToIdeParsingAnchors.fileStatusPrefix, llmToIdeParsingAnchors);
+    const parsedSection = parseFileSection(
+      sectionRawText,
+      llmToIdeParsingAnchors.FILE_STATUS_ANCHOR,
+      llmToIdeParsingAnchors
+    );
 
     if (!parsedSection.ok) return { ok: false, errorMessage: `${path}: ${parsedSection.errorMessage}` };
 
@@ -65,7 +66,7 @@ function parseConcatenatedFileListings(
 function parseFileSection(
   rawSectionText: string,
   fileStatusPrefix: string,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig
 ): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
   const { firstLine, restText } = splitFirstLine(rawSectionText);
 
@@ -75,8 +76,7 @@ function parseFileSection(
 
   if (!operation) return { ok: true, value: { content: rawSectionText } };
 
-  if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted)
-    return { ok: true, value: { content: '', operation } };
+  if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) return { ok: true, value: { content: '', operation } };
 
   const normalizedContent = restText.replace(/^\r?\n/, '');
 
@@ -100,21 +100,21 @@ function splitFirstLine(text: string): { firstLine: string; restText: string } {
 function tryParseOperationLine(
   line: string,
   fileStatusPrefix: string,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig
 ): FilePayloadOperationType | undefined {
   const trimmedLine = line.trim();
   const trimmedPrefix = fileStatusPrefix.trim();
 
   const prefix = trimmedPrefix ? `${trimmedPrefix} ` : '';
 
-  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull}`)
-    return llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
+  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR}`)
+    return llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
 
-  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.filePayloadOperationTypeCreated}`)
-    return llmToIdeParsingAnchors.filePayloadOperationTypeCreated;
+  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.FILE_CREATED_ANCHOR}`)
+    return llmToIdeParsingAnchors.FILE_CREATED_ANCHOR;
 
-  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.filePayloadOperationTypeDeleted}`)
-    return llmToIdeParsingAnchors.filePayloadOperationTypeDeleted;
+  if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.FILE_DELETED_ANCHOR}`)
+    return llmToIdeParsingAnchors.FILE_DELETED_ANCHOR;
 
   return undefined;
 }

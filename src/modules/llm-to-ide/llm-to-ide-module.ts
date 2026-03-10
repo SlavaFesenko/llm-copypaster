@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config-service';
+import { ConfigService } from '../../config/config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/utils/prompt-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
@@ -17,7 +17,7 @@ export class LlmToIdeModule {
 
   public async applyClipboardToFiles(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getConfig();
+    const config = await this._configService.getLlmCopypasterPublicConfig();
 
     const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
@@ -33,12 +33,12 @@ export class LlmToIdeModule {
       return;
     }
 
-    const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
+    const sanitizedPayload = sanitizeFilesPayload(validation.value, config);
 
     const applyResult = await applyFilesPayloadToWorkspace(
       sanitizedPayload,
-      config.baseSettings.postFilePatchActionsConfig,
-      config.llmToIdeParsingAnchors,
+      config.coreSettings.postFilePatchActions,
+      config.vitalParsingAnchors,
       this._logger
     );
 
@@ -57,7 +57,7 @@ export class LlmToIdeModule {
 
     const promptStatsResult = buildTextSizeStats({
       promptText: clipboardText,
-      contextConfig: config.baseSettings.llmToIdeContextConfig,
+      contextConfig: config.coreSettings.llmToIde,
     });
     const promptSizeStatsSuffix = buildPromptSizeStatsSuffix(promptStatsResult);
     const message = promptSizeStatsSuffix
@@ -70,7 +70,7 @@ export class LlmToIdeModule {
 
   public async validateClipboardPayload(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getConfig();
+    const config = await this._configService.getLlmCopypasterPublicConfig();
 
     const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
@@ -91,7 +91,7 @@ export class LlmToIdeModule {
 
   public async sanitizeClipboardPayload(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getConfig();
+    const config = await this._configService.getLlmCopypasterPublicConfig();
 
     const validation = validateClipboardTextToFilesPayload(clipboardText, config);
 
@@ -107,7 +107,7 @@ export class LlmToIdeModule {
       return;
     }
 
-    const sanitizedPayload = sanitizeFilesPayload(validation.value, config, this._logger);
+    const sanitizedPayload = sanitizeFilesPayload(validation.value, config);
 
     const ronParkClipboardText = sanitizedPayload.files
       .map(file => {

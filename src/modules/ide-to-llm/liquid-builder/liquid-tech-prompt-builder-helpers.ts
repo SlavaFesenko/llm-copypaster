@@ -1,8 +1,3 @@
-import * as path from 'node:path';
-import * as vscode from 'vscode';
-
-import { type PromptInstructionsConfig } from '../../../config-service';
-
 export function collapseEmptyLines(text: string): string {
   const normalized = (text ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -54,25 +49,4 @@ export function tryExtractConfigVariablePath(rawTemplate: string, configVariable
   if (!normalized.startsWith(configVariablePrefix)) return undefined;
 
   return normalized;
-}
-
-export function tryBuildPromptUri(args: {
-  promptInstructionsConfig: PromptInstructionsConfig;
-  extensionContext: vscode.ExtensionContext;
-}): vscode.Uri | null {
-  const rawPath = args.promptInstructionsConfig.relativePathToSubInstruction;
-
-  if (rawPath.startsWith('file:')) return vscode.Uri.parse(rawPath); // support file:// URI values (not raw OS paths)
-  if (path.isAbsolute(rawPath)) return vscode.Uri.file(rawPath);
-
-  return args.promptInstructionsConfig.isSystemBundledFile
-    ? vscode.Uri.joinPath(args.extensionContext.extensionUri, rawPath)
-    : tryBuildWorkspacePromptUri(rawPath);
-}
-
-export function tryBuildWorkspacePromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
-  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-  if (!workspaceFolder) return null;
-
-  return vscode.Uri.joinPath(workspaceFolder.uri, relativePathToSubInstruction);
 }

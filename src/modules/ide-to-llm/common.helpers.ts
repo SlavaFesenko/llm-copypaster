@@ -1,12 +1,9 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config-service';
-import { CollectedFileItem } from '../../types/files-payload';
-import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
+import { ConfigService } from '../../config/config-service';
+import { CollectedFileItem } from '../../contracts/files-payload';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { buildLlmPromptTextForProfiles, buildMergedConfigMarkdownReportText } from './liquid-builder/external-helpers';
-import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
-import { closeUnavailableTabs } from './utils/uncategorized-helpers';
+import { ShowCopyResultNotificationArgs } from './copy-result-notificator';
 
 export interface EditorToLlmModulePrivateHelpersDependencies {
   extensionContext: vscode.ExtensionContext;
@@ -34,19 +31,7 @@ export interface EditorToLlmPromptSizeStats {
   exceededBy: string[];
 }
 
-export interface ShowCopyResultNotificationArgs {
-  commandName: string;
-  includeTechPrompt: boolean;
-  copiedFilesCount: number;
-  totalFilesCount: number;
-  deletedFileUris: vscode.Uri[];
-  unresolvedTabs: vscode.Tab[];
-  promptText: string;
-  fileItems: CollectedFileItem[];
-  promptSizeStats?: EditorToLlmPromptSizeStats;
-}
-
-export type ExplorerCopySelectionSource = 'SELECTED' | 'CLICKED' | 'BOTH';
+export { ShowCopyResultNotificationArgs };
 
 export function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
   if (tab.input instanceof vscode.TabInputText) {
@@ -67,10 +52,7 @@ export function buildUriKey(uri: vscode.Uri): string {
   return uri.toString();
 }
 
-export async function readUrisAsFileItems(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  uris: vscode.Uri[]
-): Promise<ReadUrisAsFileItemsResult> {
+export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisAsFileItemsResult> {
   const dedupedByPathMap = new Map<string, vscode.Uri>();
 
   for (const uri of uris) {
@@ -102,7 +84,7 @@ export async function readUrisAsFileItems(
   return { fileItems, deletedFileUris };
 }
 
-export async function tryReadFileAsText(
+async function tryReadFileAsText(
   uri: vscode.Uri
 ): Promise<{ text: string | null; languageId?: string; readError?: string; isFileNotFound: boolean }> {
   try {
@@ -116,7 +98,7 @@ export async function tryReadFileAsText(
   }
 }
 
-export function isFileNotFoundError(error: unknown): boolean {
+function isFileNotFoundError(error: unknown): boolean {
   const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
   const code = String(anyError?.code ?? '');
   if (code === 'FileNotFound') return true;
@@ -131,219 +113,4 @@ export function isFileNotFoundError(error: unknown): boolean {
   if (name.includes('FileNotFound')) return true;
 
   return false;
-}
-
-export async function showCopyResultNotification(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  args: ShowCopyResultNotificationArgs
-): Promise<void> {
-  const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
-
-  const closeUnavailableActionLabel =
-    unavailableFilesCount > 0 ? `Close ${unavailableFilesCount} unavailable file(s) in Editor` : '';
-
-  const hasProfiles = await deps.configService.hasAvailableProfiles();
-
-  const openPromptInEditor = 'Open Prompt in Editor';
-  const eraseInstructions = 'Erase Instructions';
-
-  let selectedProfileIds: string[] = [];
-  let currentPromptText = args.promptText;
-  let isTechPromptErased = false;
-
-  while (true) {
-    const baseEffectiveConfig = await deps.configService.buildEffectiveConfigForProfileIds(selectedProfileIds);
-
-    const effectiveConfig = isTechPromptErased
-      ? { ...baseEffectiveConfig, baseSettings: { ...baseEffectiveConfig.baseSettings, skipTechPrompt: true } }
-      : baseEffectiveConfig;
-
-    const promptStatsResult = buildTextSizeStats({
-      promptText: currentPromptText,
-      contextConfig: effectiveConfig.baseSettings.ideToLlmContextConfig,
-    });
-
-    const shouldShowPromptSizeStats =
-      effectiveConfig.baseSettings.ideToLlmContextConfig.skipPromptSizeStatsInCopyNotification !== true;
-
-    const baseMessage =
-      unavailableFilesCount === 0
-        ? `Copied ${args.copiedFilesCount} file(s)`
-        : `Copied ${args.copiedFilesCount}/${args.totalFilesCount} available file(s)`;
-
-    const promptSizeStatsSuffix = shouldShowPromptSizeStats ? buildPromptSizeStatsSuffix(promptStatsResult) : '';
-
-    const message = promptSizeStatsSuffix ? `${baseMessage} | ${promptSizeStatsSuffix}` : baseMessage;
-
-    const shouldWarn = shouldShowPromptSizeStats ? Boolean(promptStatsResult.isExceeded) : false;
-
-    const hasNoSelectedProfiles = selectedProfileIds.length === 0;
-
-    const applyOrChangeProfilesLabel = hasNoSelectedProfiles ? 'Apply Profiles' : 'Change Profiles';
-
-    const actionLabels = [
-      openPromptInEditor,
-      ...(isTechPromptErased ? [] : [eraseInstructions]),
-      ...(hasProfiles ? [applyOrChangeProfilesLabel] : []),
-      ...(closeUnavailableActionLabel ? [closeUnavailableActionLabel] : []),
-    ];
-
-    let selectedAction: string | undefined;
-
-    if (actionLabels.length > 0) {
-      if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message, ...actionLabels);
-      else selectedAction = await vscode.window.showInformationMessage(message, ...actionLabels);
-    } else {
-      if (shouldWarn) selectedAction = await vscode.window.showWarningMessage(message);
-      else selectedAction = await vscode.window.showInformationMessage(message);
-    }
-
-    if (!selectedAction) return;
-
-    if (selectedAction === openPromptInEditor) {
-      await openPromptTextInEditor(deps.extensionContext, currentPromptText);
-      return;
-    }
-
-    if (selectedAction === eraseInstructions) {
-      isTechPromptErased = true;
-
-      const rebuiltPrompt = await buildLlmPromptTextForProfiles({
-        extensionContext: deps.extensionContext,
-        configService: deps.configService,
-        profileIds: selectedProfileIds,
-        includeTechPromptFromCommand: args.includeTechPrompt,
-        fileItems: args.fileItems,
-        forceSkipTechPrompt: true,
-      });
-
-      currentPromptText = rebuiltPrompt;
-
-      await vscode.env.clipboard.writeText(currentPromptText);
-
-      continue;
-    }
-
-    if (selectedAction === closeUnavailableActionLabel) {
-      await closeUnavailableTabs(deps, {
-        deletedFileUris: args.deletedFileUris,
-        unresolvedTabs: args.unresolvedTabs,
-      });
-
-      continue;
-    }
-
-    if (selectedAction === applyOrChangeProfilesLabel) {
-      const profilesById = await deps.configService.getProfilesById();
-
-      const nextPickResult = await pickProfileIds({ profilesById, selectedProfileIds });
-      if (!nextPickResult) return;
-
-      selectedProfileIds = nextPickResult.profileIds;
-
-      const rebuiltPrompt = await buildLlmPromptTextForProfiles({
-        extensionContext: deps.extensionContext,
-        configService: deps.configService,
-        profileIds: selectedProfileIds,
-        includeTechPromptFromCommand: args.includeTechPrompt,
-        fileItems: args.fileItems,
-        forceSkipTechPrompt: isTechPromptErased,
-      });
-
-      currentPromptText = rebuiltPrompt;
-
-      await vscode.env.clipboard.writeText(currentPromptText);
-
-      if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
-        const baseConfig = await deps.configService.getConfig();
-
-        const mergedConfigForSelectedProfiles = await deps.configService.buildEffectiveConfigForProfileIds(
-          selectedProfileIds,
-          baseConfig
-        );
-
-        const mergedConfigReportText = await buildMergedConfigMarkdownReportText({
-          baseSettingsConfig: baseConfig.baseSettings,
-          mergedSettingsConfig: mergedConfigForSelectedProfiles.baseSettings,
-          profilesById: baseConfig.profilesById ?? {},
-          selectedProfileIds,
-        });
-
-        await openMergedConfigInEditor(deps.extensionContext, mergedConfigReportText);
-      }
-
-      continue;
-    }
-  }
-}
-
-interface ApplyProfileQuickPickItem extends vscode.QuickPickItem {
-  profileId?: string;
-  isAdditionallyOpenMergedConfigInEditorOption?: boolean;
-}
-
-interface PickProfileIdsResult {
-  profileIds: string[];
-  shouldAdditionallyOpenMergedConfigInEditor: boolean;
-}
-
-async function pickProfileIds(args: {
-  profilesById: Record<string, { description: string; version?: string }>;
-  selectedProfileIds: string[];
-}): Promise<PickProfileIdsResult | null> {
-  const selectedProfileIdsSet = new Set(args.selectedProfileIds);
-
-  const items: ApplyProfileQuickPickItem[] = [
-    {
-      isAdditionallyOpenMergedConfigInEditorOption: true,
-      label: '[DEBUG OPTION] Afterwards open merged config in Editor',
-      detail: 'Profiles are merged into base settings (order matters: last wins)',
-      picked: false,
-    },
-  ];
-
-  for (const profileId of Object.keys(args.profilesById)) {
-    const profile = args.profilesById[profileId];
-    const descriptionSuffix = profile.description ? `: ${profile.description}` : '';
-    const version = profile.version ? `v${profile.version}` : '';
-
-    items.push({
-      profileId,
-      label: profileId,
-      detail: `${version}${descriptionSuffix}`,
-      picked: selectedProfileIdsSet.has(profileId),
-    });
-  }
-
-  const selectedItems = await vscode.window.showQuickPick(items, {
-    placeHolder: 'Select profiles to merge and apply to prompt (empty selection = base only)',
-    canPickMany: true,
-  });
-
-  if (!selectedItems) return null;
-
-  const shouldAdditionallyOpenMergedConfigInEditor = selectedItems.some(
-    selectedItem => selectedItem.isAdditionallyOpenMergedConfigInEditorOption === true
-  );
-
-  const profileIds = selectedItems
-    .map(selectedItem => selectedItem.profileId)
-    .filter((profileId): profileId is string => Boolean(profileId));
-
-  return { profileIds, shouldAdditionallyOpenMergedConfigInEditor };
-}
-
-async function openPromptTextInEditor(extensionContext: vscode.ExtensionContext, promptText: string): Promise<void> {
-  await ensureReadonlyVirtualMarkdownDocOpened({ extensionContext, docId: 'prompt', markdownText: promptText });
-}
-
-async function openMergedConfigInEditor(
-  extensionContext: vscode.ExtensionContext,
-  mergedConfigReportText: string
-): Promise<void> {
-  await ensureReadonlyVirtualMarkdownDocOpened({
-    extensionContext,
-    docId: 'merged-config',
-    markdownText: mergedConfigReportText,
-  });
 }

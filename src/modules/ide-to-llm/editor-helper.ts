@@ -3,10 +3,10 @@ import * as vscode from 'vscode';
 import {
   EditorToLlmModulePrivateHelpersDependencies,
   readUrisAsFileItems,
-  showCopyResultNotification,
   TabBasedFileItemsResult,
   tryGetUriFromTab,
 } from './common.helpers';
+import { CopyResultNotificator } from './copy-result-notificator';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildLlmContextText } from './utils/llm-context-formatter';
@@ -136,7 +136,7 @@ export class EditorHelper {
       tabUris.push(tabUri);
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -162,7 +162,7 @@ export class EditorHelper {
       }
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -190,7 +190,7 @@ export class EditorHelper {
       }
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -218,7 +218,7 @@ export class EditorHelper {
       tabUris.push(tabUri);
     }
 
-    const readResult = await readUrisAsFileItems(this._deps, tabUris);
+    const readResult = await readUrisAsFileItems(tabUris);
 
     return { ...readResult, unresolvedTabs };
   }
@@ -260,7 +260,7 @@ export class EditorHelper {
       return;
     }
 
-    const config = await this._deps.configService.getConfig();
+    const config = await this._deps.configService.getLlmCopypasterPublicConfig();
 
     const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
 
@@ -274,12 +274,12 @@ export class EditorHelper {
 
     const promptStatsResult = buildTextSizeStats({
       promptText: contextText,
-      contextConfig: config.baseSettings.ideToLlmContextConfig,
+      contextConfig: config.coreSettings.ideToLlm,
     });
 
     await vscode.env.clipboard.writeText(contextText);
 
-    await showCopyResultNotification(this._deps, {
+    await new CopyResultNotificator(this._deps).showCopyResultNotification({
       commandName: args.commandName,
       includeTechPrompt: true,
       copiedFilesCount: args.copiedFilesCount,
@@ -291,8 +291,8 @@ export class EditorHelper {
       promptSizeStats: {
         linesCount: promptStatsResult.linesCount,
         approxTokensCount: promptStatsResult.approxTokensCount,
-        maxLinesCountInContext: promptStatsResult.maxLinesCountInContext,
-        maxTokensCountInContext: promptStatsResult.maxTokensCountInContext,
+        maxLinesCountInContext: promptStatsResult.linesMaxToShowWarning,
+        maxTokensCountInContext: promptStatsResult.tokensMaxToShowWarning,
         isExceeded: promptStatsResult.isExceeded,
         exceededBy: promptStatsResult.exceededBy,
       },

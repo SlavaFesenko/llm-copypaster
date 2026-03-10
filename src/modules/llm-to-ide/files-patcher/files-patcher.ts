@@ -1,8 +1,8 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { LlmToIdeParsingAnchorsConfig, PostFilePatchActionsConfig } from '../../../config-service';
-import { FilesPayload } from '../../../types/files-payload';
+import { PostFilePatchActionsConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
+import { FilesPayload } from '../../../contracts/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
 import { toWorkspaceUri } from '../../../utils/path-utils';
 
@@ -21,7 +21,7 @@ export type ApplyResult = ApplyOk | ApplyFail;
 export async function applyFilesPayloadToWorkspace(
   payload: FilesPayload,
   postFilesPatchActions: PostFilePatchActionsConfig,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<ApplyResult> {
   try {
@@ -79,9 +79,9 @@ export async function applyFilesPayloadToWorkspace(
 
       if (!targetUri) return { ok: false, errorMessage: `No workspace folder for path: ${file.path}` };
 
-      const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
+      const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
 
-      if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
+      if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) {
         workspaceEdit.deleteFile(targetUri, { ignoreIfNotExists: true });
         hasWorkspaceEdits = true;
         appliedFilesCount++;
@@ -116,9 +116,9 @@ export async function applyFilesPayloadToWorkspace(
       const isConfirmed = await confirmOutOfWorkspaceFileOperation(externalTargetUri);
       if (!isConfirmed) return { ok: false, errorMessage: `Cancelled by user: ${file.path}` };
 
-      const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
+      const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
 
-      if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) {
+      if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) {
         try {
           await vscode.workspace.fs.delete(externalTargetUri, { recursive: false, useTrash: true });
         } catch (error) {
@@ -191,7 +191,7 @@ async function fileExists(uri: vscode.Uri): Promise<boolean> {
 
 async function tryFormatAppliedDocuments(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<void> {
   await tryApplyToFilesPayloadDocuments(
@@ -210,7 +210,7 @@ async function tryFormatAppliedDocuments(
 
 async function trySaveAppliedDocuments(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<void> {
   await tryApplyToFilesPayloadDocuments(payload, llmToIdeParsingAnchors, logger, 'Save', toWorkspaceUri, async document => {
@@ -220,7 +220,7 @@ async function trySaveAppliedDocuments(
 
 async function tryOpenAppliedDocumentsInEditor(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger
 ): Promise<void> {
   await tryApplyToFilesPayloadDocuments(
@@ -247,15 +247,15 @@ export async function ensureParentDirectoryExists(targetFileUri: vscode.Uri, log
 
 export async function tryApplyToFilesPayloadDocuments(
   payload: FilesPayload,
-  llmToIdeParsingAnchors: LlmToIdeParsingAnchorsConfig,
+  llmToIdeParsingAnchors: VitalParsingAnchorsConfig,
   logger: OutputChannelLogger,
   actionName: string,
   resolveTargetUri: (filePath: string) => vscode.Uri | null,
   action: (document: vscode.TextDocument, targetUri: vscode.Uri) => Promise<void>
 ): Promise<void> {
   for (const file of payload.files) {
-    const operation = file.operation ?? llmToIdeParsingAnchors.filePayloadOperationTypeEditedFull;
-    if (operation === llmToIdeParsingAnchors.filePayloadOperationTypeDeleted) continue;
+    const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
+    if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) continue;
 
     const targetUri = resolveTargetUri(file.path);
     if (!targetUri) continue;

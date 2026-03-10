@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
-import { ConfigService } from './config-service';
+import { ConfigService } from './config/config-service';
+import { ConfigReportFacade } from './config/reporters/config-report-facade';
 import { AdvancedTabOptionsModule } from './modules/advanced-tab-options/advanced-file-options-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
 import { OutputChannelLogger } from './utils/output-channel-logger';
-import { createReadonlyTextView } from './utils/text-view-helpers';
 
 export const commandIds = {
   helloWorld: 'llm-copypaster.helloWorld',
@@ -47,8 +47,6 @@ export interface RegisterCommandsDeps {
 }
 
 export function registerCommands(context: vscode.ExtensionContext, deps: RegisterCommandsDeps) {
-  const lsConfigReadonlyView = createReadonlyTextView(context, 'llm-copypaster-lsconfig', 'current-config-state', 'json');
-
   const commandDisposables: vscode.Disposable[] = [
     // #region Editor 2 LLM
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContext, async () => {
@@ -119,10 +117,10 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
-      const config = await deps.configService.getConfig();
-      const configJson = JSON.stringify(config, null, 2);
-
-      await lsConfigReadonlyView.open(configJson);
+      await new ConfigReportFacade({
+        extensionContext: context,
+        configService: deps.configService,
+      }).displayLsConfigReport();
     }),
 
     // #endregion

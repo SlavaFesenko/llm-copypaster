@@ -1,5 +1,4 @@
-import { LlmCopypasterConfig } from '../../../../config-service';
-import { OutputChannelLogger } from '../../../../utils/output-channel-logger';
+import { LlmCopypasterConfig } from '../../../../config/system-config-contracts';
 
 export interface ApplySanitizationRulesFileMeta {
   path: string;
@@ -9,38 +8,33 @@ export interface ApplySanitizationRulesFileMeta {
 export function applySanitizationRules(
   inputText: string,
   fileMeta: ApplySanitizationRulesFileMeta,
-  config: LlmCopypasterConfig,
-  logger: OutputChannelLogger
+  config: LlmCopypasterConfig
 ): string {
   let outputText = inputText;
 
-  const sanitizationRulesById = config.baseSettings.llmToIdeSanitizationRulesById;
+  const sanitizationRulesById = config.coreSettings.llmToIdeSanitizationRulesById;
 
   for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
     if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;
 
-    try {
-      const regexp = new RegExp(ruleConfig.pattern, 'g');
-      outputText = outputText.replace(regexp, ruleConfig.replaceWith);
-    } catch (error) {
-      logger.warn(`Sanitization rule failed (${ruleId}) for ${fileMeta.path}: ${String(error)}`);
-    }
+    const regexp = new RegExp(ruleConfig.regexPattern, 'g');
+    outputText = outputText.replace(regexp, ruleConfig.replaceWith);
   }
 
   return outputText;
 }
 
 function isRuleDisabledForFile(
-  rule: { disabledForLanguages?: string[]; disabledForPaths?: string[] },
+  rule: { skipForLanguages?: string[]; skipForPaths?: string[] },
   fileMeta: ApplySanitizationRulesFileMeta
 ): boolean {
-  const disabledForLanguages = rule.disabledForLanguages ?? [];
-  const disabledForPaths = rule.disabledForPaths ?? [];
+  const skipForLanguages = rule.skipForLanguages ?? [];
+  const skipForPaths = rule.skipForPaths ?? [];
 
-  if (fileMeta.languageId && disabledForLanguages.includes(fileMeta.languageId)) return true;
+  if (fileMeta.languageId && skipForLanguages.includes(fileMeta.languageId)) return true;
 
-  for (const disabledPathPrefix of disabledForPaths) {
-    if (fileMeta.path.startsWith(disabledPathPrefix)) return true;
+  for (const skipPathPrefix of skipForPaths) {
+    if (fileMeta.path.startsWith(skipPathPrefix)) return true;
   }
 
   return false;
