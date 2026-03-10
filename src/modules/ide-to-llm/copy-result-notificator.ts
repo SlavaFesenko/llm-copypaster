@@ -38,7 +38,8 @@ export class CopyResultNotificator {
     let isTechPromptErased = false;
 
     while (true) {
-      const effectiveConfig = await this._deps.configService.getMergedConfigByOverrideIds(selectedProfileIds);
+      const mergedConfigResult = await this._deps.configService.getMergedConfigByOverrideIds(selectedProfileIds);
+      const effectiveConfig = mergedConfigResult.mergedConfig;
 
       const promptStatsResult = buildTextSizeStats({
         promptText: currentPromptText,
@@ -186,7 +187,8 @@ export class CopyResultNotificator {
     fileItems: CollectedFileItem[];
     forceSkipTechPrompt?: boolean;
   }): Promise<string> {
-    const effectiveConfig = await this._deps.configService.getMergedConfigByOverrideIds(args.profileIds);
+    const mergedConfigResult = await this._deps.configService.getMergedConfigByOverrideIds(args.profileIds);
+    const effectiveConfig = mergedConfigResult.mergedConfig;
 
     const shouldIncludeTechPrompt =
       args.includeTechPromptFromCommand &&

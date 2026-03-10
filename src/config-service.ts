@@ -80,7 +80,11 @@ export interface OverridesInBaseConfigReport {
 export interface LlmCopypasterConfig {
   vitalParsingAnchors: VitalParsingAnchorsConfig;
   coreSettings: CoreSettingsConfig;
-  overridesInBaseConfig?: OverridesInBaseConfigReport;
+}
+
+export interface MergedConfigWithOverrideIdResult {
+  mergedConfig: LlmCopypasterConfig;
+  overridesInBaseConfig: OverridesInBaseConfigReport;
 }
 
 export class ConfigService {
@@ -101,18 +105,16 @@ export class ConfigService {
     return this._systemConfig;
   }
 
-  public async getLlmCopypasterPublicConfig(overrideId?: string): Promise<LlmCopypasterConfig> {
-    return this.getMergedConfigByOverrideIds(overrideId ? [overrideId] : []);
+  public async getLlmCopypasterPublicConfig(): Promise<LlmCopypasterConfig> {
+    return await this._getLlmCopypasterConfig();
   }
 
-  public async getMergedConfigByOverrideIds(overrideIds?: string[]): Promise<LlmCopypasterConfig> {
+  public async getMergedConfigByOverrideIds(overrideIds?: string[]): Promise<MergedConfigWithOverrideIdResult> {
     const baseConfig = await this._getLlmCopypasterConfig();
     const userConfig = await this._getUserConfig();
     const normalizedOverrideIds = this._normalizeOverrideIds(overrideIds);
 
-    if (normalizedOverrideIds.length === 0) return baseConfig;
-
-    let mergedConfigWrapper: LlmCopypasterConfig = {
+    let mergedConfig: LlmCopypasterConfig = {
       vitalParsingAnchors: baseConfig.vitalParsingAnchors,
       coreSettings: baseConfig.coreSettings,
     };
@@ -126,11 +128,11 @@ export class ConfigService {
       const overrideUserConfig = this._buildOverrideWrapperUserConfig(userConfig?.overridesById?.[overrideId]);
       if (!overrideUserConfig) continue;
 
-      mergedConfigWrapper = mergeConfigs(mergedConfigWrapper, overrideUserConfig);
+      mergedConfig = mergeConfigs(mergedConfig, overrideUserConfig);
 
       const mergedConfigAfterOverride: LlmCopypasterConfig = {
-        vitalParsingAnchors: mergedConfigWrapper.vitalParsingAnchors,
-        coreSettings: mergedConfigWrapper.coreSettings,
+        vitalParsingAnchors: mergedConfig.vitalParsingAnchors,
+        coreSettings: mergedConfig.coreSettings,
       };
 
       overridesInBaseConfig.appliedOverrideIds.push(overrideId);
@@ -142,8 +144,7 @@ export class ConfigService {
     }
 
     return {
-      vitalParsingAnchors: mergedConfigWrapper.vitalParsingAnchors,
-      coreSettings: mergedConfigWrapper.coreSettings,
+      mergedConfig,
       overridesInBaseConfig,
     };
   }
