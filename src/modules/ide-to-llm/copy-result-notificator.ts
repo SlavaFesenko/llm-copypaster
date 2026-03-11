@@ -7,7 +7,7 @@ import { CollectedFileItem } from '../../contracts/files-payload';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { EditorToLlmModulePrivateHelpersDependencies, EditorToLlmPromptSizeStats } from './common.helpers';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
-import { buildLlmContextText } from './utils/llm-context-formatter';
+import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
 
 export interface ShowCopyResultNotificationArgs {
@@ -196,11 +196,11 @@ export class CopyResultNotificator {
       ? await new PromptBuilder(this._deps.extensionContext, args.effectiveConfig).build()
       : '';
 
-    return buildLlmContextText({
+    return buildFinalPromptText({
       fileItems: effectiveFileItems,
       ignorePromptInstructions: !shouldIncludeTechPrompt,
       config: args.effectiveConfig,
-      techPromptText,
+      instructionsText: techPromptText,
     });
   }
 

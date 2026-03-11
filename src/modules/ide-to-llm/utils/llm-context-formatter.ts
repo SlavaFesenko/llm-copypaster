@@ -5,21 +5,21 @@ export interface BuildLlmContextTextArgs {
   fileItems: EditorToLlmFileItem[];
   config: LlmCopypasterConfig;
   ignorePromptInstructions?: boolean;
-  techPromptText?: string;
+  instructionsText?: string;
 }
 
-export function buildLlmContextText(args: BuildLlmContextTextArgs): string {
+export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
   const techPromptDelimiter = args.config.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR;
 
   if (args.ignorePromptInstructions) return `\n${techPromptDelimiter}\n${listings}`;
 
-  const techPromptText = args.techPromptText ?? '';
+  const instructionsText = args.instructionsText ?? '';
 
-  if (!techPromptText.trim()) return listings;
+  if (!instructionsText.trim()) return listings;
 
-  return `\n${techPromptDelimiter}\n${techPromptText}\n${techPromptDelimiter}\n${listings}`;
+  return `\n${techPromptDelimiter}\n${instructionsText}\n${techPromptDelimiter}\n${listings}`;
 }
 
 function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {

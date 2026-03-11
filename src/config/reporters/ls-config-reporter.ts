@@ -21,7 +21,7 @@ export interface BuildLsConfigReportTextArgs {
 export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs): Promise<string> {
   const systemConfig = await args.configService.getSystemConfig();
   const userConfig = await readUserConfig();
-  const basePublicConfig = await args.configService.getLlmCopypasterPublicConfig();
+  const basePublicConfig = await args.configService.getLlmCopypasterConfig();
   const overrideOptions = args.configService.overrideOptions;
 
   const preparedOverrideReportEntries = await buildPreparedOverrideReportEntries({

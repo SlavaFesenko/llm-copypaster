@@ -8,7 +8,7 @@ import {
 } from './common.helpers';
 import { CopyResultNotificator } from './copy-result-notificator';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
-import { buildLlmContextText } from './utils/llm-context-formatter';
+import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
 
 export interface CopySelectedExplorerItemsArgs {
@@ -42,14 +42,14 @@ export class ExplorerHelper {
     }
 
     if (selection.fileItems.length > 0) {
-      const config = await this._deps.configService.getLlmCopypasterPublicConfig();
+      const config = await this._deps.configService.getLlmCopypasterConfig();
 
       const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
 
-      const contextText = buildLlmContextText({
+      const contextText = buildFinalPromptText({
         fileItems: selection.fileItems,
         config,
-        techPromptText,
+        instructionsText: techPromptText,
       });
 
       const promptStatsResult = buildTextSizeStats({

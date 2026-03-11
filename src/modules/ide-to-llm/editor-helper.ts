@@ -9,7 +9,7 @@ import {
 import { CopyResultNotificator } from './copy-result-notificator';
 import { PromptBuilder } from './liquid-builder/prompt-builder';
 import { collectActiveFileSelection } from './utils/file-selection';
-import { buildLlmContextText } from './utils/llm-context-formatter';
+import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
 
 export class EditorHelper {
@@ -247,24 +247,23 @@ export class EditorHelper {
       return;
     }
 
-    const config = await this._deps.configService.getLlmCopypasterPublicConfig();
-
-    const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
-
+    const config = await this._deps.configService.getLlmCopypasterConfig();
     const fileItems = args.selectionFileItems;
 
-    const contextText = buildLlmContextText({
+    const instructionsText = await new PromptBuilder(this._deps.extensionContext, config).build();
+
+    const finalPromptText = buildFinalPromptText({
       fileItems,
       config,
-      techPromptText,
+      instructionsText: instructionsText,
     });
 
     const promptStatsResult = buildTextSizeStats({
-      promptText: contextText,
+      promptText: finalPromptText,
       contextConfig: config.coreSettings.ideToLlm,
     });
 
-    await vscode.env.clipboard.writeText(contextText);
+    await vscode.env.clipboard.writeText(finalPromptText);
 
     await new CopyResultNotificator(this._deps).showCopyResultNotification({
       commandName: args.commandName,
@@ -273,7 +272,7 @@ export class EditorHelper {
       totalFilesCount: args.totalFilesCount,
       deletedFileUris: args.deletedFileUris,
       unresolvedTabs: args.unresolvedTabs,
-      promptText: contextText,
+      promptText: finalPromptText,
       fileItems: args.selectionFileItems,
       promptSizeStats: {
         linesCount: promptStatsResult.linesCount,

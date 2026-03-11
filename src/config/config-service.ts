@@ -49,7 +49,7 @@ export class ConfigService {
     return this._systemConfig;
   }
 
-  public async getLlmCopypasterPublicConfig(): Promise<LlmCopypasterConfig> {
+  public async getLlmCopypasterConfig(): Promise<LlmCopypasterConfig> {
     return await this._getLlmCopypasterConfig();
   }
 
