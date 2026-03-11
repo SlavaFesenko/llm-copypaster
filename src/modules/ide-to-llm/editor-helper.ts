@@ -16,28 +16,15 @@ export class EditorHelper {
   public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
 
   public async copyThisFileAsContext(): Promise<void> {
-    const selection = await collectActiveFileSelection(this._deps.logger);
-    if (!selection) {
-      await vscode.window.showWarningMessage('No active file to copy');
-      return;
-    }
-
-    const nonDeletedFileItems = selection.fileItems.filter(fileItem => fileItem.content !== null);
-
-    const totalFilesCount = selection.fileItems.length;
-    const copiedFilesCount = nonDeletedFileItems.length;
-
-    if (copiedFilesCount === 0) {
-      await vscode.window.showWarningMessage('No active file to copy');
-      return;
-    }
+    const fileItem = await collectActiveFileSelection();
+    if (!fileItem) return;
 
     await this._copyFileItemsSelectionAsContext({
-      selectionFileItems: nonDeletedFileItems,
+      selectionFileItems: [fileItem],
       warningWhenEmpty: 'No active file to copy',
       commandName: 'Copy File',
-      totalFilesCount,
-      copiedFilesCount,
+      totalFilesCount: 1,
+      copiedFilesCount: 1,
       deletedFileUris: [],
       unresolvedTabs: [],
     });
