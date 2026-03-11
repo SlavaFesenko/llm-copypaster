@@ -18,7 +18,7 @@
     "commands": [
       {
         "command": "llm-copypaster.copyThisFileAsLlmContext",
-        "title": "LLM Copypaster: Copy This File"
+        "title": "LLM Copypaster: Copy All File / Selection if any"
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
