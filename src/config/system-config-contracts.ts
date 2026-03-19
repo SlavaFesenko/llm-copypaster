@@ -51,8 +51,8 @@ export interface InstructionsAndVariablesConfig {
 export interface InstructionConfig {
   path: string; // ex relativePathToSubInstruction
   skip: boolean; // ex ignore
-  skipInOverrideMode: boolean;
-  skipInQuickInstructionMode: boolean;
+  showInOverrideMode: boolean;
+  showInQuickInstructionMode: boolean;
 }
 
 export interface LlmToIdeSanitizationRuleConfig {

@@ -93,7 +93,7 @@ export class QuickInstructionModule {
     instructionsById: Record<string, InstructionConfig>
   ): QuickInstructionQuickPickItem[] {
     return Object.entries(instructionsById)
-      .filter(([, instructionConfig]) => !instructionConfig.skip && !instructionConfig.skipInQuickInstructionMode)
+      .filter(([, instructionConfig]) => !instructionConfig.skip && instructionConfig.showInQuickInstructionMode)
       .map(([instructionId, instructionConfig]) => ({
         instructionId,
         label: instructionId,

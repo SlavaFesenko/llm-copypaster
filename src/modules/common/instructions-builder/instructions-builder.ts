@@ -99,8 +99,8 @@ export class InstructionsBuilder {
     const allowedInstructionIds = Object.entries(args.instructionsById)
       .filter(([, instructionDetails]) => {
         if (instructionDetails.skip) return false;
-        if (args.mode === InstructionsBuilderMode.Override && instructionDetails.skipInOverrideMode) return false;
-        if (args.mode === InstructionsBuilderMode.QuickInstruction && instructionDetails.skipInQuickInstructionMode)
+        if (args.mode === InstructionsBuilderMode.Override && !instructionDetails.showInOverrideMode) return false;
+        if (args.mode === InstructionsBuilderMode.QuickInstruction && !instructionDetails.showInQuickInstructionMode)
           return false;
 
         return true;

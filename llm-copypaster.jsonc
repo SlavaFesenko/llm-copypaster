@@ -8,15 +8,22 @@
         "llm-response-rules-prompt": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\llm-response-rules-prompt.txt",
           "skip": false,
+          "showInOverrideMode": true,
         },
         "web-git-prompt": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\web-git-prompt.txt",
           "skip": false,
+          "showInOverrideMode": true,
         },
         "forget-response-rules": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\forget-response-rules.txt",
           "skip": false,
-          "skipInOverrideMode": true, // this instruction can't be the one applied by-default in overrides mode to avoid nonsense
+          "showInQuickInstructionMode": true,
+        },
+        "return-only-provided-text": {
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\return-only-provided-text.txt",
+          "skip": false,
+          "showInQuickInstructionMode": true,
         },
       },
       "sharedVariablesById": {
