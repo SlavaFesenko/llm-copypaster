@@ -163,6 +163,8 @@ export function mapInstructionsById(
       nextInstructionsById[instructionId] = {
         path: userInstruction.path,
         skip: userInstruction.skip,
+        skipInOverrideMode: userInstruction.skipInOverrideMode,
+        skipInQuickInstructionMode: userInstruction.skipInQuickInstructionMode,
       };
 
       continue;
@@ -171,6 +173,8 @@ export function mapInstructionsById(
     nextInstructionsById[instructionId] = {
       path: userInstruction.path ?? baseInstruction.path,
       skip: userInstruction.skip ?? baseInstruction.skip,
+      skipInOverrideMode: userInstruction.skipInOverrideMode,
+      skipInQuickInstructionMode: userInstruction.skipInQuickInstructionMode,
     };
   }
 

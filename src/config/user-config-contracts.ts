@@ -49,6 +49,8 @@ export interface InstructionsAndVariablesUserConfig {
 export interface InstructionUserConfig {
   path?: string;
   skip?: boolean;
+  skipInOverrideMode: boolean;
+  skipInQuickInstructionMode: boolean;
 }
 
 export interface LlmToIdeSanitizationRuleUserConfig {

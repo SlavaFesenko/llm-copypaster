@@ -15,10 +15,10 @@ import {
   normalizeDirectPlaceholderValue,
   tryExtractConfigVariablePath,
   tryParseScalarLiquidValue,
-} from './liquid-tech-prompt-builder-helpers';
-import { showTechPromptResolveIssuesIfAny, type TechPromptResolveIssues } from './variables-resolve-report-helpers';
+} from './helper';
+import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './variables-resolve-report-helpers';
 
-export class PromptBuilder {
+export class InstructionsBuilder {
   private readonly _liquidStrict: Liquid;
   private readonly _liquidLight: Liquid;
 
@@ -31,77 +31,83 @@ export class PromptBuilder {
   }
 
   public async build(): Promise<string> {
-    const promptInstructionConfig: Partial<InstructionsAndVariablesConfig> =
+    const instructionsAndVariablesConfig: Partial<InstructionsAndVariablesConfig> =
       this._config.coreSettings.instructionsAndVariables ?? {};
-    const subInstructionsById = promptInstructionConfig.instructionsById ?? {};
-    const promptIdsInConfig = Object.keys(subInstructionsById);
+    const instructionsById = instructionsAndVariablesConfig.instructionsById ?? {};
+    const instructionsIds = Object.keys(instructionsById);
 
-    if (promptIdsInConfig.length === 0) return '';
+    if (instructionsIds.length === 0) return '';
 
-    const resolveIssues: TechPromptResolveIssues = {
+    const resolveIssuesBag: InstructionsResolveIssuesBag = {
       filePromptsIssues: [],
       configVariablesIssues: [],
       liquidJsIssues: [],
     };
 
-    const resolvedSharedVariablesById = await this._buildResolvedSharedVariablesById(resolveIssues);
+    const resolvedSharedVariablesById = await this._resolveSharedVariablesById(resolveIssuesBag);
 
-    const builtPrompts: string[] = [];
+    const finalInstructionsText: string[] = [];
 
-    for (const promptId of promptIdsInConfig) {
-      const promptInstructionsConfig = subInstructionsById[promptId] as InstructionConfig | undefined;
+    for (const instructionId of instructionsIds) {
+      const instructionDetails = instructionsById[instructionId];
 
-      if (!promptInstructionsConfig) continue;
-      if (promptInstructionsConfig.skip) continue;
+      if (!instructionDetails) continue;
+      if (instructionDetails.skip) continue;
 
-      const builtPromptText = await this._tryBuildPromptText({
-        promptId,
-        promptInstructionsConfig,
+      const instructionText = await this._buildInstructionsText({
+        instructionId: instructionId,
+        instructionDetails: instructionDetails,
         resolvedSharedVariablesById,
-        resolveIssues,
+        resolveIssuesBag: resolveIssuesBag,
       });
 
-      if (!builtPromptText) continue;
+      if (!instructionText) continue;
 
-      builtPrompts.push(builtPromptText);
+      finalInstructionsText.push(instructionText);
     }
 
-    showTechPromptResolveIssuesIfAny({ extensionContext: this._extensionContext, resolveIssues });
+    showNotificationIfAnyIssues({ extensionContext: this._extensionContext, resolveIssues: resolveIssuesBag });
 
-    if (builtPrompts.length === 0) return '';
+    if (finalInstructionsText.length === 0) return '';
 
     const delimiterLine = `\n${this._config.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
 
-    return builtPrompts.join(delimiterLine);
+    return finalInstructionsText.join(delimiterLine);
   }
 
-  private async _tryBuildPromptText(args: {
-    promptId: string;
-    promptInstructionsConfig: InstructionConfig;
+  private async _buildInstructionsText(args: {
+    instructionId: string;
+    instructionDetails: InstructionConfig;
     resolvedSharedVariablesById: Record<string, unknown>;
-    resolveIssues: TechPromptResolveIssues;
+    resolveIssuesBag: InstructionsResolveIssuesBag;
   }): Promise<string | null> {
-    if (args.promptInstructionsConfig.skip) return null;
+    if (args.instructionDetails.skip) return null;
 
-    const promptText = await this._tryReadPromptText(args.promptInstructionsConfig, args.promptId, args.resolveIssues);
-    if (!promptText) return null;
+    const instructionText = await this._readInstructionText(
+      args.instructionDetails,
+      args.instructionId,
+      args.resolveIssuesBag
+    );
+    if (!instructionText) return null;
 
     let renderedTextOrNull: string | null = null;
 
     try {
-      renderedTextOrNull = await this._liquidStrict.parseAndRender(promptText, { ...args.resolvedSharedVariablesById });
+      renderedTextOrNull = await this._liquidStrict.parseAndRender(instructionText, { ...args.resolvedSharedVariablesById });
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
-      args.resolveIssues.liquidJsIssues.push({
-        promptId: args.promptId,
+      args.resolveIssuesBag.liquidJsIssues.push({
+        promptId: args.instructionId,
         errorText,
       });
     }
 
     if (renderedTextOrNull === null) {
       try {
-        renderedTextOrNull = await this._liquidLight.parseAndRender(promptText, { ...args.resolvedSharedVariablesById });
+        renderedTextOrNull = await this._liquidLight.parseAndRender(instructionText, {
+          ...args.resolvedSharedVariablesById,
+        });
       } catch {
         return null;
       }
@@ -115,7 +121,7 @@ export class PromptBuilder {
     return normalizedRenderedText;
   }
 
-  private async _buildResolvedSharedVariablesById(resolveIssues: TechPromptResolveIssues): Promise<Record<string, unknown>> {
+  private async _resolveSharedVariablesById(resolveIssues: InstructionsResolveIssuesBag): Promise<Record<string, unknown>> {
     const rawSharedVariablesById = this._config.coreSettings.instructionsAndVariables.sharedVariablesById ?? {};
 
     const resolvedSharedVariablesById: Record<string, unknown> = {};
@@ -172,7 +178,7 @@ export class PromptBuilder {
   private _tryResolveDirectConfigTemplate(
     rawTemplate: string,
     sharedVariableId: string,
-    resolveIssues: TechPromptResolveIssues
+    resolveIssues: InstructionsResolveIssuesBag
   ): unknown | undefined {
     const configVariablePrefix = this._config.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
 
@@ -198,10 +204,10 @@ export class PromptBuilder {
     return normalizeDirectPlaceholderValue(resolvedValue);
   }
 
-  private async _tryReadPromptText(
+  private async _readInstructionText(
     promptInstructionsConfig: InstructionConfig,
     promptId: string,
-    resolveIssues: TechPromptResolveIssues
+    resolveIssues: InstructionsResolveIssuesBag
   ): Promise<string | null> {
     const promptUri = this._tryBuildPromptUri(promptInstructionsConfig.path);
     const isSystemBundledPromptFile = this._isSystemBundledPromptFile(promptInstructionsConfig.path);

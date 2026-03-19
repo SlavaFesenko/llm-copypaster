@@ -7,7 +7,7 @@ import {
   readUrisAsFileItems,
 } from './common.helpers';
 import { CopyResultNotificator } from './copy-result-notificator';
-import { PromptBuilder } from './liquid-builder/prompt-builder';
+import { InstructionsBuilder } from './liquid-builder/instructions-builder';
 import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
 
@@ -44,7 +44,7 @@ export class ExplorerHelper {
     if (selection.fileItems.length > 0) {
       const config = await this._deps.configService.getLlmCopypasterConfig();
 
-      const techPromptText = await new PromptBuilder(this._deps.extensionContext, config).build();
+      const techPromptText = await new InstructionsBuilder(this._deps.extensionContext, config).build();
 
       const contextText = buildFinalPromptText({
         fileItems: selection.fileItems,

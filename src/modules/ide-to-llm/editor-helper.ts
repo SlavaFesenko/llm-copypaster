@@ -7,7 +7,7 @@ import {
   tryGetUriFromTab,
 } from './common.helpers';
 import { CopyResultNotificator } from './copy-result-notificator';
-import { PromptBuilder } from './liquid-builder/prompt-builder';
+import { InstructionsBuilder } from './liquid-builder/instructions-builder';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
@@ -250,7 +250,7 @@ export class EditorHelper {
     const config = await this._deps.configService.getLlmCopypasterConfig();
     const fileItems = args.selectionFileItems;
 
-    const instructionsText = await new PromptBuilder(this._deps.extensionContext, config).build();
+    const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, config).build();
 
     const finalPromptText = buildFinalPromptText({
       fileItems,

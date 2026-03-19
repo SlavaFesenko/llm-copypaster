@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-virtual-doc-helpers';
 
-export interface TechPromptResolveIssues {
+export interface InstructionsResolveIssuesBag {
   filePromptsIssues: FilePromptResolveIssue[];
   configVariablesIssues: ConfigVariablesResolveIssue[];
   liquidJsIssues: LiquidJsResolveIssue[];
@@ -28,29 +28,29 @@ export interface LiquidJsResolveIssue {
   errorText: string;
 }
 
-export function showTechPromptResolveIssuesIfAny(args: {
+export function showNotificationIfAnyIssues(args: {
   extensionContext: vscode.ExtensionContext;
-  resolveIssues: TechPromptResolveIssues;
+  resolveIssues: InstructionsResolveIssuesBag;
 }): void {
-  const issuesCount = countTechPromptResolveIssues(args.resolveIssues);
+  const issuesCount = calculateTotalIssuesCount(args.resolveIssues);
   if (issuesCount === 0) return;
 
-  void showTechPromptResolveIssuesNotification({
+  void buildAndShowNotification({
     extensionContext: args.extensionContext,
     resolveIssues: args.resolveIssues,
     issuesCount,
   });
 }
 
-function countTechPromptResolveIssues(resolveIssues: TechPromptResolveIssues): number {
+function calculateTotalIssuesCount(resolveIssues: InstructionsResolveIssuesBag): number {
   return (
     resolveIssues.filePromptsIssues.length + resolveIssues.configVariablesIssues.length + resolveIssues.liquidJsIssues.length
   );
 }
 
-async function showTechPromptResolveIssuesNotification(args: {
+async function buildAndShowNotification(args: {
   extensionContext: vscode.ExtensionContext;
-  resolveIssues: TechPromptResolveIssues;
+  resolveIssues: InstructionsResolveIssuesBag;
   issuesCount: number;
 }): Promise<void> {
   const selection = await vscode.window.showWarningMessage(
@@ -60,7 +60,7 @@ async function showTechPromptResolveIssuesNotification(args: {
 
   if (selection !== 'Show Report') return;
 
-  const markdownText = buildTechPromptResolveIssuesMarkdownReport(args.resolveIssues, args.issuesCount);
+  const markdownText = buildMarkdownReport(args.resolveIssues, args.issuesCount);
 
   await ensureReadonlyVirtualMarkdownDocOpened({
     extensionContext: args.extensionContext,
@@ -69,18 +69,18 @@ async function showTechPromptResolveIssuesNotification(args: {
   });
 }
 
-function buildTechPromptResolveIssuesMarkdownReport(resolveIssues: TechPromptResolveIssues, issuesCount: number): string {
+function buildMarkdownReport(resolveIssues: InstructionsResolveIssuesBag, totalIssuesCount: number): string {
   const sections: string[] = [];
 
   sections.push(`# Tech Prompt Resolve Report`);
-  sections.push(`Total errors: ${issuesCount}`);
+  sections.push(`Total errors: ${totalIssuesCount}`);
   sections.push('');
 
   sections.push(`## File Prompts Resolve Issues`);
   sections.push(buildFilePromptsIssuesMarkdown(resolveIssues.filePromptsIssues));
   sections.push('');
 
-  sections.push(`## Config Varaibles Resolve Issues`);
+  sections.push(`## Config Variables Resolve Issues`);
   sections.push(buildConfigVariablesIssuesMarkdown(resolveIssues.configVariablesIssues));
   sections.push('');
 
