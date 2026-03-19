@@ -62,7 +62,7 @@ export class CopyResultNotificator {
 
       const hasNoSelectedProfiles = selectedProfileIds.length === 0;
 
-      const applyOrChangeOverridesCommand = hasNoSelectedProfiles ? 'Apply Profiles' : 'Change Profiles';
+      const applyOrChangeOverridesCommand = hasNoSelectedProfiles ? 'Apply Overrides' : 'Change Overrides';
 
       const actionLabels = [
         openPromptInEditor,

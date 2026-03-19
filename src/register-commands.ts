@@ -6,6 +6,7 @@ import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-hel
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
+import { QuickInstructionModule } from './modules/quick-instruction/quick-instruction-module';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export const commandIds = {
@@ -24,6 +25,8 @@ export const commandIds = {
   openSelectedFilesInTabGroup: 'llm-copypaster.openSelectedFilesInTabGroup',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
+  replaceClipboardByInstruction: 'llm-copypaster.replaceClipboardByInstruction',
+  prependInstructionToClipboard: 'llm-copypaster.prependInstructionToClipboard',
 
   forceCloseAllTabs: 'llm-copypaster.forceCloseAllTabs',
   forceCloseTabsInTabGroup: 'llm-copypaster.forceCloseTabsInTabGroup',
@@ -40,6 +43,7 @@ export type CommandId = (typeof commandIds)[keyof typeof commandIds];
 export interface RegisterCommandsDeps {
   editorToLlmModule: IdeToLlmModule;
   llmToEditorModule: LlmToIdeModule;
+  quickInstructionModule: QuickInstructionModule;
   guidedRetryStore: GuidedRetryStore;
   advancedCloseModule: AdvancedTabOptionsModule;
   configService: ConfigService;
@@ -114,6 +118,14 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     vscode.commands.registerCommand(commandIds.applyClipboardToFiles, async () => {
       await deps.llmToEditorModule.applyClipboardToFiles();
+    }),
+
+    vscode.commands.registerCommand(commandIds.replaceClipboardByInstruction, async () => {
+      await deps.quickInstructionModule.replaceClipboardByInstruction();
+    }),
+
+    vscode.commands.registerCommand(commandIds.prependInstructionToClipboard, async () => {
+      await deps.quickInstructionModule.prependInstructionToClipboard();
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {

@@ -61,6 +61,14 @@
         "title": "LLM Copypaster: Paste Clipboard to Files"
       },
       {
+        "command": "llm-copypaster.replaceClipboardByInstruction",
+        "title": "LLM Copypaster: Replace Clipboard By Quick Instructions"
+      },
+      {
+        "command": "llm-copypaster.prependInstructionToClipboard",
+        "title": "LLM Copypaster: Prepend Quick Instructions To Clipboard"
+      },
+      {
         "command": "llm-copypaster.forceCloseAllTabs",
         "title": "Force Close All Tabs"
       },
@@ -192,18 +200,13 @@
     },
     "keybindings": [
       {
-        "command": "llm-copypaster.applyClipboardToFiles",
-        "key": "alt+1",
+        "command": "llm-copypaster.replaceClipboardByInstruction",
+        "key": "alt+4",
         "when": "editorTextFocus"
       },
       {
-        "command": "llm-copypaster.validateClipboardPayload",
-        "key": "alt+2",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "llm-copypaster.sanitizeClipboardPayload",
-        "key": "alt+3",
+        "command": "llm-copypaster.prependInstructionToClipboard",
+        "key": "alt+5",
         "when": "editorTextFocus"
       }
     ]

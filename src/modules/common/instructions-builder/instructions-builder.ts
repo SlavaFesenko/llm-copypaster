@@ -18,6 +18,16 @@ import {
 } from './helpers';
 import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './report-helpers';
 
+export enum InstructionsBuilderMode {
+  Override = 'override',
+  QuickInstruction = 'quickInstruction',
+}
+
+export interface BuildInstructionsArgs {
+  mode: InstructionsBuilderMode;
+  onlyForInstructionsIds?: string[];
+}
+
 export class InstructionsBuilder {
   private readonly _liquidStrict: Liquid;
   private readonly _liquidLight: Liquid;
@@ -30,13 +40,20 @@ export class InstructionsBuilder {
     this._liquidLight = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
   }
 
-  public async build(): Promise<string> {
+  public async build(args?: BuildInstructionsArgs): Promise<string> {
+    const resolvedBuildInstructionsArgs = this._resolveBuildInstructionsArgs(args);
+
     const instructionsAndVariablesConfig: Partial<InstructionsAndVariablesConfig> =
       this._config.coreSettings.instructionsAndVariables ?? {};
     const instructionsById = instructionsAndVariablesConfig.instructionsById ?? {};
-    const instructionsIds = Object.keys(instructionsById);
 
-    if (instructionsIds.length === 0) return '';
+    const effectiveInstructionsIds = this._calculateInstructionIdsToBuild({
+      instructionsById,
+      onlyForInstructionsIds: resolvedBuildInstructionsArgs.onlyForInstructionsIds,
+      mode: resolvedBuildInstructionsArgs.mode,
+    });
+
+    if (effectiveInstructionsIds.length === 0) return '';
 
     const resolveIssuesBag: InstructionsResolveIssuesBag = {
       filePromptsIssues: [],
@@ -48,11 +65,10 @@ export class InstructionsBuilder {
 
     const finalInstructionsText: string[] = [];
 
-    for (const instructionId of instructionsIds) {
+    for (const instructionId of effectiveInstructionsIds) {
       const instructionDetails = instructionsById[instructionId];
 
       if (!instructionDetails) continue;
-      if (instructionDetails.skip) continue;
 
       const instructionText = await this._buildInstructionsText({
         instructionId: instructionId,
@@ -73,6 +89,38 @@ export class InstructionsBuilder {
     const delimiterLine = `\n${this._config.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
 
     return finalInstructionsText.join(delimiterLine);
+  }
+
+  private _calculateInstructionIdsToBuild(args: {
+    instructionsById: Record<string, InstructionConfig>;
+    onlyForInstructionsIds?: string[];
+    mode: InstructionsBuilderMode;
+  }): string[] {
+    const allowedInstructionIds = Object.entries(args.instructionsById)
+      .filter(([, instructionDetails]) => {
+        if (instructionDetails.skip) return false;
+        if (args.mode === InstructionsBuilderMode.Override && instructionDetails.skipInOverrideMode) return false;
+        if (args.mode === InstructionsBuilderMode.QuickInstruction && instructionDetails.skipInQuickInstructionMode)
+          return false;
+
+        return true;
+      })
+      .map(([instructionId]) => instructionId);
+
+    const selectedInstructionIds = args.onlyForInstructionsIds?.filter(Boolean) ?? [];
+
+    if (selectedInstructionIds.length === 0) return allowedInstructionIds;
+
+    const allowedInstructionIdsSet = new Set(allowedInstructionIds);
+    const extraInstructionIds = selectedInstructionIds.filter(instructionId => !allowedInstructionIdsSet.has(instructionId));
+
+    if (extraInstructionIds.length > 0) {
+      void vscode.window.showWarningMessage(
+        `Some onlyForInstructionsIds are not allowed by config for mode: ${extraInstructionIds.join(', ')}`
+      );
+    }
+
+    return allowedInstructionIds.filter(instructionId => selectedInstructionIds.includes(instructionId));
   }
 
   private async _buildInstructionsText(args: {
@@ -261,5 +309,12 @@ export class InstructionsBuilder {
     const normalizedRelativePathToSubInstruction = (relativePathToSubInstruction ?? '').replaceAll('\\', '/');
 
     return normalizedRelativePathToSubInstruction === GLOB_CONSTS.LLM_RESPONSE_RULES_PROMPT_RELATIVE_PATH;
+  }
+
+  private _resolveBuildInstructionsArgs(args?: BuildInstructionsArgs): BuildInstructionsArgs {
+    return {
+      mode: args?.mode ?? InstructionsBuilderMode.Override,
+      onlyForInstructionsIds: args?.onlyForInstructionsIds,
+    };
   }
 }
