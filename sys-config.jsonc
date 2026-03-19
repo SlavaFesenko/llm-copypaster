@@ -38,9 +38,14 @@
     },
     "instructionsAndVariables": {
       "instructionsById": {
-        "llm-response-rules-prompt": {
-          "path": ".sys-prompts/llm-response-rules-prompt.txt",
+        "llm-response-rules": {
+          "path": ".sys-instructions/llm-response-rules.txt",
           "skip": false,
+        },
+        "llm-response-rules-prompt": {
+          "path": ".sys-instructions/forget-response-rules.txt",
+          "skip": false,
+          "skipInOverrideMode": true, // this instruction can't be the one applied by-default in overrides mode to avoid nonsense
         },
       },
       "sharedVariablesById": {

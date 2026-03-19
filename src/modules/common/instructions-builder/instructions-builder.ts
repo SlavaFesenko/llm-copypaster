@@ -258,7 +258,7 @@ export class InstructionsBuilder {
     resolveIssues: InstructionsResolveIssuesBag
   ): Promise<string | null> {
     const promptUri = this._tryBuildPromptUri(promptInstructionsConfig.path);
-    const isSystemBundledPromptFile = this._isSystemBundledPromptFile(promptInstructionsConfig.path);
+    const isSystemBundledPromptFile = this._isSystemBundledInstructionFile(promptInstructionsConfig.path);
     const promptSource = isSystemBundledPromptFile ? 'extension' : 'workspace';
 
     if (!promptUri) {
@@ -292,7 +292,7 @@ export class InstructionsBuilder {
   }
 
   private _tryBuildPromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
-    if (this._isSystemBundledPromptFile(relativePathToSubInstruction))
+    if (this._isSystemBundledInstructionFile(relativePathToSubInstruction))
       return vscode.Uri.joinPath(this._extensionContext.extensionUri, relativePathToSubInstruction);
 
     if (relativePathToSubInstruction.startsWith('file:')) return vscode.Uri.parse(relativePathToSubInstruction);
@@ -305,10 +305,10 @@ export class InstructionsBuilder {
     return vscode.Uri.joinPath(workspaceRootUri, relativePathToSubInstruction);
   }
 
-  private _isSystemBundledPromptFile(relativePathToSubInstruction: string): boolean {
+  private _isSystemBundledInstructionFile(relativePathToSubInstruction: string): boolean {
     const normalizedRelativePathToSubInstruction = (relativePathToSubInstruction ?? '').replaceAll('\\', '/');
 
-    return normalizedRelativePathToSubInstruction === GLOB_CONSTS.LLM_RESPONSE_RULES_PROMPT_RELATIVE_PATH;
+    return normalizedRelativePathToSubInstruction === GLOB_CONSTS.LLM_RESPONSE_RULES_INSTRUCTION_PATH;
   }
 
   private _resolveBuildInstructionsArgs(args?: BuildInstructionsArgs): BuildInstructionsArgs {
