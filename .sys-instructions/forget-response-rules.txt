@@ -1,3 +1,0 @@
-Ignore all earlier user-level response format rules introduced in this prompt chain.
-Do not override any system, developer, platform, or safety instructions.
-From this point on, only the most recent user-level response format rule is active.

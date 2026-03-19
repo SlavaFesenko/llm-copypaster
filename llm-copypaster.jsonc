@@ -13,6 +13,11 @@
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\web-git-prompt.txt",
           "skip": false,
         },
+        "forget-response-rules": {
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\forget-response-rules.txt",
+          "skip": false,
+          "skipInOverrideMode": true, // this instruction can't be the one applied by-default in overrides mode to avoid nonsense
+        },
       },
       "sharedVariablesById": {
         "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.coreSettings.instructionsAndVariables.instructionsById.web-git-prompt.skip",

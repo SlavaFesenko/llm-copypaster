@@ -4,6 +4,5 @@ export const GLOB_CONSTS = {
 
   SYSTEM_INSTRUCTIONS: {
     LLM_RESPONSE_RULES: '.sys-instructions/llm-response-rules.txt',
-    FORGET_RESPONSE_RULES: '.sys-instructions/forget-response-rules.txt',
   },
 } as const;
