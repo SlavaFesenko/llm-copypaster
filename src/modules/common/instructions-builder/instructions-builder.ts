@@ -308,7 +308,9 @@ export class InstructionsBuilder {
   private _isSystemBundledInstructionFile(relativePathToSubInstruction: string): boolean {
     const normalizedRelativePathToSubInstruction = (relativePathToSubInstruction ?? '').replaceAll('\\', '/');
 
-    return normalizedRelativePathToSubInstruction === GLOB_CONSTS.LLM_RESPONSE_RULES_INSTRUCTION_PATH;
+    return (Object.values(GLOB_CONSTS.SYSTEM_INSTRUCTIONS) as readonly string[]).includes(
+      normalizedRelativePathToSubInstruction
+    );
   }
 
   private _resolveBuildInstructionsArgs(args?: BuildInstructionsArgs): BuildInstructionsArgs {

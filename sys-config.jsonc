@@ -42,7 +42,7 @@
           "path": ".sys-instructions/llm-response-rules.txt",
           "skip": false,
         },
-        "llm-response-rules-prompt": {
+        "forget-response-rules": {
           "path": ".sys-instructions/forget-response-rules.txt",
           "skip": false,
           "skipInOverrideMode": true, // this instruction can't be the one applied by-default in overrides mode to avoid nonsense
