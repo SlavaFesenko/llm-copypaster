@@ -16,13 +16,13 @@ export function activate(context: vscode.ExtensionContext) {
 
   const editorToLlmModule = new IdeToLlmModule(context, configService, logger);
   const llmToEditorModule = new LlmToIdeModule(configService, guidedRetryStore, logger);
-  const advancedTabOptionsModuleModule = new AdvancedTabOptionsModule(logger);
+  const advancedTabOptionsModule = new AdvancedTabOptionsModule(logger);
 
   registerCommands(context, {
     editorToLlmModule,
     llmToEditorModule,
     guidedRetryStore,
-    advancedCloseModule: advancedTabOptionsModuleModule,
+    advancedCloseModule: advancedTabOptionsModule,
     configService,
     logger,
   });
