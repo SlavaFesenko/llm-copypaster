@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
 import { InstructionConfig } from '../../config/system-config-contracts';
+import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { InstructionsBuilder, InstructionsBuilderMode } from '../common/instructions-builder/instructions-builder';
 
 interface QuickInstructionQuickPickItem extends vscode.QuickPickItem {
@@ -19,6 +20,7 @@ export class QuickInstructionModule {
     if (!instructionsSet) return;
 
     await vscode.env.clipboard.writeText(instructionsSet);
+    await this._showClipboardChangedNotification(instructionsSet, 'replace');
   }
 
   public async prependInstructionToClipboard(): Promise<void> {
@@ -29,15 +31,35 @@ export class QuickInstructionModule {
 
     if (!currentClipboardText.trim()) {
       await vscode.env.clipboard.writeText(instructionsSet);
+      await this._showClipboardChangedNotification(instructionsSet, 'prepend');
       return;
     }
 
     const llmCopypasterConfig = await this._configService.getLlmCopypasterConfig();
 
     const delimiterLine = `\n${llmCopypasterConfig.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
-    const nextClipboardText = `${instructionsSet}${delimiterLine}${currentClipboardText}`;
+    const nextClipboardText = `${delimiterLine}${instructionsSet}${delimiterLine}${currentClipboardText}`;
 
     await vscode.env.clipboard.writeText(nextClipboardText);
+    await this._showClipboardChangedNotification(nextClipboardText, 'prepend');
+  }
+
+  private async _showClipboardChangedNotification(
+    clipboardText: string,
+    operationType: 'prepend' | 'replace'
+  ): Promise<void> {
+    const openPromptInEditor = 'Open Prompt in Editor';
+    const message = operationType === 'prepend' ? 'Clipboard content was prepended' : 'Clipboard content was replaced';
+
+    const selectedAction = await vscode.window.showInformationMessage(message, openPromptInEditor);
+
+    if (selectedAction !== openPromptInEditor) return;
+
+    await ensureReadonlyVirtualMarkdownDocOpened({
+      extensionContext: this._extensionContext,
+      docId: 'clipboard',
+      markdownText: clipboardText,
+    });
   }
 
   private async _getInstructionsSet(quickPickPlaceHolder: string): Promise<string> {
