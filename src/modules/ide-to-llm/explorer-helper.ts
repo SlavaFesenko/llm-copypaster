@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import {
   EditorToLlmModulePrivateHelpersDependencies,
   ReadUrisAsFileItemsResult,
@@ -7,7 +8,6 @@ import {
   readUrisAsFileItems,
 } from './common.helpers';
 import { CopyResultNotificator } from './copy-result-notificator';
-import { InstructionsBuilder } from './instructions-builder/instructions-builder';
 import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
 

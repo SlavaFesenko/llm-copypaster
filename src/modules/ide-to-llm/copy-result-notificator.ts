@@ -5,8 +5,8 @@ import { ConfigReportFacade } from '../../config/reporters/config-report-facade'
 import { LlmCopypasterConfig } from '../../config/system-config-contracts';
 import { CollectedFileItem } from '../../contracts/files-payload';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
+import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { EditorToLlmModulePrivateHelpersDependencies, EditorToLlmPromptSizeStats } from './common.helpers';
-import { InstructionsBuilder } from './instructions-builder/instructions-builder';
 import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './utils/prompt-size-helper';
 
