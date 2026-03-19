@@ -15,8 +15,8 @@ import {
   normalizeDirectPlaceholderValue,
   tryExtractConfigVariablePath,
   tryParseScalarLiquidValue,
-} from './helper';
-import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './variables-resolve-report-helpers';
+} from './helpers';
+import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './report-helpers';
 
 export class InstructionsBuilder {
   private readonly _liquidStrict: Liquid;

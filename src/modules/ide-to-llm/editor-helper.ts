@@ -7,7 +7,7 @@ import {
   tryGetUriFromTab,
 } from './common.helpers';
 import { CopyResultNotificator } from './copy-result-notificator';
-import { InstructionsBuilder } from './liquid-builder/instructions-builder';
+import { InstructionsBuilder } from './instructions-builder/instructions-builder';
 import { collectActiveFileSelection } from './utils/file-selection';
 import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';

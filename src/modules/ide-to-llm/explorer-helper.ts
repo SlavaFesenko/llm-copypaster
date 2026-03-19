@@ -7,7 +7,7 @@ import {
   readUrisAsFileItems,
 } from './common.helpers';
 import { CopyResultNotificator } from './copy-result-notificator';
-import { InstructionsBuilder } from './liquid-builder/instructions-builder';
+import { InstructionsBuilder } from './instructions-builder/instructions-builder';
 import { buildFinalPromptText } from './utils/llm-context-formatter';
 import { buildTextSizeStats } from './utils/prompt-size-helper';
 
