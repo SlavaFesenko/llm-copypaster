@@ -1,6 +1,6 @@
 {
   "name": "llm-copypaster",
-  "displayName": "llm-copypaster",
+  "displayName": "LLM Copypaster",
   "description": "Added Paste from Editor Feature",
   "version": "0.10.0",
   "repository": {
