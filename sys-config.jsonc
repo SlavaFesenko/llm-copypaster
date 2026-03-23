@@ -9,6 +9,7 @@
     "CONFIG_REF_VAR_ANCHOR": "LLM_CPP_CFG.",
   },
   "coreSettings": {
+    "allowOutsideWorkspaceOps": true,
     "skipInstructions": false,
     "skipCodeListings": false,
     "ideToLlm": {

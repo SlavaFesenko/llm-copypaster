@@ -66,6 +66,7 @@ export function mergeCoreSettingsConfig(
   if (!userSettings) return baseSettings;
 
   return {
+    allowOutsideWorkspaceOps: userSettings.allowOutsideWorkspaceOps ?? baseSettings.allowOutsideWorkspaceOps,
     skipInstructions: userSettings.skipInstructions ?? baseSettings.skipInstructions,
     skipCodeListings: userSettings.skipCodeListings ?? baseSettings.skipCodeListings,
     ideToLlm: mergeIdeToLlmContextConfig(baseSettings.ideToLlm, userSettings.ideToLlm),

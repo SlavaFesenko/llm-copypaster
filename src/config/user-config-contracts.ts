@@ -15,6 +15,7 @@ export interface VitalParsingAnchorsUserConfig {
 }
 
 export interface CoreSettingsUserConfig {
+  allowOutsideWorkspaceOps?: boolean;
   skipInstructions?: boolean;
   skipCodeListings?: boolean;
   ideToLlm?: IdeToLlmUserConfig;
