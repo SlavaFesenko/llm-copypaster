@@ -30,11 +30,11 @@
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
-        "title": "LLM Copypaster: Copy All Files"
+        "title": "Copy All Files"
       },
       {
         "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
-        "title": "LLM Copypaster: Copy All Pinned Files"
+        "title": "Copy All Pinned Files"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
@@ -42,19 +42,25 @@
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
-        "title": "LLM Copypaster: Paste Clipboard to Files"
+        "title": "Paste Clipboard to Files"
       },
       {
         "command": "llm-copypaster.replaceClipboardByInstruction",
-        "title": "LLM Copypaster: Replace Clipboard By Quick Instructions"
+        "title": "Replace Clipboard By Quick Instructions"
       },
       {
         "command": "llm-copypaster.prependInstructionToClipboard",
-        "title": "LLM Copypaster: Prepend Quick Instructions To Clipboard"
+        "title": "Prepend Quick Instructions To Clipboard"
       },
       {
         "command": "llm-copypaster.lsConfig",
-        "title": "ls config"
+        "title": "[DEBUG] Open default config"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "llm-copypaster.editorContext.other",
+        "label": "LLM Copypaster: Other..."
       }
     ],
     "menus": {
@@ -82,17 +88,39 @@
           "group": "0-navigation@3"
         },
         {
-          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+          "submenu": "llm-copypaster.editorContext.other",
           "when": "resourceScheme == file",
           "group": "0-navigation@4"
+        }
+      ],
+      "llm-copypaster.editorContext.other": [
+        {
+          "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@1"
         },
         {
           "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
           "when": "resourceScheme == file",
-          "group": "0-navigation@5"
+          "group": "0-navigation@2"
         },
         {
           "command": "llm-copypaster.applyClipboardToFiles",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@3"
+        },
+        {
+          "command": "llm-copypaster.replaceClipboardByInstruction",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@4"
+        },
+        {
+          "command": "llm-copypaster.prependInstructionToClipboard",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@5"
+        },
+        {
+          "command": "llm-copypaster.lsConfig",
           "when": "resourceScheme == file",
           "group": "0-navigation@6"
         }
