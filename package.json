@@ -22,11 +22,11 @@
       },
       {
         "command": "llm-copypaster.copyThisTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy This Tab Group Files"
+        "title": "LLM Copypaster: Copy Tab Group Files"
       },
       {
         "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy This Tab Group Pinned Files"
+        "title": "LLM Copypaster: Copy Tab Group Pinned Files"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
