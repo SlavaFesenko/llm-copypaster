@@ -41,22 +41,6 @@
         "title": "LLM Copypaster: Copy File(s)"
       },
       {
-        "command": "llm-copypaster.openSelectedFiles",
-        "title": "Open Selected Files"
-      },
-      {
-        "command": "llm-copypaster.openSelectedFilesInNewTabGroup",
-        "title": "Open Selected Files In NEW Tab Group"
-      },
-      {
-        "command": "llm-copypaster.openSelectedFilesInActiveTabGroup",
-        "title": "Open Selected Files In ACTIVE Tab Group"
-      },
-      {
-        "command": "llm-copypaster.openSelectedFilesInTabGroup",
-        "title": "Open Selected Files In <SELECT> Tab Group"
-      },
-      {
         "command": "llm-copypaster.applyClipboardToFiles",
         "title": "LLM Copypaster: Paste Clipboard to Files"
       },
@@ -69,30 +53,6 @@
         "title": "LLM Copypaster: Prepend Quick Instructions To Clipboard"
       },
       {
-        "command": "llm-copypaster.forceCloseAllTabs",
-        "title": "Force Close All Tabs"
-      },
-      {
-        "command": "llm-copypaster.forceCloseTabsInTabGroup",
-        "title": "Force Close Tabs in Tab Group"
-      },
-      {
-        "command": "llm-copypaster.pinAllTabs",
-        "title": "Pin All Tabs"
-      },
-      {
-        "command": "llm-copypaster.pinTabsInTabGroup",
-        "title": "Pin Tabs in Tab Group"
-      },
-      {
-        "command": "llm-copypaster.unpinAllTabs",
-        "title": "Unpin All Tabs"
-      },
-      {
-        "command": "llm-copypaster.unpinTabsInTabGroup",
-        "title": "Unpin Tabs in Tab Group"
-      },
-      {
         "command": "llm-copypaster.lsConfig",
         "title": "ls config"
       }
@@ -103,26 +63,6 @@
           "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
           "when": "explorerResourceIsFolder || resourceScheme == file",
           "group": "1-navigation@1"
-        },
-        {
-          "command": "llm-copypaster.openSelectedFiles",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "1-navigation@2"
-        },
-        {
-          "command": "llm-copypaster.openSelectedFilesInNewTabGroup",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "1-navigation@3"
-        },
-        {
-          "command": "llm-copypaster.openSelectedFilesInActiveTabGroup",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "1-navigation@4"
-        },
-        {
-          "command": "llm-copypaster.openSelectedFilesInTabGroup",
-          "when": "explorerResourceIsFolder || resourceScheme == file",
-          "group": "1-navigation@5"
         }
       ],
       "editor/context": [
@@ -153,38 +93,6 @@
         },
         {
           "command": "llm-copypaster.applyClipboardToFiles",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@6"
-        }
-      ],
-      "editor/title/context": [
-        {
-          "command": "llm-copypaster.pinTabsInTabGroup",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@1"
-        },
-        {
-          "command": "llm-copypaster.unpinTabsInTabGroup",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@2"
-        },
-        {
-          "command": "llm-copypaster.pinAllTabs",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@3"
-        },
-        {
-          "command": "llm-copypaster.unpinAllTabs",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@4"
-        },
-        {
-          "command": "llm-copypaster.forceCloseAllTabs",
-          "when": "resourceScheme == file",
-          "group": "0-navigation@5"
-        },
-        {
-          "command": "llm-copypaster.forceCloseTabsInTabGroup",
           "when": "resourceScheme == file",
           "group": "0-navigation@6"
         }

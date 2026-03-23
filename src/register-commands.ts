@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ConfigService } from './config/config-service';
 import { ConfigReportFacade } from './config/reporters/config-report-facade';
-import { AdvancedTabOptionsModule } from './modules/advanced-tab-options/advanced-file-options-module';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
 import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
@@ -19,21 +18,9 @@ export const commandIds = {
   copyPinnedFilesInActiveTabGroupAsLlmContext: 'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
 
-  openSelectedFiles: 'llm-copypaster.openSelectedFiles',
-  openSelectedFilesInNewTabGroup: 'llm-copypaster.openSelectedFilesInNewTabGroup',
-  openSelectedFilesInActiveTabGroup: 'llm-copypaster.openSelectedFilesInActiveTabGroup',
-  openSelectedFilesInTabGroup: 'llm-copypaster.openSelectedFilesInTabGroup',
-
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
   replaceClipboardByInstruction: 'llm-copypaster.replaceClipboardByInstruction',
   prependInstructionToClipboard: 'llm-copypaster.prependInstructionToClipboard',
-
-  forceCloseAllTabs: 'llm-copypaster.forceCloseAllTabs',
-  forceCloseTabsInTabGroup: 'llm-copypaster.forceCloseTabsInTabGroup',
-  pinAllTabs: 'llm-copypaster.pinAllTabs',
-  pinTabsInTabGroup: 'llm-copypaster.pinTabsInTabGroup',
-  unpinAllTabs: 'llm-copypaster.unpinAllTabs',
-  unpinTabsInTabGroup: 'llm-copypaster.unpinTabsInTabGroup',
 
   lsConfig: 'llm-copypaster.lsConfig',
 } as const;
@@ -45,7 +32,6 @@ export interface RegisterCommandsDeps {
   llmToEditorModule: LlmToIdeModule;
   quickInstructionModule: QuickInstructionModule;
   guidedRetryStore: GuidedRetryStore;
-  advancedCloseModule: AdvancedTabOptionsModule;
   configService: ConfigService;
   logger: OutputChannelLogger;
 }
@@ -82,38 +68,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
 
     // #endregion
 
-    // #region Open Selected Files
-
-    vscode.commands.registerCommand(
-      commandIds.openSelectedFiles,
-      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.advancedCloseModule.openSelectedFiles({ selectedUris });
-      }
-    ),
-
-    vscode.commands.registerCommand(
-      commandIds.openSelectedFilesInNewTabGroup,
-      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.advancedCloseModule.openSelectedFilesInNewTabGroup({ selectedUris });
-      }
-    ),
-
-    vscode.commands.registerCommand(
-      commandIds.openSelectedFilesInActiveTabGroup,
-      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.advancedCloseModule.openSelectedFilesInActiveTabGroup({ selectedUris });
-      }
-    ),
-
-    vscode.commands.registerCommand(
-      commandIds.openSelectedFilesInTabGroup,
-      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.advancedCloseModule.openSelectedFilesInTabGroup({ selectedUris });
-      }
-    ),
-
-    // #endregion
-
     // #region LLM 2 Editor
 
     vscode.commands.registerCommand(commandIds.applyClipboardToFiles, async () => {
@@ -133,30 +87,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
         extensionContext: context,
         configService: deps.configService,
       }).displayLsConfigReport();
-    }),
-
-    // #endregion
-
-    // #region Advanced Close
-
-    vscode.commands.registerCommand(commandIds.forceCloseAllTabs, async () => {
-      await deps.advancedCloseModule.forceCloseAllTabs();
-    }),
-    vscode.commands.registerCommand(commandIds.forceCloseTabsInTabGroup, async (clickedContext?: unknown) => {
-      await deps.advancedCloseModule.forceCloseTabsInTabGroup(clickedContext);
-    }),
-
-    vscode.commands.registerCommand(commandIds.pinAllTabs, async () => {
-      await deps.advancedCloseModule.pinAllTabs();
-    }),
-    vscode.commands.registerCommand(commandIds.pinTabsInTabGroup, async (clickedContext?: unknown) => {
-      await deps.advancedCloseModule.pinTabsInTabGroup(clickedContext);
-    }),
-    vscode.commands.registerCommand(commandIds.unpinAllTabs, async () => {
-      await deps.advancedCloseModule.unpinAllTabs();
-    }),
-    vscode.commands.registerCommand(commandIds.unpinTabsInTabGroup, async (clickedContext?: unknown) => {
-      await deps.advancedCloseModule.unpinTabsInTabGroup(clickedContext);
     }),
 
     // #endregion
