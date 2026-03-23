@@ -8,19 +8,18 @@ import { QuickInstructionModule } from './modules/quick-instruction/quick-instru
 import { registerCommands } from './register-commands';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-// This method is called when your extension is activated, extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
   const configService = new ConfigService();
   const guidedRetryStore = new GuidedRetryStore(context, logger);
 
-  const editorToLlmModule = new IdeToLlmModule(context, configService, logger);
-  const llmToEditorModule = new LlmToIdeModule(configService, guidedRetryStore, logger);
+  const ideToLlmModule = new IdeToLlmModule(context, configService, logger);
+  const llmToIdeModule = new LlmToIdeModule(configService, guidedRetryStore, logger);
   const quickInstructionModule = new QuickInstructionModule(context, configService);
 
   registerCommands(context, {
-    editorToLlmModule,
-    llmToEditorModule,
+    editorToLlmModule: ideToLlmModule,
+    llmToEditorModule: llmToIdeModule,
     quickInstructionModule,
     guidedRetryStore,
     configService,
