@@ -6,6 +6,7 @@ import {
   LlmCopypasterConfig,
   LlmToIdeConfig,
   LlmToIdeSanitizationRuleConfig,
+  NonOverrideableSettingsConfig,
   PostFilePatchActionsConfig,
   VitalParsingAnchorsConfig,
 } from '../system-config-contracts';
@@ -17,6 +18,7 @@ import {
   LlmCopypasterUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
   LlmToIdeUserConfig,
+  NonOverrideableSettingsUserConfig,
   PostFilePatchActionsUserConfig,
   VitalParsingAnchorsUserConfig,
 } from '../user-config-contracts';
@@ -35,11 +37,26 @@ export function applyUserConfig(
   userConfig: LlmCopypasterUserConfig
 ): LlmCopypasterConfig {
   const nextConfig: LlmCopypasterConfig = {
-    vitalParsingAnchors: mergeLlmToIdeParsingAnchors(systemConfig.vitalParsingAnchors, userConfig.vitalParsingAnchors),
+    nonOverrideableSettings: mergeNonOverrideableSettingsConfig(
+      systemConfig.nonOverrideableSettings,
+      userConfig.nonOverrideableSettings
+    ),
     coreSettings: mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings),
   };
 
   return nextConfig;
+}
+
+export function mergeNonOverrideableSettingsConfig(
+  baseSettings: NonOverrideableSettingsConfig,
+  userSettings?: NonOverrideableSettingsUserConfig
+): NonOverrideableSettingsConfig {
+  if (!userSettings) return baseSettings;
+
+  return {
+    allowOutsideWorkspaceOps: userSettings.allowOutsideWorkspaceOps ?? baseSettings.allowOutsideWorkspaceOps,
+    vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseSettings.vitalParsingAnchors, userSettings.vitalParsingAnchors),
+  };
 }
 
 export function mergeLlmToIdeParsingAnchors(
@@ -66,7 +83,6 @@ export function mergeCoreSettingsConfig(
   if (!userSettings) return baseSettings;
 
   return {
-    allowOutsideWorkspaceOps: userSettings.allowOutsideWorkspaceOps ?? baseSettings.allowOutsideWorkspaceOps,
     skipInstructions: userSettings.skipInstructions ?? baseSettings.skipInstructions,
     skipCodeListings: userSettings.skipCodeListings ?? baseSettings.skipCodeListings,
     ideToLlm: mergeIdeToLlmContextConfig(baseSettings.ideToLlm, userSettings.ideToLlm),

@@ -60,7 +60,7 @@ export class ConfigService {
     const normalizedOverrideIds = this._normalizeOverrideIds(overrideIds);
 
     let mergedConfig: LlmCopypasterConfig = {
-      vitalParsingAnchors: baseConfig.vitalParsingAnchors,
+      nonOverrideableSettings: baseConfig.nonOverrideableSettings,
       coreSettings: baseConfig.coreSettings,
     };
 
@@ -109,7 +109,7 @@ export class ConfigService {
 
   private _buildBaseOnlyUserConfig(userConfig: LlmCopypasterUserConfig): LlmCopypasterUserConfig {
     return {
-      vitalParsingAnchors: userConfig.vitalParsingAnchors,
+      nonOverrideableSettings: userConfig.nonOverrideableSettings,
       coreSettings: userConfig.coreSettings,
     };
   }

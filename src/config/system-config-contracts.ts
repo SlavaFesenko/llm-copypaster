@@ -1,6 +1,11 @@
 export interface LlmCopypasterConfig {
-  vitalParsingAnchors: VitalParsingAnchorsConfig;
+  nonOverrideableSettings: NonOverrideableSettingsConfig;
   coreSettings: CoreSettingsConfig;
+}
+
+export interface NonOverrideableSettingsConfig {
+  allowOutsideWorkspaceOps: boolean;
+  vitalParsingAnchors: VitalParsingAnchorsConfig;
 }
 
 export interface VitalParsingAnchorsConfig {
@@ -14,7 +19,6 @@ export interface VitalParsingAnchorsConfig {
 }
 
 export interface CoreSettingsConfig {
-  allowOutsideWorkspaceOps: boolean;
   skipInstructions: boolean;
   skipCodeListings: boolean;
   ideToLlm: IdeToLlmConfig; // ex ideToLlmContextConfig

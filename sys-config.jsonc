@@ -1,15 +1,17 @@
 {
-  "vitalParsingAnchors": {
-    "PROMPT_DELIMITER_ANCHOR": "---",
-    "CODE_LISTING_HEADER_ANCHOR": "## LLM-CPP-FILE:",
-    "FILE_STATUS_ANCHOR": "#### FILE WAS ",
-    "FILE_EDITED_FULL_ANCHOR": "EDITED_FULL",
-    "FILE_CREATED_ANCHOR": "CREATED",
-    "FILE_DELETED_ANCHOR": "DELETED",
-    "CONFIG_REF_VAR_ANCHOR": "LLM_CPP_CFG.",
+  "nonOverrideableSettings": {
+    "allowOutsideWorkspaceOps": true,
+    "vitalParsingAnchors": {
+      "PROMPT_DELIMITER_ANCHOR": "---",
+      "CODE_LISTING_HEADER_ANCHOR": "## LLM-CPP-FILE:",
+      "FILE_STATUS_ANCHOR": "#### FILE WAS ",
+      "FILE_EDITED_FULL_ANCHOR": "EDITED_FULL",
+      "FILE_CREATED_ANCHOR": "CREATED",
+      "FILE_DELETED_ANCHOR": "DELETED",
+      "CONFIG_REF_VAR_ANCHOR": "LLM_CPP_CFG.",
+    },
   },
   "coreSettings": {
-    "allowOutsideWorkspaceOps": true,
     "skipInstructions": false,
     "skipCodeListings": false,
     "ideToLlm": {
@@ -45,11 +47,11 @@
         },
       },
       "sharedVariablesById": {
-        "CODE_LISTING_HEADER_START_FRAGMENT": "LLM_CPP_CFG.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
-        "FILE_STATUS_PREFIX": "LLM_CPP_CFG.vitalParsingAnchors.FILE_STATUS_ANCHOR",
-        "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "LLM_CPP_CFG.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",
-        "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "LLM_CPP_CFG.vitalParsingAnchors.FILE_CREATED_ANCHOR",
-        "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "LLM_CPP_CFG.vitalParsingAnchors.FILE_DELETED_ANCHOR",
+        "CODE_LISTING_HEADER_START_FRAGMENT": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
+        "FILE_STATUS_PREFIX": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR",
       },
     },
   },

@@ -11,7 +11,7 @@ export interface BuildLlmContextTextArgs {
 export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
-  const techPromptDelimiter = args.config.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR;
+  const techPromptDelimiter = args.config.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR;
 
   if (args.ignorePromptInstructions) return `\n${techPromptDelimiter}\n${listings}`;
 
@@ -23,7 +23,7 @@ export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
 }
 
 function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
-  const headerLine = `${config.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR} ${fileItem.path}`;
+  const headerLine = `${config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR} ${fileItem.path}`;
 
   const contentLines: string[] = [];
 

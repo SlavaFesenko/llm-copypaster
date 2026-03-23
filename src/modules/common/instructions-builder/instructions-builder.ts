@@ -86,7 +86,7 @@ export class InstructionsBuilder {
 
     if (finalInstructionsText.length === 0) return '';
 
-    const delimiterLine = `\n${this._config.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
+    const delimiterLine = `\n${this._config.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
 
     return finalInstructionsText.join(delimiterLine);
   }
@@ -201,7 +201,7 @@ export class InstructionsBuilder {
           rawTemplate,
           configVariablePath: tryExtractConfigVariablePath(
             rawTemplate,
-            this._config.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR
+            this._config.nonOverrideableSettings.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR
           ),
           errorText,
         });
@@ -228,7 +228,7 @@ export class InstructionsBuilder {
     sharedVariableId: string,
     resolveIssues: InstructionsResolveIssuesBag
   ): unknown | undefined {
-    const configVariablePrefix = this._config.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
+    const configVariablePrefix = this._config.nonOverrideableSettings.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
 
     const normalized = (rawTemplate ?? '').trim();
     if (!configVariablePrefix) return undefined;

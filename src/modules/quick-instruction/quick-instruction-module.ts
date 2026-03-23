@@ -37,7 +37,7 @@ export class QuickInstructionModule {
 
     const llmCopypasterConfig = await this._configService.getLlmCopypasterConfig();
 
-    const delimiterLine = `\n${llmCopypasterConfig.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
+    const delimiterLine = `\n${llmCopypasterConfig.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
     const nextClipboardText = `${delimiterLine}${instructionsSet}${delimiterLine}${currentClipboardText}`;
 
     await vscode.env.clipboard.writeText(nextClipboardText);

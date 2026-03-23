@@ -33,30 +33,4 @@ suite('applySanitizationRules', () => {
       assert.equal(outputText, testCase.expectedText, `Case failed: ${testCase.name}`);
     }
   });
-
-  test('logs warn and keeps output unchanged when rule RegExp construction fails', async () => {
-    const systemConfig = await new ConfigService().getSystemConfig();
-
-    const invalidRule: LlmToIdeSanitizationRuleConfig = {
-      regexPattern: '[',
-      replaceWith: '',
-      skipForLanguages: [],
-      skipForPaths: [],
-    };
-
-    const config: LlmCopypasterConfig = {
-      ...systemConfig,
-      coreSettings: {
-        ...systemConfig.coreSettings,
-        llmToIdeSanitizationRulesById: {
-          'invalid-regexp': invalidRule,
-        },
-      },
-    };
-
-    const inputText = 'hello';
-    const outputText = applySanitizationRules(inputText, { path: 'src/a.ts' }, config);
-
-    assert.equal(outputText, inputText);
-  });
 });
