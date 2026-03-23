@@ -41,8 +41,16 @@ export class IdeToLlmModule {
     await this._editorHelper.copyAllPinnedFilesAsContext();
   }
 
+  public async copyAllUnpinnedFilesAsContext(): Promise<void> {
+    await this._editorHelper.copyAllUnpinnedFilesAsContext();
+  }
+
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
     await this._editorHelper.copyPinnedFilesInActiveTabGroupAsContext();
+  }
+
+  public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
+    await this._editorHelper.copyUnpinnedFilesInActiveTabGroupAsContext();
   }
 
   public async copySelectedExplorerItemsAsContext(args?: CopySelectedExplorerItemsArgs): Promise<void> {

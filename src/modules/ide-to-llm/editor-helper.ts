@@ -84,6 +84,24 @@ export class EditorHelper {
     });
   }
 
+  public async copyAllUnpinnedFilesAsContext(): Promise<void> {
+    const selection = await this._collectAllUnpinnedTabsFileItems();
+
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+
+    if (totalFilesCount === 0) {
+      await vscode.window.showWarningMessage('No unpinned files to copy');
+      return;
+    }
+
+    await this._copyTabBasedSelectionAsContext({
+      selection,
+      warningWhenEmpty: 'No unpinned files to copy',
+      commandName: 'Copy All Unpinned',
+      totalFilesCount,
+    });
+  }
+
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
     const selection = await this._collectPinnedTabsInActiveTabGroupFileItems();
 
@@ -98,6 +116,24 @@ export class EditorHelper {
       selection,
       warningWhenEmpty: 'No pinned tab group files to copy',
       commandName: 'Copy Pinned Tab Group',
+      totalFilesCount,
+    });
+  }
+
+  public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
+    const selection = await this._collectUnpinnedTabsInActiveTabGroupFileItems();
+
+    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+
+    if (totalFilesCount === 0) {
+      await vscode.window.showWarningMessage('No unpinned tab group files to copy');
+      return;
+    }
+
+    await this._copyTabBasedSelectionAsContext({
+      selection,
+      warningWhenEmpty: 'No unpinned tab group files to copy',
+      commandName: 'Copy Unpinned Tab Group',
       totalFilesCount,
     });
   }
@@ -182,6 +218,34 @@ export class EditorHelper {
     return { ...readResult, unresolvedTabs };
   }
 
+  private async _collectAllUnpinnedTabsFileItems(): Promise<TabBasedFileItemsResult> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+
+    const tabUris: vscode.Uri[] = [];
+    const unresolvedTabs: vscode.Tab[] = [];
+
+    for (const tabGroup of vscode.window.tabGroups.all) {
+      for (const tab of tabGroup.tabs) {
+        if (tab.isPinned) continue;
+
+        const tabUri = tryGetUriFromTab(tab);
+        if (!tabUri) {
+          unresolvedTabs.push(tab);
+          continue;
+        }
+
+        if (tabUri.scheme !== 'file') continue;
+
+        tabUris.push(tabUri);
+      }
+    }
+
+    const readResult = await readUrisAsFileItems(tabUris);
+
+    return { ...readResult, unresolvedTabs };
+  }
+
   private async _collectPinnedTabsInActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
@@ -193,6 +257,34 @@ export class EditorHelper {
 
     for (const tab of tabGroup.tabs) {
       if (!tab.isPinned) continue;
+
+      const tabUri = tryGetUriFromTab(tab);
+      if (!tabUri) {
+        unresolvedTabs.push(tab);
+        continue;
+      }
+
+      if (tabUri.scheme !== 'file') continue;
+
+      tabUris.push(tabUri);
+    }
+
+    const readResult = await readUrisAsFileItems(tabUris);
+
+    return { ...readResult, unresolvedTabs };
+  }
+
+  private async _collectUnpinnedTabsInActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+
+    const tabGroup = vscode.window.tabGroups.activeTabGroup;
+
+    const tabUris: vscode.Uri[] = [];
+    const unresolvedTabs: vscode.Tab[] = [];
+
+    for (const tab of tabGroup.tabs) {
+      if (tab.isPinned) continue;
 
       const tabUri = tryGetUriFromTab(tab);
       if (!tabUri) {

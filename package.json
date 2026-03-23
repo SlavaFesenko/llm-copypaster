@@ -2,7 +2,7 @@
   "name": "llm-copypaster",
   "displayName": "LLM Copypaster",
   "description": "Added Paste from Editor Feature",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "repository": {
     "type": "git",
     "url": "[https://github.com/SlavaFesenko/llm-copypaster.git](https://github.com/SlavaFesenko/llm-copypaster.git)"
@@ -26,7 +26,11 @@
       },
       {
         "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy Tab Group 📌 Files❗"
+        "title": "LLM Copypaster: Copy Tab Group 📌 Files"
+      },
+      {
+        "command": "llm-copypaster.copyUnpinnedFilesInActiveTabGroupAsLlmContext",
+        "title": "LLM Copypaster: Copy Tab Group ❗📌 Files"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
@@ -35,6 +39,10 @@
       {
         "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
         "title": "Copy All 📌 Files"
+      },
+      {
+        "command": "llm-copypaster.copyAllUnpinnedFilesAsLlmContext",
+        "title": "Copy All ❗📌 Files"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
@@ -88,9 +96,14 @@
           "group": "0-navigation@3"
         },
         {
-          "submenu": "llm-copypaster.editorContext.other",
+          "command": "llm-copypaster.copyUnpinnedFilesInActiveTabGroupAsLlmContext",
           "when": "resourceScheme == file",
           "group": "0-navigation@4"
+        },
+        {
+          "submenu": "llm-copypaster.editorContext.other",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@5"
         }
       ],
       "llm-copypaster.editorContext.other": [
@@ -105,7 +118,7 @@
           "group": "0-navigation@2"
         },
         {
-          "command": "llm-copypaster.applyClipboardToFiles",
+          "command": "llm-copypaster.copyAllUnpinnedFilesAsLlmContext",
           "when": "resourceScheme == file",
           "group": "0-navigation@3"
         },
@@ -120,9 +133,14 @@
           "group": "0-navigation@5"
         },
         {
-          "command": "llm-copypaster.lsConfig",
+          "command": "llm-copypaster.applyClipboardToFiles",
           "when": "resourceScheme == file",
           "group": "0-navigation@6"
+        },
+        {
+          "command": "llm-copypaster.lsConfig",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@7"
         }
       ]
     },

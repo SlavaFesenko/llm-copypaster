@@ -15,7 +15,9 @@ export const commandIds = {
   copyThisTabGroupAsLlmContext: 'llm-copypaster.copyThisTabGroupAsLlmContext',
   copyAllOpenFilesAsLlmContext: 'llm-copypaster.copyAllOpenFilesAsLlmContext',
   copyAllPinnedFilesAsLlmContext: 'llm-copypaster.copyAllPinnedFilesAsLlmContext',
+  copyAllUnpinnedFilesAsLlmContext: 'llm-copypaster.copyAllUnpinnedFilesAsLlmContext',
   copyPinnedFilesInActiveTabGroupAsLlmContext: 'llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext',
+  copyUnpinnedFilesInActiveTabGroupAsLlmContext: 'llm-copypaster.copyUnpinnedFilesInActiveTabGroupAsLlmContext',
   copySelectedExplorerItemsAsLlmContext: 'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
 
   applyClipboardToFiles: 'llm-copypaster.applyClipboardToFiles',
@@ -55,8 +57,16 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
       await deps.editorToLlmModule.copyAllPinnedFilesAsContext();
     }),
 
+    vscode.commands.registerCommand(commandIds.copyAllUnpinnedFilesAsLlmContext, async () => {
+      await deps.editorToLlmModule.copyAllUnpinnedFilesAsContext();
+    }),
+
     vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContext, async () => {
       await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext();
+    }),
+
+    vscode.commands.registerCommand(commandIds.copyUnpinnedFilesInActiveTabGroupAsLlmContext, async () => {
+      await deps.editorToLlmModule.copyUnpinnedFilesInActiveTabGroupAsContext();
     }),
 
     vscode.commands.registerCommand(
