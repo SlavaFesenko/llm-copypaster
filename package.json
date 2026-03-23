@@ -26,7 +26,7 @@
       },
       {
         "command": "llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext",
-        "title": "LLM Copypaster: Copy Tab Group Pinned Files"
+        "title": "LLM Copypaster: Copy Tab Group 📌 Files❗"
       },
       {
         "command": "llm-copypaster.copyAllOpenFilesAsLlmContext",
@@ -34,7 +34,7 @@
       },
       {
         "command": "llm-copypaster.copyAllPinnedFilesAsLlmContext",
-        "title": "Copy All Pinned Files"
+        "title": "Copy All 📌 Files"
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
