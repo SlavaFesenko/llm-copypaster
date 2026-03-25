@@ -5,30 +5,30 @@
   "coreSettings": {
     "instructionsAndVariables": {
       "instructionsById": {
-        "llm-response-rules-prompt": {
-          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\llm-response-rules-prompt.txt",
+        "llm-response-rules": {
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\llm-response-rules.liquid",
           "skip": false,
           "showInOverrideMode": true,
         },
-        "web-git-prompt": {
-          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\web-git-prompt.txt",
+        "web-git": {
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\web-git.liquid",
           "skip": false,
           "showInOverrideMode": true,
         },
         "forget-response-rules": {
-          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\forget-response-rules.txt",
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\quick-instructions\\forget-response-rules.liquid",
           "skip": false,
           "showInQuickInstructionMode": true,
         },
         "return-only-provided-text": {
-          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\Coding Prompts\\return-only-provided-text.txt",
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\quick-instructions\\return-only-provided-text.liquid",
           "skip": false,
           "showInQuickInstructionMode": true,
         },
       },
       "sharedVariablesById": {
-        "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.coreSettings.instructionsAndVariables.instructionsById.web-git-prompt.skip",
-        "WEB_GIT_PROMPT_NAME": "Web Git Prompt",
+        "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.coreSettings.instructionsAndVariables.instructionsById.web-git.skip",
+        "WEB_GIT_PROMPT_NAME": "Web Git Rules",
         "BRANCH_NAME": "master",
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
         "BLOB_GITHUB_BASE_URL": "https://github.com/",

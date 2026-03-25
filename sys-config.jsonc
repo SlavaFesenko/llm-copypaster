@@ -43,7 +43,7 @@
     "instructionsAndVariables": {
       "instructionsById": {
         "llm-response-rules": {
-          "path": ".sys-instructions/llm-response-rules.txt",
+          "path": ".sys-instructions/llm-response-rules.liquid",
           "skip": false,
         },
       },
@@ -53,6 +53,7 @@
         "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",
         "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR",
         "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR",
+        "END_OF_OUTPUT_ANCHOR": "LLM_CPP_CFG.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR",
       },
     },
   },

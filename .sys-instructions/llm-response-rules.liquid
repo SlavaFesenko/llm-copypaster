@@ -1,5 +1,4 @@
-{% comment %} PROMPT_VERSION: 1.1.0 - added ``` to avoid auto-parsing to md of file content {% endcomment %}
-{% comment %} File is in .txt to avoid dangerous auto-formatting to MD {% endcomment %}
+{% comment %} PROMPT_VERSION: 1.2.0 - added END_OF_OUTPUT_ANCHOR anchor support {% endcomment %}
 
 # OUTPUT INSTRUCTIONS (system)
 
@@ -21,8 +20,12 @@
 - First line strictly: `{{CODE_LISTING_HEADER_START_FRAGMENT}} relative/path.ext` — no colons, no suffixes, no extra spaces/tabs
 - Second line strictly one of: {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}, {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}, {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
 - Immediately after — the full file content as raw text, or in case of a deleted file — do not output any content at all (immediately the next header or end of output)
-- For each non-deleted file in `FILE LISTING`: wrap the file content in a fenced code block: ```text ... ```
+- For each non-deleted file in `FILE LISTING`: wrap the file content in a fenced code block: 
 - Headers `{{CODE_LISTING_HEADER_START_FRAGMENT}} ...` and status line MUST stay outside the code block
+{% if END_OF_OUTPUT_ANCHOR != blank %}
+- After the end of the LAST `FILE LISTING` and only after it, output this exact final anchor on its own line: `{{END_OF_OUTPUT_ANCHOR}}`
+- Do NOT output `{{END_OF_OUTPUT_ANCHOR}}` anywhere else
+{% endif %}
 
 ## WHICH FILES TO OUTPUT:
 
@@ -35,7 +38,7 @@
 ## PROHIBITIONS OUTSIDE FILE CONTENTS:
 
 - No markdown, lists, headings, tables, links, separators (triple-hyphen / triple-asterisk), empty “separator” blocks outside the `EXPLANATIONS BLOCK` and file contents
-- No extra text except: (a) the `EXPLANATIONS BLOCK` at the beginning, (b) `FILE LISTING`
+- No extra text except: (a) the `EXPLANATIONS BLOCK` at the beginning, (b) `FILE LISTING`{% if END_OF_OUTPUT_ANCHOR != blank %}, (c) the single final line `{{END_OF_OUTPUT_ANCHOR}}` placed strictly after the last `FILE LISTING`{% endif %}
 
 ## EXAMPLE (when you NEED to modify files):
 
@@ -49,17 +52,25 @@ Files changed:
 
 {{CODE_LISTING_HEADER_START_FRAGMENT}} src/index.ts
 {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL}}
-
-```ts
 console.log('Hello world!');
-```
 
 {{CODE_LISTING_HEADER_START_FRAGMENT}} src/dont-need-anymore.ts
 {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_DELETED}}
 
 {{CODE_LISTING_HEADER_START_FRAGMENT}} src/subnode/created-file
 {{FILE_STATUS_PREFIX}}{{FILE_PAYLOAD_OPERATION_TYPE_CREATED}}
-
-```text
 console.log('Hello world from new file!');
-```
+{% if END_OF_OUTPUT_ANCHOR != blank %}
+{{END_OF_OUTPUT_ANCHOR}}
+{% endif %}
+
+
+{% comment %} DEV NOTES {% endcomment %}
+
+{% comment %}
+"Useful to check whether a string variable is false, null, undefined, an empty string, or a string containing only blank characters."
+Docs: https://liquidjs.com/tutorials/drops.html#blank
+{% endcomment %}
+
+
+

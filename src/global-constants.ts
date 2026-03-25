@@ -3,6 +3,6 @@ export const GLOB_CONSTS = {
   USER_CONFIG_FILE_NAME: 'llm-copypaster.jsonc',
 
   SYSTEM_INSTRUCTIONS: {
-    LLM_RESPONSE_RULES: '.sys-instructions/llm-response-rules.txt',
+    LLM_RESPONSE_RULES: '.sys-instructions/llm-response-rules.liquid',
   },
 } as const;
