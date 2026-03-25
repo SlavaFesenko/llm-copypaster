@@ -3,24 +3,38 @@ import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../
 
 export class RawLlmOutputParser {
   private readonly _codeListingHeaderAnchor: string;
+  private readonly _endOfOutputAnchor: string | null;
   private readonly _fileHeaderRegex: RegExp;
   private readonly _firstNewLineRegex: RegExp = /\r?\n/;
   private readonly _leadingNewLineRegex: RegExp = /^\r?\n/;
 
   public constructor(private readonly _config: LlmCopypasterConfig) {
     this._codeListingHeaderAnchor = this._config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR;
+    this._endOfOutputAnchor = this._config.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR;
     this._fileHeaderRegex = new RegExp(String.raw`^${this._codeListingHeaderAnchor}\s+(.+)\s*$`, 'gm');
   }
 
   public parseFilesPayload(rawClipboardText: string): FilesPayload {
+    const rawClipboardTextWithoutIgnoredTail = this._cutOffIgnoredTextAfterEndOfOutputAnchor(rawClipboardText);
+
     const parsedFilesPayload = this._parseConcatenatedFileListings(
-      rawClipboardText,
+      rawClipboardTextWithoutIgnoredTail,
       this._config.nonOverrideableSettings.vitalParsingAnchors
     );
 
     if (parsedFilesPayload.files.length === 0) throw new Error('No files found in clipboard text');
 
     return parsedFilesPayload;
+  }
+
+  private _cutOffIgnoredTextAfterEndOfOutputAnchor(rawClipboardText: string): string {
+    if (!this._endOfOutputAnchor) return rawClipboardText;
+
+    const configEndOfOutputAnchorIndex = rawClipboardText.indexOf(this._endOfOutputAnchor);
+
+    if (configEndOfOutputAnchorIndex === -1) return rawClipboardText;
+
+    return rawClipboardText.slice(0, configEndOfOutputAnchorIndex);
   }
 
   private _parseConcatenatedFileListings(rawText: string, llmToIdeParsingAnchors: VitalParsingAnchorsConfig): FilesPayload {
