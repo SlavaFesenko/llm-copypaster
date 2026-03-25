@@ -36,8 +36,9 @@ export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs)
     overrideOptions,
     activeOverrideIds: args.activeOverrideIds,
     currentNormalizedConfigLabel: `Base Config: ${GLOB_CONSTS.SYS_CONFIG_FILE_NAME} + ${GLOB_CONSTS.USER_CONFIG_FILE_NAME}`,
-    currentNormalizedConfigDescription: 'Base Config is applied by default (when no override manually selected)',
-    currentNormalizedConfigValue: basePublicConfig.coreSettings,
+    currentNormalizedConfigDescription:
+      'Base Config (core settings) is applied by default (when no override manually selected)',
+    currentNormalizedConfigValue: basePublicConfig,
     rawUserCoreSettingsConfig: userConfig?.coreSettings ?? null,
     rawSystemCoreSettingsConfig: systemConfig.coreSettings,
     preparedOverrideReportEntries,

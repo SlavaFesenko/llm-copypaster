@@ -62,7 +62,7 @@
       },
       {
         "command": "llm-copypaster.lsConfig",
-        "title": "[DEBUG] Open default config"
+        "title": "[DEBUG] Open Config Details"
       }
     ],
     "submenus": [

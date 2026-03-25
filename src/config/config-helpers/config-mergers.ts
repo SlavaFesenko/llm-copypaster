@@ -73,10 +73,7 @@ export function mergeLlmToIdeParsingAnchors(
     FILE_CREATED_ANCHOR: userAnchors.FILE_CREATED_ANCHOR ?? baseAnchors.FILE_CREATED_ANCHOR,
     FILE_DELETED_ANCHOR: userAnchors.FILE_DELETED_ANCHOR ?? baseAnchors.FILE_DELETED_ANCHOR,
     CONFIG_REF_VAR_ANCHOR: userAnchors.CONFIG_REF_VAR_ANCHOR ?? baseAnchors.CONFIG_REF_VAR_ANCHOR,
-    END_OF_CODELISTINGS_ANCHOR: mergeNullableAnchor(
-      baseAnchors.END_OF_CODELISTINGS_ANCHOR,
-      userAnchors.END_OF_CODELISTINGS_ANCHOR
-    ),
+    END_OF_OUTPUT_ANCHOR: mergeNullableAnchor(baseAnchors.END_OF_OUTPUT_ANCHOR, userAnchors.END_OF_OUTPUT_ANCHOR),
   };
 }
 

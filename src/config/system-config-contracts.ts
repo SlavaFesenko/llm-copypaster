@@ -15,8 +15,8 @@ export interface VitalParsingAnchorsConfig {
   FILE_EDITED_FULL_ANCHOR: string; // ex filePayloadOperationTypeEditedFull
   FILE_CREATED_ANCHOR: string; // ex filePayloadOperationTypeCreated
   FILE_DELETED_ANCHOR: string; // ex filePayloadOperationTypeDeleted
+  END_OF_OUTPUT_ANCHOR: string | null;
   CONFIG_REF_VAR_ANCHOR: string; // ex configVariablePrefix
-  END_OF_CODELISTINGS_ANCHOR: string | null;
 }
 
 export interface CoreSettingsConfig {
