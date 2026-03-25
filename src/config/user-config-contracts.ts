@@ -17,6 +17,7 @@ export interface VitalParsingAnchorsUserConfig {
   FILE_CREATED_ANCHOR?: string;
   FILE_DELETED_ANCHOR?: string;
   CONFIG_REF_VAR_ANCHOR?: string;
+  END_OF_CODELISTINGS_ANCHOR?: string | null;
 }
 
 export interface CoreSettingsUserConfig {
