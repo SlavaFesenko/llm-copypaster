@@ -9,23 +9,23 @@ export interface NonOverrideableSettingsConfig {
 }
 
 export interface VitalParsingAnchorsConfig {
-  PROMPT_DELIMITER_ANCHOR: string; // ex techPromptDelimiter
-  CODE_LISTING_HEADER_ANCHOR: string; // ex codeListingHeaderStartFragment
-  FILE_STATUS_ANCHOR: string; // ex fileStatusPrefix
-  FILE_EDITED_FULL_ANCHOR: string; // ex filePayloadOperationTypeEditedFull
-  FILE_CREATED_ANCHOR: string; // ex filePayloadOperationTypeCreated
-  FILE_DELETED_ANCHOR: string; // ex filePayloadOperationTypeDeleted
+  PROMPT_DELIMITER_ANCHOR: string;
+  CODE_LISTING_HEADER_ANCHOR: string;
+  FILE_STATUS_ANCHOR: string;
+  FILE_EDITED_FULL_ANCHOR: string;
+  FILE_CREATED_ANCHOR: string;
+  FILE_DELETED_ANCHOR: string;
   END_OF_OUTPUT_ANCHOR: string | null;
-  CONFIG_REF_VAR_ANCHOR: string; // ex configVariablePrefix
+  CONFIG_REF_VAR_ANCHOR: string;
 }
 
 export interface CoreSettingsConfig {
   skipInstructions: boolean;
   skipCodeListings: boolean;
-  ideToLlm: IdeToLlmConfig; // ex ideToLlmContextConfig
-  llmToIde: LlmToIdeConfig; // ex llmToIdeContextConfig
-  postFilePatchActions: PostFilePatchActionsConfig; // ex postFilePatchActionsConfig
-  instructionsAndVariables: InstructionsAndVariablesConfig; // ex promptInstructionConfig
+  ideToLlm: IdeToLlmConfig;
+  llmToIde: LlmToIdeConfig;
+  postFilePatchActions: PostFilePatchActionsConfig;
+  instructionsAndVariables: InstructionsAndVariablesConfig;
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
@@ -36,10 +36,8 @@ export interface PromptLimitsConfig {
   tokensMaxToShowWarning: number;
 }
 
-// ex IdeToLlmContextConfig
 export interface IdeToLlmConfig extends PromptLimitsConfig {}
 
-// ex LlmToIdeContextConfig
 export interface LlmToIdeConfig extends PromptLimitsConfig {}
 
 export interface PostFilePatchActionsConfig {
@@ -49,21 +47,20 @@ export interface PostFilePatchActionsConfig {
 }
 
 export interface InstructionsAndVariablesConfig {
-  instructionsById: Record<string, InstructionConfig>; // ex subInstructionsById
+  instructionsById: Record<string, InstructionConfig>;
   sharedVariablesById: Record<string, string>;
 }
 
-// ex PromptInstructionsConfig
 export interface InstructionConfig {
-  path: string; // ex relativePathToSubInstruction
-  skip: boolean; // ex ignore
+  path: string;
+  skip: boolean;
   showInOverrideMode: boolean;
   showInQuickInstructionMode: boolean;
 }
 
 export interface LlmToIdeSanitizationRuleConfig {
-  regexPattern: string; // ex pattern
+  regexPattern: string;
   replaceWith: string;
-  skipForLanguages: string[]; // ex disableForLanguages
-  skipForPaths: string[]; // ex disableForPaths
+  skipForLanguages: string[];
+  skipForPaths: string[];
 }
