@@ -4,8 +4,8 @@ import { ConfigService } from '../../config/config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/utils/prompt-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
+import { RawLlmOutputParser } from './parsing/raw-llm-output-parser';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';
-import { RawLlmOutputParser } from './validation/raw-llm-output-parser';
 
 export class LlmToIdeModule {
   public constructor(
