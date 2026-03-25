@@ -1,41 +1,33 @@
 import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
 import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../contracts/files-payload';
 
-export type RawLlmOutputParserResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
-
-type ParseResult<T> = { ok: true; value: T } | { ok: false; errorMessage: string };
-
 export class RawLlmOutputParser {
-  public constructor(private readonly _config: LlmCopypasterConfig) {}
+  private readonly _codeListingHeaderAnchor: string;
+  private readonly _fileHeaderRegex: RegExp;
+  private readonly _firstNewLineRegex: RegExp = /\r?\n/;
+  private readonly _leadingNewLineRegex: RegExp = /^\r?\n/;
 
-  public parseFilesPayload(rawClipboardText: string): RawLlmOutputParserResult<FilesPayload> {
-    const headerRegex = new RegExp(
-      String.raw`^${this._config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR}\s+(.+)\s*$`,
-      'gm'
-    );
+  public constructor(private readonly _config: LlmCopypasterConfig) {
+    this._codeListingHeaderAnchor = this._config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR;
+    this._fileHeaderRegex = new RegExp(String.raw`^${this._codeListingHeaderAnchor}\s+(.+)\s*$`, 'gm');
+  }
 
-    const parsed = this._parseConcatenatedFileListings(
+  public parseFilesPayload(rawClipboardText: string): FilesPayload {
+    const parsedFilesPayload = this._parseConcatenatedFileListings(
       rawClipboardText,
-      headerRegex,
       this._config.nonOverrideableSettings.vitalParsingAnchors
     );
 
-    if (!parsed.ok) return parsed;
+    if (parsedFilesPayload.files.length === 0) throw new Error('No files found in clipboard text');
 
-    if (parsed.value.files.length === 0) return { ok: false, errorMessage: 'No files found in clipboard text' };
-
-    return parsed;
+    return parsedFilesPayload;
   }
 
-  private _parseConcatenatedFileListings(
-    rawText: string,
-    headerRegex: RegExp,
-    llmToIdeParsingAnchors: VitalParsingAnchorsConfig
-  ): ParseResult<FilesPayload> {
-    const matches = [...rawText.matchAll(headerRegex)];
+  private _parseConcatenatedFileListings(rawText: string, llmToIdeParsingAnchors: VitalParsingAnchorsConfig): FilesPayload {
+    const matches = [...rawText.matchAll(this._fileHeaderRegex)];
 
     if (matches.length === 0)
-      return { ok: false, errorMessage: 'No file headers found (expected "## FILE: relative/path.ext")' };
+      throw new Error(`No file headers found (expected "${this._codeListingHeaderAnchor} path/filename.ext")`);
 
     const files: FilesPayloadFile[] = [];
 
@@ -45,53 +37,51 @@ export class RawLlmOutputParser {
 
       const path = (current[1] ?? '').trim();
 
-      if (!path) return { ok: false, errorMessage: 'Empty file path in header' };
+      if (!path) throw new Error('Empty file path in header');
 
       const sectionStartIndex = (current.index ?? 0) + current[0].length;
       const sectionEndIndex = next?.index ?? rawText.length;
 
-      const sectionRawText = rawText.slice(sectionStartIndex, sectionEndIndex).replace(/^\r?\n/, '');
+      const sectionRawText = rawText.slice(sectionStartIndex, sectionEndIndex).replace(this._leadingNewLineRegex, '');
       const parsedSection = this._parseFileSection(
         sectionRawText,
         llmToIdeParsingAnchors.FILE_STATUS_ANCHOR,
         llmToIdeParsingAnchors
       );
 
-      if (!parsedSection.ok) return { ok: false, errorMessage: `${path}: ${parsedSection.errorMessage}` };
-
       files.push({
         path,
-        content: parsedSection.value.content,
-        operation: parsedSection.value.operation,
+        content: parsedSection.content,
+        operation: parsedSection.operation,
         sourceRange: { start: sectionStartIndex, end: sectionEndIndex },
       });
     }
 
-    return { ok: true, value: { files, warnings: [], errors: [] } };
+    return { files, warnings: [], errors: [] };
   }
 
   private _parseFileSection(
     rawSectionText: string,
     fileStatusPrefix: string,
     llmToIdeParsingAnchors: VitalParsingAnchorsConfig
-  ): ParseResult<{ content: string; operation?: FilePayloadOperationType }> {
+  ): { content: string; operation?: FilePayloadOperationType } {
     const { firstLine, restText } = this._splitFirstLine(rawSectionText);
 
-    if (!firstLine) return { ok: true, value: { content: rawSectionText } };
+    if (!firstLine) return { content: rawSectionText };
 
     const operation = this._tryParseOperationLine(firstLine, fileStatusPrefix, llmToIdeParsingAnchors);
 
-    if (!operation) return { ok: true, value: { content: rawSectionText } };
+    if (!operation) return { content: rawSectionText };
 
-    if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) return { ok: true, value: { content: '', operation } };
+    if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) return { content: '', operation };
 
-    const normalizedContent = restText.replace(/^\r?\n/, '');
+    const normalizedContent = restText.replace(this._leadingNewLineRegex, '');
 
-    return { ok: true, value: { content: normalizedContent, operation } };
+    return { content: normalizedContent, operation };
   }
 
   private _splitFirstLine(text: string): { firstLine: string; restText: string } {
-    const newLineMatch = text.match(/\r?\n/);
+    const newLineMatch = this._firstNewLineRegex.exec(text);
 
     if (!newLineMatch) return { firstLine: text.trimEnd(), restText: '' };
 
@@ -108,7 +98,7 @@ export class RawLlmOutputParser {
     line: string,
     fileStatusPrefix: string,
     llmToIdeParsingAnchors: VitalParsingAnchorsConfig
-  ): FilePayloadOperationType | undefined {
+  ): FilePayloadOperationType | null {
     const trimmedLine = line.trim();
     const trimmedPrefix = fileStatusPrefix.trim();
 
@@ -123,6 +113,6 @@ export class RawLlmOutputParser {
     if (trimmedLine === `${prefix}${llmToIdeParsingAnchors.FILE_DELETED_ANCHOR}`)
       return llmToIdeParsingAnchors.FILE_DELETED_ANCHOR;
 
-    return undefined;
+    return null;
   }
 }

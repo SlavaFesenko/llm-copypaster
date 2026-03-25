@@ -17,15 +17,20 @@ export class LlmToIdeModule {
     const clipboardText = await vscode.env.clipboard.readText();
     const config = await this._configService.getLlmCopypasterConfig();
     const rawLlmOutputParser = new RawLlmOutputParser(config);
-    const rawLlmOutputParserResult = rawLlmOutputParser.parseFilesPayload(clipboardText);
 
-    if (!rawLlmOutputParserResult.ok) {
-      await vscode.window.showErrorMessage(`Clipboard payload invalid: ${rawLlmOutputParserResult.errorMessage}`);
+    let parsedFilesPayload;
+
+    try {
+      parsedFilesPayload = rawLlmOutputParser.parseFilesPayload(clipboardText);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      await vscode.window.showErrorMessage(`Clipboard payload invalid: ${errorMessage}`);
 
       return;
     }
 
-    const sanitizedPayload = sanitizeFilesPayload(rawLlmOutputParserResult.value, config);
+    const sanitizedPayload = sanitizeFilesPayload(parsedFilesPayload, config);
 
     const applyResult = await applyFilesPayloadToWorkspace(
       sanitizedPayload,
