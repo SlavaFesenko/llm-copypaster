@@ -3,7 +3,6 @@ import { ConfigService } from './config/config-service';
 import { ConfigReportFacade } from './config/reporters/config-report-facade';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
 import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
-import { GuidedRetryStore } from './modules/llm-to-ide/guided-retry/guided-retry-store';
 import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
 import { QuickInstructionModule } from './modules/quick-instruction/quick-instruction-module';
 import { OutputChannelLogger } from './utils/output-channel-logger';
@@ -33,7 +32,6 @@ export interface RegisterCommandsDeps {
   editorToLlmModule: IdeToLlmModule;
   llmToEditorModule: LlmToIdeModule;
   quickInstructionModule: QuickInstructionModule;
-  guidedRetryStore: GuidedRetryStore;
   configService: ConfigService;
   logger: OutputChannelLogger;
 }
