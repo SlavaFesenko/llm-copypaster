@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { collectExplorerItemsFileItems } from '../../utils/file-utils';
-import { uniqueByUriKeyKeepOrder } from '../../utils/uri-tab-utils';
+import { buildSkippedOutsideWorkspaceWarningMessage, uniqueByUriKeyKeepOrder } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { CopySelectedExplorerItemsArgs, IdeToLlmDeps } from './contracts';
 import { buildFinalPromptText } from './helpers/common.helpers';
@@ -25,9 +25,18 @@ export class ExplorerService {
   }
 
   private async _copyExplorerUrisAsContext(inputUris: vscode.Uri[]): Promise<void> {
-    const selection = await collectExplorerItemsFileItems(inputUris, this._deps.logger);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length;
+    const selection = await collectExplorerItemsFileItems(
+      inputUris,
+      this._deps.logger,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length + selection.deletedFileUris.length + selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No files found in explorer selection');
@@ -35,14 +44,12 @@ export class ExplorerService {
     }
 
     if (selection.fileItems.length > 0) {
-      const config = await this._deps.configService.getLlmCopypasterConfig();
-
       const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, config).build();
 
       const contextText = buildFinalPromptText({
         fileItems: selection.fileItems,
         config,
-        instructionsText: instructionsText,
+        instructionsText,
       });
 
       const textSizeStats = buildTextSizeStats({
@@ -59,6 +66,7 @@ export class ExplorerService {
         totalFilesCount,
         deletedFileUris: selection.deletedFileUris,
         unresolvedTabs: [],
+        skippedOutsideWorkspaceUris: selection.skippedOutsideWorkspaceUris,
         promptText: contextText,
         fileItems: selection.fileItems,
         promptSizeStats: {
@@ -75,5 +83,11 @@ export class ExplorerService {
     }
 
     await vscode.window.showWarningMessage('No files found in explorer selection');
+  }
+
+  private async _showSkippedOutsideWorkspaceWarning(skippedOutsideWorkspaceUris: vscode.Uri[]): Promise<void> {
+    if (skippedOutsideWorkspaceUris.length === 0) return;
+
+    await vscode.window.showWarningMessage(buildSkippedOutsideWorkspaceWarningMessage(skippedOutsideWorkspaceUris));
   }
 }

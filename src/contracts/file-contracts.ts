@@ -18,11 +18,13 @@ export interface TabBasedFileItemsResult {
   fileItems: CollectedFileItem[];
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
+  skippedOutsideWorkspaceUris: vscode.Uri[];
 }
 
 export interface ReadUrisAsFileItemsResult {
   fileItems: CollectedFileItem[];
   deletedFileUris: vscode.Uri[];
+  skippedOutsideWorkspaceUris: vscode.Uri[];
 }
 
 export interface CollectedFileItem {

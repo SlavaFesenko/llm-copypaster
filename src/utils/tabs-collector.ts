@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { TabBasedFileItemsResult } from '../contracts/file-contracts';
 import { readUrisAsFileItems } from './file-utils';
-import { getUriFromTab, toWorkspaceRelativePath } from './uri-tab-utils';
+import { getUriFromTab, isInsideWorkspace, toDisplayPath } from './uri-tab-utils';
 
 export enum TabsCollectorBuildOption {
   ActiveEditorFile = 'ActiveEditorFile',
@@ -15,14 +15,22 @@ export enum TabsCollectorBuildOption {
 }
 
 export class TabsCollector {
-  public async collectFileItems(buildOption: TabsCollectorBuildOption): Promise<TabBasedFileItemsResult> {
-    if (buildOption === TabsCollectorBuildOption.ActiveEditorFile) return this._collectActiveEditorFileItems();
+  public async collectFileItems(
+    buildOption: TabsCollectorBuildOption,
+    allowOutsideWorkspaceOps: boolean
+  ): Promise<TabBasedFileItemsResult> {
+    if (buildOption === TabsCollectorBuildOption.ActiveEditorFile) {
+      return this._collectActiveEditorFileItems(allowOutsideWorkspaceOps);
+    }
 
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    if (!workspaceFolder && !allowOutsideWorkspaceOps) {
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [], skippedOutsideWorkspaceUris: [] };
+    }
 
     const tabUris: vscode.Uri[] = [];
     const unresolvedTabs: vscode.Tab[] = [];
+    const skippedOutsideWorkspaceUris: vscode.Uri[] = [];
 
     for (const tabGroup of this._getTabGroups(buildOption)) {
       for (const tab of tabGroup.tabs) {
@@ -36,46 +44,59 @@ export class TabsCollector {
 
         if (tabUri.scheme !== 'file') continue;
 
+        if (!allowOutsideWorkspaceOps && !isInsideWorkspace(tabUri)) {
+          skippedOutsideWorkspaceUris.push(tabUri);
+          continue;
+        }
+
         tabUris.push(tabUri);
       }
     }
 
-    const readResult = await readUrisAsFileItems(tabUris);
+    const readResult = await readUrisAsFileItems(tabUris, allowOutsideWorkspaceOps);
 
-    return { ...readResult, unresolvedTabs };
+    return {
+      ...readResult,
+      unresolvedTabs,
+      skippedOutsideWorkspaceUris: [...skippedOutsideWorkspaceUris, ...readResult.skippedOutsideWorkspaceUris],
+    };
   }
 
-  private async _collectActiveEditorFileItems(): Promise<TabBasedFileItemsResult> {
+  private async _collectActiveEditorFileItems(allowOutsideWorkspaceOps: boolean): Promise<TabBasedFileItemsResult> {
     const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    if (!activeEditor) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [], skippedOutsideWorkspaceUris: [] };
 
-    const fileItem = this._readEditorDocumentAsFileItem(activeEditor.document);
-    if (fileItem.content === null) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+    const fileItem = this._readEditorDocumentAsFileItem(activeEditor.document, allowOutsideWorkspaceOps);
+
+    if (fileItem === null) {
+      return {
+        fileItems: [],
+        deletedFileUris: [],
+        unresolvedTabs: [],
+        skippedOutsideWorkspaceUris: [activeEditor.document.uri],
+      };
+    }
+
+    if (fileItem.content === null) {
+      return { fileItems: [], deletedFileUris: [], unresolvedTabs: [], skippedOutsideWorkspaceUris: [] };
+    }
 
     return {
       fileItems: [fileItem],
       deletedFileUris: [],
       unresolvedTabs: [],
+      skippedOutsideWorkspaceUris: [],
     };
   }
 
-  private _readEditorDocumentAsFileItem(document: vscode.TextDocument): {
-    path: string;
-    content: string | null;
-    languageId?: string;
-  } {
-    const relativePath = toWorkspaceRelativePath(document.uri);
-
-    if (!relativePath) {
-      return {
-        path: document.uri.fsPath,
-        content: document.getText(),
-        languageId: document.languageId,
-      };
-    }
+  private _readEditorDocumentAsFileItem(
+    document: vscode.TextDocument,
+    allowOutsideWorkspaceOps: boolean
+  ): { path: string; content: string | null; languageId?: string } | null {
+    if (!allowOutsideWorkspaceOps && !isInsideWorkspace(document.uri)) return null;
 
     return {
-      path: relativePath,
+      path: toDisplayPath(document.uri, allowOutsideWorkspaceOps),
       content: document.getText(),
       languageId: document.languageId,
     };
@@ -87,12 +108,10 @@ export class TabsCollector {
       case TabsCollectorBuildOption.PinnedTabsInActiveTabGroup:
       case TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup:
         return [vscode.window.tabGroups.activeTabGroup];
-
       case TabsCollectorBuildOption.AllOpenTabs:
       case TabsCollectorBuildOption.AllPinnedTabs:
       case TabsCollectorBuildOption.AllUnpinnedTabs:
         return vscode.window.tabGroups.all;
-
       default:
         throw new Error(`Unsupported TabsCollectorBuildOption for tab groups: ${buildOption}`);
     }
@@ -103,15 +122,12 @@ export class TabsCollector {
       case TabsCollectorBuildOption.ActiveTabGroup:
       case TabsCollectorBuildOption.AllOpenTabs:
         return true;
-
       case TabsCollectorBuildOption.AllPinnedTabs:
       case TabsCollectorBuildOption.PinnedTabsInActiveTabGroup:
         return tab.isPinned;
-
       case TabsCollectorBuildOption.AllUnpinnedTabs:
       case TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup:
         return !tab.isPinned;
-
       default:
         throw new Error(`Unsupported TabsCollectorBuildOption for tab filtering: ${buildOption}`);
     }

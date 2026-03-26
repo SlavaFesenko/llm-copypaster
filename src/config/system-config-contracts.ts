@@ -4,7 +4,9 @@ export interface LlmCopypasterConfig {
 }
 
 export interface NonOverrideableSettingsConfig {
-  allowOutsideWorkspaceOps: boolean;
+  allowOutsideWorkspaceRead: boolean;
+  allowOutsideWorkspaceWrite: boolean;
+  allowOutsideWorkspaceWriteViaConfirmation: boolean;
   vitalParsingAnchors: VitalParsingAnchorsConfig;
 }
 

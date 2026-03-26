@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { TabBasedFileItemsResult } from '../../contracts/file-contracts';
 import { TabsCollector, TabsCollectorBuildOption } from '../../utils/tabs-collector';
+import { buildSkippedOutsideWorkspaceWarningMessage } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { IdeToLlmDeps } from './contracts';
 import { buildFinalPromptText } from './helpers/common.helpers';
@@ -14,20 +15,40 @@ export class EditorService {
   private readonly _tabsCollector = new TabsCollector();
 
   public async copyThisFileAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.ActiveEditorFile);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
+
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.ActiveEditorFile,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No active file to copy',
       commandName: 'Copy File',
-      totalFilesCount: 1,
+      totalFilesCount:
+        selection.fileItems.length + selection.deletedFileUris.length + selection.skippedOutsideWorkspaceUris.length,
     });
   }
 
   public async copyThisTabGroupAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.ActiveTabGroup);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.ActiveTabGroup,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length +
+      selection.deletedFileUris.length +
+      selection.unresolvedTabs.length +
+      selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No tab group files to copy!');
@@ -35,6 +56,7 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No tab group files to copy!',
       commandName: 'Copy Tab Group',
@@ -43,9 +65,20 @@ export class EditorService {
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllOpenTabs);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.AllOpenTabs,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length +
+      selection.deletedFileUris.length +
+      selection.unresolvedTabs.length +
+      selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No open files to copy');
@@ -53,6 +86,7 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No open files to copy',
       commandName: 'Copy All',
@@ -61,9 +95,20 @@ export class EditorService {
   }
 
   public async copyAllPinnedFilesAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllPinnedTabs);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.AllPinnedTabs,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length +
+      selection.deletedFileUris.length +
+      selection.unresolvedTabs.length +
+      selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No pinned files to copy');
@@ -71,6 +116,7 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No pinned files to copy',
       commandName: 'Copy All Pinned',
@@ -79,9 +125,20 @@ export class EditorService {
   }
 
   public async copyAllUnpinnedFilesAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllUnpinnedTabs);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.AllUnpinnedTabs,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length +
+      selection.deletedFileUris.length +
+      selection.unresolvedTabs.length +
+      selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No unpinned files to copy');
@@ -89,6 +146,7 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No unpinned files to copy',
       commandName: 'Copy All Unpinned',
@@ -97,9 +155,20 @@ export class EditorService {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.PinnedTabsInActiveTabGroup);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.PinnedTabsInActiveTabGroup,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length +
+      selection.deletedFileUris.length +
+      selection.unresolvedTabs.length +
+      selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No pinned tab group files to copy');
@@ -107,6 +176,7 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No pinned tab group files to copy',
       commandName: 'Copy Pinned Tab Group',
@@ -115,9 +185,20 @@ export class EditorService {
   }
 
   public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup);
+    const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
+    const selection = await this._tabsCollector.collectFileItems(
+      TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
+
+    await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
+
+    const totalFilesCount =
+      selection.fileItems.length +
+      selection.deletedFileUris.length +
+      selection.unresolvedTabs.length +
+      selection.skippedOutsideWorkspaceUris.length;
 
     if (totalFilesCount === 0) {
       await vscode.window.showWarningMessage('No unpinned tab group files to copy');
@@ -125,6 +206,7 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
+      config,
       selection,
       warningWhenEmpty: 'No unpinned tab group files to copy',
       commandName: 'Copy Unpinned Tab Group',
@@ -133,6 +215,7 @@ export class EditorService {
   }
 
   private async _copyTabBasedSelectionAsContext(args: {
+    config: Awaited<ReturnType<IdeToLlmDeps['configService']['getLlmCopypasterConfig']>>;
     selection: TabBasedFileItemsResult;
     warningWhenEmpty: string;
     commandName: string;
@@ -140,6 +223,7 @@ export class EditorService {
   }): Promise<void> {
     if (args.selection.fileItems.length > 0) {
       await this._copyFileItemsSelectionAsContext({
+        config: args.config,
         selectionFileItems: args.selection.fileItems,
         warningWhenEmpty: args.warningWhenEmpty,
         commandName: args.commandName,
@@ -147,6 +231,7 @@ export class EditorService {
         copiedFilesCount: args.selection.fileItems.length,
         deletedFileUris: args.selection.deletedFileUris,
         unresolvedTabs: args.selection.unresolvedTabs,
+        skippedOutsideWorkspaceUris: args.selection.skippedOutsideWorkspaceUris,
       });
 
       return;
@@ -156,6 +241,7 @@ export class EditorService {
   }
 
   private async _copyFileItemsSelectionAsContext(args: {
+    config: Awaited<ReturnType<IdeToLlmDeps['configService']['getLlmCopypasterConfig']>>;
     selectionFileItems: Array<{ path: string; content: string | null; languageId?: string; readError?: string }>;
     warningWhenEmpty: string;
     commandName: string;
@@ -163,26 +249,26 @@ export class EditorService {
     copiedFilesCount: number;
     deletedFileUris: vscode.Uri[];
     unresolvedTabs: vscode.Tab[];
+    skippedOutsideWorkspaceUris: vscode.Uri[];
   }): Promise<void> {
     if (args.selectionFileItems.length === 0) {
       await vscode.window.showWarningMessage(args.warningWhenEmpty);
       return;
     }
 
-    const config = await this._deps.configService.getLlmCopypasterConfig();
     const fileItems = args.selectionFileItems;
 
-    const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, config).build();
+    const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, args.config).build();
 
     const finalPromptText = buildFinalPromptText({
       fileItems,
-      config,
-      instructionsText: instructionsText,
+      config: args.config,
+      instructionsText,
     });
 
     const promptStatsResult = buildTextSizeStats({
       promptText: finalPromptText,
-      contextConfig: config.coreSettings.ideToLlm,
+      contextConfig: args.config.coreSettings.ideToLlm,
     });
 
     await vscode.env.clipboard.writeText(finalPromptText);
@@ -194,6 +280,7 @@ export class EditorService {
       totalFilesCount: args.totalFilesCount,
       deletedFileUris: args.deletedFileUris,
       unresolvedTabs: args.unresolvedTabs,
+      skippedOutsideWorkspaceUris: args.skippedOutsideWorkspaceUris,
       promptText: finalPromptText,
       fileItems: args.selectionFileItems,
       promptSizeStats: {
@@ -205,5 +292,11 @@ export class EditorService {
         exceededBy: promptStatsResult.exceededBy,
       },
     });
+  }
+
+  private async _showSkippedOutsideWorkspaceWarning(skippedOutsideWorkspaceUris: vscode.Uri[]): Promise<void> {
+    if (skippedOutsideWorkspaceUris.length === 0) return;
+
+    await vscode.window.showWarningMessage(buildSkippedOutsideWorkspaceWarningMessage(skippedOutsideWorkspaceUris));
   }
 }
