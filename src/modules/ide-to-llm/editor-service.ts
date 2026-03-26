@@ -2,9 +2,8 @@ import * as vscode from 'vscode';
 
 import { TabBasedFileItemsResult } from '../../contracts/file-contracts';
 import { TabsCollector, TabsCollectorBuildOption } from '../../utils/tabs-collector';
-import { toWorkspaceRelativePath } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
-import { IdeToLlmDeps, IdeToLlmFile } from './contracts';
+import { IdeToLlmDeps } from './contracts';
 import { buildFinalPromptText } from './helpers/common.helpers';
 import { CopiedNotificator } from './helpers/copied-notificator';
 import { buildTextSizeStats } from './helpers/text-size-helper';
@@ -12,23 +11,21 @@ import { buildTextSizeStats } from './helpers/text-size-helper';
 export class EditorService {
   public constructor(private readonly _deps: IdeToLlmDeps) {}
 
-  public async copyThisFileAsContext(): Promise<void> {
-    const fileItem = await this._getActiveEditorFile();
-    if (!fileItem) return;
+  private readonly _tabsCollector = new TabsCollector();
 
-    await this._copyFileItemsSelectionAsContext({
-      selectionFileItems: [fileItem],
+  public async copyThisFileAsContext(): Promise<void> {
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.ActiveEditorFile);
+
+    await this._copyTabBasedSelectionAsContext({
+      selection,
       warningWhenEmpty: 'No active file to copy',
       commandName: 'Copy File',
       totalFilesCount: 1,
-      copiedFilesCount: 1,
-      deletedFileUris: [],
-      unresolvedTabs: [],
     });
   }
 
   public async copyThisTabGroupAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.ActiveTabGroup);
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.ActiveTabGroup);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -46,7 +43,7 @@ export class EditorService {
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.AllOpenTabs);
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllOpenTabs);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -64,7 +61,7 @@ export class EditorService {
   }
 
   public async copyAllPinnedFilesAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.AllPinnedTabs);
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllPinnedTabs);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -82,7 +79,7 @@ export class EditorService {
   }
 
   public async copyAllUnpinnedFilesAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.AllUnpinnedTabs);
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllUnpinnedTabs);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -100,7 +97,7 @@ export class EditorService {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.PinnedTabsInActiveTabGroup);
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.PinnedTabsInActiveTabGroup);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -118,7 +115,7 @@ export class EditorService {
   }
 
   public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup);
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -208,39 +205,5 @@ export class EditorService {
         exceededBy: promptStatsResult.exceededBy,
       },
     });
-  }
-
-  private async _getActiveEditorFile(): Promise<IdeToLlmFile | null> {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (!activeEditor) {
-      await vscode.window.showWarningMessage('No active file to copy');
-      return null;
-    }
-
-    const fileItem = await this._readEditorDocumentAsFileItem(activeEditor.document);
-    if (fileItem?.content === null) {
-      await vscode.window.showWarningMessage('No active file to copy');
-      return null;
-    }
-
-    return fileItem;
-  }
-
-  private async _readEditorDocumentAsFileItem(document: vscode.TextDocument): Promise<IdeToLlmFile> {
-    const relativePath = toWorkspaceRelativePath(document.uri);
-
-    if (!relativePath) {
-      return {
-        path: document.uri.fsPath,
-        content: document.getText(),
-        languageId: document.languageId,
-      };
-    }
-
-    return {
-      path: relativePath,
-      content: document.getText(),
-      languageId: document.languageId,
-    };
   }
 }

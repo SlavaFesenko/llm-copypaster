@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 
 import { TabBasedFileItemsResult } from '../contracts/file-contracts';
-import { getUriFromTab, readUrisAsFileItems } from './uri-tab-utils';
+import { getUriFromTab, readUrisAsFileItems, toWorkspaceRelativePath } from './uri-tab-utils';
 
 export enum TabsCollectorBuildOption {
+  ActiveEditorFile = 'ActiveEditorFile',
   ActiveTabGroup = 'ActiveTabGroup',
   AllOpenTabs = 'AllOpenTabs',
   AllPinnedTabs = 'AllPinnedTabs',
@@ -14,6 +15,8 @@ export enum TabsCollectorBuildOption {
 
 export class TabsCollector {
   public async collectFileItems(buildOption: TabsCollectorBuildOption): Promise<TabBasedFileItemsResult> {
+    if (buildOption === TabsCollectorBuildOption.ActiveEditorFile) return this._collectActiveEditorFileItems();
+
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
 
@@ -41,6 +44,42 @@ export class TabsCollector {
     return { ...readResult, unresolvedTabs };
   }
 
+  private async _collectActiveEditorFileItems(): Promise<TabBasedFileItemsResult> {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (!activeEditor) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+
+    const fileItem = this._readEditorDocumentAsFileItem(activeEditor.document);
+    if (fileItem.content === null) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
+
+    return {
+      fileItems: [fileItem],
+      deletedFileUris: [],
+      unresolvedTabs: [],
+    };
+  }
+
+  private _readEditorDocumentAsFileItem(document: vscode.TextDocument): {
+    path: string;
+    content: string | null;
+    languageId?: string;
+  } {
+    const relativePath = toWorkspaceRelativePath(document.uri);
+
+    if (!relativePath) {
+      return {
+        path: document.uri.fsPath,
+        content: document.getText(),
+        languageId: document.languageId,
+      };
+    }
+
+    return {
+      path: relativePath,
+      content: document.getText(),
+      languageId: document.languageId,
+    };
+  }
+
   private _getTabGroups(buildOption: TabsCollectorBuildOption): readonly vscode.TabGroup[] {
     switch (buildOption) {
       case TabsCollectorBuildOption.ActiveTabGroup:
@@ -52,6 +91,9 @@ export class TabsCollector {
       case TabsCollectorBuildOption.AllPinnedTabs:
       case TabsCollectorBuildOption.AllUnpinnedTabs:
         return vscode.window.tabGroups.all;
+
+      default:
+        throw new Error(`Unsupported TabsCollectorBuildOption for tab groups: ${buildOption}`);
     }
   }
 
@@ -68,6 +110,9 @@ export class TabsCollector {
       case TabsCollectorBuildOption.AllUnpinnedTabs:
       case TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup:
         return !tab.isPinned;
+
+      default:
+        throw new Error(`Unsupported TabsCollectorBuildOption for tab filtering: ${buildOption}`);
     }
   }
 }
