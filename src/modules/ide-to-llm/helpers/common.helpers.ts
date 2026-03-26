@@ -2,18 +2,14 @@ import * as vscode from 'vscode';
 
 import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
 import { CollectedFileItem } from '../../../contracts/files-payload';
-import { toWorkspaceRelativePath } from '../../../utils/path-utils';
-import { BuildLlmContextTextArgs, EditorToLlmFileItem, ReadUrisAsFileItemsResult } from '../contracts';
+import { BuildLlmContextTextArgs, IdeToLlmFile, ReadUrisAsFileItemsResult } from '../contracts';
 
-export function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
-  if (tab.input instanceof vscode.TabInputText) {
-    return tab.input.uri;
-  }
+export function getUriFromTab(tab: vscode.Tab): vscode.Uri | null {
+  if (tab.input instanceof vscode.TabInputText) return tab.input.uri;
 
-  const anyInput = tab.input as unknown as { uri?: vscode.Uri };
-  if (anyInput?.uri instanceof vscode.Uri) {
-    return anyInput.uri;
-  }
+  const anyInput = tab.input as { uri?: vscode.Uri };
+
+  if (anyInput?.uri instanceof vscode.Uri) return anyInput.uri;
 
   return null;
 }
@@ -56,40 +52,6 @@ export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisA
   return { fileItems, deletedFileUris };
 }
 
-export async function collectActiveFileSelection(): Promise<EditorToLlmFileItem | null> {
-  const activeEditor = vscode.window.activeTextEditor;
-  if (!activeEditor) {
-    await vscode.window.showWarningMessage('No active file to copy');
-    return null;
-  }
-
-  const fileItem = await readEditorDocumentAsFileItem(activeEditor.document);
-  if (fileItem?.content === null) {
-    await vscode.window.showWarningMessage('No active file to copy');
-    return null;
-  }
-
-  return fileItem;
-}
-
-async function readEditorDocumentAsFileItem(document: vscode.TextDocument): Promise<EditorToLlmFileItem> {
-  const relativePath = toWorkspaceRelativePath(document.uri);
-
-  if (!relativePath) {
-    return {
-      path: document.uri.fsPath,
-      content: document.getText(),
-      languageId: document.languageId,
-    };
-  }
-
-  return {
-    path: relativePath,
-    content: document.getText(),
-    languageId: document.languageId,
-  };
-}
-
 export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
@@ -104,7 +66,7 @@ export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
   return `\n${techPromptDelimiter}\n${instructionsText}\n${techPromptDelimiter}\n${listings}`;
 }
 
-function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
+function buildSingleFileListing(fileItem: IdeToLlmFile, config: LlmCopypasterConfig): string {
   const headerLine = `${config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR} ${fileItem.path}`;
 
   const contentLines: string[] = [];
@@ -133,11 +95,11 @@ async function tryReadFileAsText(
 
 function isFileNotFoundError(error: unknown): boolean {
   const anyError = error as { code?: unknown; name?: unknown; message?: unknown } | null;
+
   const code = String(anyError?.code ?? '');
   if (code === 'FileNotFound') return true;
 
   const message = String(anyError?.message ?? error ?? '');
-
   if (message.includes('FileNotFound')) return true;
   if (message.includes('ENOENT')) return true;
   if (message.includes('no such file or directory')) return true;

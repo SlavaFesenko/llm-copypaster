@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/helpers/prompt-size-helper';
+import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/helpers/text-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
 import { RawLlmOutputParser } from './parsing/raw-llm-output-parser';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';

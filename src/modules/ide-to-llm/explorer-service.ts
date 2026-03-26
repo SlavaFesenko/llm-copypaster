@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { CopySelectedExplorerItemsArgs, IdeToLlmDeps, ReadUrisAsFileItemsResult } from './contracts';
 import { buildFinalPromptText, buildUriKey, readUrisAsFileItems } from './helpers/common.helpers';
-import { CopyResultNotificator } from './helpers/copy-result-notificator';
-import { buildTextSizeStats } from './helpers/prompt-size-helper';
+import { CopiedNotificator } from './helpers/copied-notificator';
+import { buildTextSizeStats } from './helpers/text-size-helper';
 
 export class ExplorerService {
   public constructor(private readonly _deps: IdeToLlmDeps) {}
@@ -50,7 +50,7 @@ export class ExplorerService {
 
       await vscode.env.clipboard.writeText(contextText);
 
-      await new CopyResultNotificator(this._deps).showCopyResultNotification({
+      await new CopiedNotificator(this._deps).showCopyResultNotification({
         commandName: 'Copy Explorer Items',
         includeTechPrompt: true,
         copiedFilesCount: selection.fileItems.length,

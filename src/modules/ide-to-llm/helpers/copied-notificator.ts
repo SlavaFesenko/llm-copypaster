@@ -8,9 +8,9 @@ import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-vi
 import { InstructionsBuilder } from '../../common/instructions-builder/instructions-builder';
 import { IdeToLlmDeps, ShowCopyResultNotificationArgs } from '../contracts';
 import { buildFinalPromptText } from './common.helpers';
-import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './prompt-size-helper';
+import { buildPromptSizeStatsSuffix, buildTextSizeStats } from './text-size-helper';
 
-export class CopyResultNotificator {
+export class CopiedNotificator {
   public constructor(private readonly _deps: IdeToLlmDeps) {}
 
   public async showCopyResultNotification(args: ShowCopyResultNotificationArgs): Promise<void> {

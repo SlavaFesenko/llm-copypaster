@@ -47,7 +47,7 @@ export interface ShowCopyResultNotificationArgs {
   promptSizeStats?: EditorToLlmPromptSizeStats;
 }
 
-export interface EditorToLlmFileItem {
+export interface IdeToLlmFile {
   path: string;
   content: string | null;
   languageId?: string;
@@ -55,7 +55,7 @@ export interface EditorToLlmFileItem {
 }
 
 export interface BuildLlmContextTextArgs {
-  fileItems: EditorToLlmFileItem[];
+  fileItems: IdeToLlmFile[];
   config: LlmCopypasterConfig;
   ignorePromptInstructions?: boolean;
   instructionsText?: string;

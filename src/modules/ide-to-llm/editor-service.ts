@@ -1,21 +1,17 @@
 import * as vscode from 'vscode';
 
+import { toWorkspaceRelativePath } from '../../utils/path-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
-import { IdeToLlmDeps, TabBasedFileItemsResult } from './contracts';
-import {
-  buildFinalPromptText,
-  collectActiveFileSelection,
-  readUrisAsFileItems,
-  tryGetUriFromTab,
-} from './helpers/common.helpers';
-import { CopyResultNotificator } from './helpers/copy-result-notificator';
-import { buildTextSizeStats } from './helpers/prompt-size-helper';
+import { IdeToLlmDeps, IdeToLlmFile, TabBasedFileItemsResult } from './contracts';
+import { buildFinalPromptText, getUriFromTab, readUrisAsFileItems } from './helpers/common.helpers';
+import { CopiedNotificator } from './helpers/copied-notificator';
+import { buildTextSizeStats } from './helpers/text-size-helper';
 
 export class EditorService {
   public constructor(private readonly _deps: IdeToLlmDeps) {}
 
   public async copyThisFileAsContext(): Promise<void> {
-    const fileItem = await collectActiveFileSelection();
+    const fileItem = await this._getActiveEditorFile();
     if (!fileItem) return;
 
     await this._copyFileItemsSelectionAsContext({
@@ -147,7 +143,7 @@ export class EditorService {
     const unresolvedTabs: vscode.Tab[] = [];
 
     for (const tab of tabGroup.tabs) {
-      const tabUri = tryGetUriFromTab(tab);
+      const tabUri = getUriFromTab(tab);
       if (!tabUri) {
         unresolvedTabs.push(tab);
         continue;
@@ -172,7 +168,7 @@ export class EditorService {
 
     for (const tabGroup of vscode.window.tabGroups.all) {
       for (const tab of tabGroup.tabs) {
-        const tabUri = tryGetUriFromTab(tab);
+        const tabUri = getUriFromTab(tab);
         if (!tabUri) {
           unresolvedTabs.push(tab);
           continue;
@@ -200,7 +196,7 @@ export class EditorService {
       for (const tab of tabGroup.tabs) {
         if (!tab.isPinned) continue;
 
-        const tabUri = tryGetUriFromTab(tab);
+        const tabUri = getUriFromTab(tab);
         if (!tabUri) {
           unresolvedTabs.push(tab);
           continue;
@@ -228,7 +224,7 @@ export class EditorService {
       for (const tab of tabGroup.tabs) {
         if (tab.isPinned) continue;
 
-        const tabUri = tryGetUriFromTab(tab);
+        const tabUri = getUriFromTab(tab);
         if (!tabUri) {
           unresolvedTabs.push(tab);
           continue;
@@ -257,7 +253,7 @@ export class EditorService {
     for (const tab of tabGroup.tabs) {
       if (!tab.isPinned) continue;
 
-      const tabUri = tryGetUriFromTab(tab);
+      const tabUri = getUriFromTab(tab);
       if (!tabUri) {
         unresolvedTabs.push(tab);
         continue;
@@ -285,7 +281,7 @@ export class EditorService {
     for (const tab of tabGroup.tabs) {
       if (tab.isPinned) continue;
 
-      const tabUri = tryGetUriFromTab(tab);
+      const tabUri = getUriFromTab(tab);
       if (!tabUri) {
         unresolvedTabs.push(tab);
         continue;
@@ -356,7 +352,7 @@ export class EditorService {
 
     await vscode.env.clipboard.writeText(finalPromptText);
 
-    await new CopyResultNotificator(this._deps).showCopyResultNotification({
+    await new CopiedNotificator(this._deps).showCopyResultNotification({
       commandName: args.commandName,
       includeTechPrompt: true,
       copiedFilesCount: args.copiedFilesCount,
@@ -374,5 +370,39 @@ export class EditorService {
         exceededBy: promptStatsResult.exceededBy,
       },
     });
+  }
+
+  private async _getActiveEditorFile(): Promise<IdeToLlmFile | null> {
+    const activeEditor = vscode.window.activeTextEditor;
+    if (!activeEditor) {
+      await vscode.window.showWarningMessage('No active file to copy');
+      return null;
+    }
+
+    const fileItem = await this._readEditorDocumentAsFileItem(activeEditor.document);
+    if (fileItem?.content === null) {
+      await vscode.window.showWarningMessage('No active file to copy');
+      return null;
+    }
+
+    return fileItem;
+  }
+
+  private async _readEditorDocumentAsFileItem(document: vscode.TextDocument): Promise<IdeToLlmFile> {
+    const relativePath = toWorkspaceRelativePath(document.uri);
+
+    if (!relativePath) {
+      return {
+        path: document.uri.fsPath,
+        content: document.getText(),
+        languageId: document.languageId,
+      };
+    }
+
+    return {
+      path: relativePath,
+      content: document.getText(),
+      languageId: document.languageId,
+    };
   }
 }
