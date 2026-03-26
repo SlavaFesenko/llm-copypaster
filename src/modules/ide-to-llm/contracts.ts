@@ -31,6 +31,7 @@ export interface ShowCopyResultNotificationArgs {
   totalFilesCount: number;
   deletedFileUris: vscode.Uri[];
   unresolvedTabs: vscode.Tab[];
+  skippedOutsideWorkspaceUris: vscode.Uri[];
   promptText: string;
   fileItems: CollectedFileItem[];
   promptSizeStats?: EditorToLlmPromptSizeStats;

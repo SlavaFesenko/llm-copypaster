@@ -45,3 +45,30 @@ export function uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
 
   return uniqueUris;
 }
+
+export function isInsideWorkspace(uri: vscode.Uri): boolean {
+  return toWorkspaceRelativePath(uri) !== null;
+}
+
+export function toDisplayPath(uri: vscode.Uri, allowOutsideWorkspaceOps: boolean): string {
+  const workspaceRelativePath = toWorkspaceRelativePath(uri);
+
+  if (!allowOutsideWorkspaceOps && workspaceRelativePath) return workspaceRelativePath;
+  if (allowOutsideWorkspaceOps && uri.scheme === 'file' && uri.fsPath) return normalizeWindowsDriveLetter(uri.fsPath);
+  if (workspaceRelativePath) return workspaceRelativePath;
+  if (uri.scheme === 'file' && uri.fsPath) return normalizeWindowsDriveLetter(uri.fsPath);
+
+  return uri.toString();
+}
+
+export function buildSkippedOutsideWorkspaceWarningMessage(skippedOutsideWorkspaceUris: vscode.Uri[]): string {
+  const skippedPaths = skippedOutsideWorkspaceUris.map(skippedOutsideWorkspaceUri =>
+    toDisplayPath(skippedOutsideWorkspaceUri, true)
+  );
+
+  return `Skipped ${skippedOutsideWorkspaceUris.length} file(s) outside workspace: ${skippedPaths.join(', ')}`;
+}
+
+function normalizeWindowsDriveLetter(path: string): string {
+  return path.replace(/^[a-z]:/, driveLetterPrefix => driveLetterPrefix.toUpperCase());
+}

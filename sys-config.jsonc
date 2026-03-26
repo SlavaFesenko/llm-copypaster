@@ -1,6 +1,7 @@
 {
   "nonOverrideableSettings": {
-    "allowOutsideWorkspaceOps": true,
+    "allowOutsideWorkspaceRead": true,
+    "allowOutsideWorkspaceWrite": true,
     "vitalParsingAnchors": {
       "PROMPT_DELIMITER_ANCHOR": "---",
       "CODE_LISTING_HEADER_ANCHOR": "## LLM-CPP-FILE:",

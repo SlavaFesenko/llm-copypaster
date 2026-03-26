@@ -1,21 +1,32 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { CollectedFileItem, ReadUrisAsFileItemsResult } from '../contracts/file-contracts';
 import { OutputChannelLogger } from './output-channel-logger';
+import { isInsideWorkspace, toDisplayPath } from './uri-tab-utils';
 
-export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisAsFileItemsResult> {
+export async function readUrisAsFileItems(
+  uris: vscode.Uri[],
+  allowOutsideWorkspaceOps: boolean
+): Promise<ReadUrisAsFileItemsResult> {
   const dedupedByPathMap = new Map<string, vscode.Uri>();
+  const skippedOutsideWorkspaceUris: vscode.Uri[] = [];
 
   for (const uri of uris) {
-    const relativePath = vscode.workspace.asRelativePath(uri, false);
-    if (!relativePath) continue;
+    if (!allowOutsideWorkspaceOps && !isInsideWorkspace(uri)) {
+      skippedOutsideWorkspaceUris.push(uri);
+      continue;
+    }
 
-    if (!dedupedByPathMap.has(relativePath)) dedupedByPathMap.set(relativePath, uri);
+    const displayPath = toDisplayPath(uri, allowOutsideWorkspaceOps);
+    if (!displayPath) continue;
+
+    if (!dedupedByPathMap.has(displayPath)) dedupedByPathMap.set(displayPath, uri);
   }
 
   const fileItems: CollectedFileItem[] = [];
   const deletedFileUris: vscode.Uri[] = [];
 
-  for (const [relativePath, uri] of dedupedByPathMap.entries()) {
+  for (const [displayPath, uri] of dedupedByPathMap.entries()) {
     const readResult = await tryReadFileAsText(uri);
 
     if (readResult.isFileNotFound) {
@@ -24,19 +35,20 @@ export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisA
     }
 
     fileItems.push({
-      path: relativePath,
+      path: displayPath,
       content: readResult.text,
       languageId: readResult.languageId,
       readError: readResult.readError,
     });
   }
 
-  return { fileItems, deletedFileUris };
+  return { fileItems, deletedFileUris, skippedOutsideWorkspaceUris };
 }
 
 export async function collectExplorerItemsFileItems(
   selectedUris: vscode.Uri[],
-  logger: OutputChannelLogger
+  logger: OutputChannelLogger,
+  allowOutsideWorkspaceOps: boolean
 ): Promise<ReadUrisAsFileItemsResult> {
   const allFileUris: vscode.Uri[] = [];
 
@@ -60,7 +72,7 @@ export async function collectExplorerItemsFileItems(
     }
   }
 
-  return await readUrisAsFileItems(allFileUris);
+  return await readUrisAsFileItems(allFileUris, allowOutsideWorkspaceOps);
 }
 
 export async function collectAllFilesInFolderRecursively(
@@ -92,6 +104,33 @@ export async function collectAllFilesInFolderRecursively(
   }
 
   return collectedFileUris;
+}
+
+export function isOutsideWorkspaceFilePath(filePath: string): boolean {
+  if (!path.isAbsolute(filePath)) return false;
+
+  return !isPathInsideWorkspaceRoot(filePath);
+}
+
+export function isPathInsideWorkspaceRoot(absoluteFilePath: string): boolean {
+  const workspaceRootFsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null;
+
+  if (!workspaceRootFsPath) return false;
+
+  const normalizedWorkspaceRootFsPath = normalizePathForCompare(workspaceRootFsPath);
+  const normalizedAbsoluteFilePath = normalizePathForCompare(absoluteFilePath);
+
+  if (normalizedAbsoluteFilePath === normalizedWorkspaceRootFsPath) return true;
+
+  return normalizedAbsoluteFilePath.startsWith(normalizedWorkspaceRootFsPath + path.sep);
+}
+
+export function normalizePathForCompare(inputPath: string): string {
+  const normalizedPath = path.resolve(inputPath);
+
+  if (process.platform === 'win32') return normalizedPath.toLowerCase();
+
+  return normalizedPath;
 }
 
 async function getStat(uri: vscode.Uri, logger: OutputChannelLogger): Promise<vscode.FileStat | null> {
