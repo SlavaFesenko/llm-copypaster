@@ -1,4 +1,4 @@
-import { GLOB_CONSTS } from '../../global-constants';
+import { GLOB_CONSTS } from '../../contracts/global-constants';
 import { readUserJsonConfigFile } from '../config-helpers/config-tech-helpers';
 import { ConfigService, OverrideOptionMetadata } from '../config-service';
 import { CoreSettingsConfig } from '../system-config-contracts';

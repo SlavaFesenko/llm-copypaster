@@ -2,7 +2,7 @@ import { parse, ParseError } from 'jsonc-parser';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { GLOB_CONSTS } from '../../global-constants';
+import { GLOB_CONSTS } from '../../contracts/global-constants';
 
 export async function readUserJsonConfigFile<TConfig>(): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];

@@ -9,7 +9,7 @@ import {
   InstructionsAndVariablesConfig,
   LlmCopypasterConfig,
 } from '../../../config/system-config-contracts';
-import { GLOB_CONSTS } from '../../../global-constants';
+import { GLOB_CONSTS } from '../../../contracts/global-constants';
 import {
   collapseEmptyLines,
   normalizeDirectPlaceholderValue,

@@ -1,4 +1,4 @@
-import { GLOB_CONSTS } from '../../global-constants';
+import { GLOB_CONSTS } from '../../contracts/global-constants';
 import { MergedConfigDebugData, OverrideOptionMetadata } from '../config-service';
 import { LlmCopypasterUserConfig } from '../user-config-contracts';
 
