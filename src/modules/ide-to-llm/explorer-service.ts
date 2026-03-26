@@ -9,7 +9,10 @@ import { CopiedNotificator } from './helpers/copied-notificator';
 import { buildTextSizeStats } from './helpers/text-size-helper';
 
 export class ExplorerService {
-  public constructor(private readonly _deps: IdeToLlmDeps) {}
+  public constructor(
+    private readonly _deps: IdeToLlmDeps,
+    private readonly _allowOutsideWorkspaceRead: boolean
+  ) {}
 
   public async copySelectedExplorerItemsAsContext(args?: CopySelectedExplorerItemsArgs): Promise<void> {
     const selectedUrisCopy = [...(args?.selectedUris ?? [])];
@@ -27,11 +30,7 @@ export class ExplorerService {
   private async _copyExplorerUrisAsContext(inputUris: vscode.Uri[]): Promise<void> {
     const config = await this._deps.configService.getLlmCopypasterConfig();
 
-    const selection = await collectExplorerItemsFileItems(
-      inputUris,
-      this._deps.logger,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await collectExplorerItemsFileItems(inputUris, this._deps.logger, this._allowOutsideWorkspaceRead);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 

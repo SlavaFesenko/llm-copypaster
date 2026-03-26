@@ -13,7 +13,8 @@ export class IdeToLlmFacade {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
-    private readonly _logger: OutputChannelLogger
+    private readonly _logger: OutputChannelLogger,
+    private readonly _allowOutsideWorkspaceRead: boolean
   ) {
     const privateHelpersDeps: IdeToLlmDeps = {
       extensionContext: this._extensionContext,
@@ -21,8 +22,8 @@ export class IdeToLlmFacade {
       logger: this._logger,
     };
 
-    this._editorHelper = new EditorService(privateHelpersDeps);
-    this._explorerHelper = new ExplorerService(privateHelpersDeps);
+    this._editorHelper = new EditorService(privateHelpersDeps, this._allowOutsideWorkspaceRead);
+    this._explorerHelper = new ExplorerService(privateHelpersDeps, this._allowOutsideWorkspaceRead);
   }
 
   public async copyThisFileAsContext(): Promise<void> {

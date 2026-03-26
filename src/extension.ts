@@ -8,11 +8,13 @@ import { LlmToIdeFacade } from './modules/llm-to-ide/llm-to-ide-facade';
 import { QuickInstructionFacade } from './modules/quick-instruction/quick-instruction-facade';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
   const configService = new ConfigService();
+  const config = await configService.getLlmCopypasterConfig();
+  const allowOutsideWorkspaceRead = config.nonOverrideableSettings.allowOutsideWorkspaceRead;
 
-  const ideToLlmFacade = new IdeToLlmFacade(context, configService, logger);
+  const ideToLlmFacade = new IdeToLlmFacade(context, configService, logger, allowOutsideWorkspaceRead);
   const llmToIdeFacade = new LlmToIdeFacade(configService, logger);
   const quickInstructionFacade = new QuickInstructionFacade(context, configService);
 

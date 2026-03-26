@@ -10,22 +10,21 @@ import { CopiedNotificator } from './helpers/copied-notificator';
 import { buildTextSizeStats } from './helpers/text-size-helper';
 
 export class EditorService {
-  public constructor(private readonly _deps: IdeToLlmDeps) {}
+  public constructor(
+    private readonly _deps: IdeToLlmDeps,
+    private readonly _allowOutsideWorkspaceRead: boolean
+  ) {
+    this._tabsCollector = new TabsCollector(this._allowOutsideWorkspaceRead);
+  }
 
-  private readonly _tabsCollector = new TabsCollector();
+  private readonly _tabsCollector: TabsCollector;
 
   public async copyThisFileAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.ActiveEditorFile,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.ActiveEditorFile);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No active file to copy',
       commandName: 'Copy File',
@@ -35,12 +34,7 @@ export class EditorService {
   }
 
   public async copyThisTabGroupAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.ActiveTabGroup,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.ActiveTabGroup);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
@@ -56,7 +50,6 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No tab group files to copy!',
       commandName: 'Copy Tab Group',
@@ -65,12 +58,7 @@ export class EditorService {
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.AllOpenTabs,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllOpenTabs);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
@@ -86,7 +74,6 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No open files to copy',
       commandName: 'Copy All',
@@ -95,12 +82,7 @@ export class EditorService {
   }
 
   public async copyAllPinnedFilesAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.AllPinnedTabs,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllPinnedTabs);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
@@ -116,7 +98,6 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No pinned files to copy',
       commandName: 'Copy All Pinned',
@@ -125,12 +106,7 @@ export class EditorService {
   }
 
   public async copyAllUnpinnedFilesAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.AllUnpinnedTabs,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.AllUnpinnedTabs);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
@@ -146,7 +122,6 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No unpinned files to copy',
       commandName: 'Copy All Unpinned',
@@ -155,12 +130,7 @@ export class EditorService {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.PinnedTabsInActiveTabGroup,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.PinnedTabsInActiveTabGroup);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
@@ -176,7 +146,6 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No pinned tab group files to copy',
       commandName: 'Copy Pinned Tab Group',
@@ -185,12 +154,7 @@ export class EditorService {
   }
 
   public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
-
-    const selection = await this._tabsCollector.collectFileItems(
-      TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
-    );
+    const selection = await this._tabsCollector.collectFileItems(TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup);
 
     await this._showSkippedOutsideWorkspaceWarning(selection.skippedOutsideWorkspaceUris);
 
@@ -206,7 +170,6 @@ export class EditorService {
     }
 
     await this._copyTabBasedSelectionAsContext({
-      config,
       selection,
       warningWhenEmpty: 'No unpinned tab group files to copy',
       commandName: 'Copy Unpinned Tab Group',
@@ -215,7 +178,6 @@ export class EditorService {
   }
 
   private async _copyTabBasedSelectionAsContext(args: {
-    config: Awaited<ReturnType<IdeToLlmDeps['configService']['getLlmCopypasterConfig']>>;
     selection: TabBasedFileItemsResult;
     warningWhenEmpty: string;
     commandName: string;
@@ -223,7 +185,6 @@ export class EditorService {
   }): Promise<void> {
     if (args.selection.fileItems.length > 0) {
       await this._copyFileItemsSelectionAsContext({
-        config: args.config,
         selectionFileItems: args.selection.fileItems,
         warningWhenEmpty: args.warningWhenEmpty,
         commandName: args.commandName,
@@ -241,7 +202,6 @@ export class EditorService {
   }
 
   private async _copyFileItemsSelectionAsContext(args: {
-    config: Awaited<ReturnType<IdeToLlmDeps['configService']['getLlmCopypasterConfig']>>;
     selectionFileItems: Array<{ path: string; content: string | null; languageId?: string; readError?: string }>;
     warningWhenEmpty: string;
     commandName: string;
@@ -256,19 +216,20 @@ export class EditorService {
       return;
     }
 
+    const config = await this._deps.configService.getLlmCopypasterConfig();
     const fileItems = args.selectionFileItems;
 
-    const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, args.config).build();
+    const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, config).build();
 
     const finalPromptText = buildFinalPromptText({
       fileItems,
-      config: args.config,
+      config,
       instructionsText,
     });
 
     const promptStatsResult = buildTextSizeStats({
       promptText: finalPromptText,
-      contextConfig: args.config.coreSettings.ideToLlm,
+      contextConfig: config.coreSettings.ideToLlm,
     });
 
     await vscode.env.clipboard.writeText(finalPromptText);
