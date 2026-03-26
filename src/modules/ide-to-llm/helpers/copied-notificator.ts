@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { OverrideOptionMetadata } from '../../../config/config-service';
 import { ConfigReportFacade } from '../../../config/reporters/config-report-facade';
 import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
-import { CollectedFileItem } from '../../../contracts/files-payload';
+import { CollectedFileItem } from '../../../contracts/file-contracts';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-virtual-doc-helpers';
 import { InstructionsBuilder } from '../../common/instructions-builder/instructions-builder';
 import { IdeToLlmDeps, ShowCopyResultNotificationArgs } from '../contracts';

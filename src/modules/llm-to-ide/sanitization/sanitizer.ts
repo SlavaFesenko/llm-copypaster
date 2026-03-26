@@ -1,5 +1,5 @@
 import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
-import { FilesPayload } from '../../../contracts/files-payload';
+import { FilesPayload } from '../../../contracts/file-contracts';
 import { applySanitizationRules } from './sanitizers/apply-sanitization-rules';
 
 export function sanitizeFilesPayload(payload: FilesPayload, config: LlmCopypasterConfig): FilesPayload {

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { TabBasedFileItemsResult } from '../../contracts/files-payload';
-import { TabsCollector } from '../../utils/tabs-collector';
+import { TabBasedFileItemsResult } from '../../contracts/file-contracts';
+import { TabsCollector, TabsCollectorBuildOption } from '../../utils/tabs-collector';
 import { toWorkspaceRelativePath } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { IdeToLlmDeps, IdeToLlmFile } from './contracts';
@@ -28,7 +28,7 @@ export class EditorService {
   }
 
   public async copyThisTabGroupAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectActiveTabGroupFileItems();
+    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.ActiveTabGroup);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -46,7 +46,7 @@ export class EditorService {
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectAllOpenTabsFileItems();
+    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.AllOpenTabs);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -64,7 +64,7 @@ export class EditorService {
   }
 
   public async copyAllPinnedFilesAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectAllPinnedTabsFileItems();
+    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.AllPinnedTabs);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -82,7 +82,7 @@ export class EditorService {
   }
 
   public async copyAllUnpinnedFilesAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectAllUnpinnedTabsFileItems();
+    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.AllUnpinnedTabs);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -100,7 +100,7 @@ export class EditorService {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectPinnedTabsInActiveTabGroupFileItems();
+    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.PinnedTabsInActiveTabGroup);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -118,7 +118,7 @@ export class EditorService {
   }
 
   public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await new TabsCollector().collectUnpinnedTabsInActiveTabGroupFileItems();
+    const selection = await new TabsCollector().collectFileItems(TabsCollectorBuildOption.UnpinnedTabsInActiveTabGroup);
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 

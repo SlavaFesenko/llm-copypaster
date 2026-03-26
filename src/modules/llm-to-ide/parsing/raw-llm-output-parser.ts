@@ -1,5 +1,5 @@
 import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
-import { FilePayload, FilesPayload } from '../../../contracts/files-payload';
+import { FilePayload, FilesPayload } from '../../../contracts/file-contracts';
 
 export class RawLlmOutputParser {
   private readonly _codeListingHeaderAnchor: string;

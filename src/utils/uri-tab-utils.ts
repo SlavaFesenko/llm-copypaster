@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { CollectedFileItem, ReadUrisAsFileItemsResult } from '../contracts/files-payload';
+import { CollectedFileItem, ReadUrisAsFileItemsResult } from '../contracts/file-contracts';
 import { OutputChannelLogger } from './output-channel-logger';
 
 export function toWorkspaceRelativePath(uri: vscode.Uri): string | null {
