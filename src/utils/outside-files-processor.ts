@@ -1,8 +1,8 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
-import { FilePayload, FilesPayload } from '../../../contracts/file-contracts';
+import { LlmCopypasterConfig } from '../config/system-config-contracts';
+import { FilePayload, FilesPayload } from '../contracts/file-contracts';
 
 export interface OutsideFilesProcessingResult {
   shouldContinue: boolean;

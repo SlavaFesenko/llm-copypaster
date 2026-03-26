@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import { ConfigService } from '../../config/config-service';
 import { FilesPayload } from '../../contracts/file-contracts';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
+import { OutsideFilesProcessor } from '../../utils/outside-files-processor';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/helpers/text-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
-import { OutsideFilesProcessor } from './outside-files/outside-files-processor';
 import { RawLlmOutputParser } from './parsing/raw-llm-output-parser';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';
 
