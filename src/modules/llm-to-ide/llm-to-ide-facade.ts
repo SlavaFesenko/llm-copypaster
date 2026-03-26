@@ -10,7 +10,9 @@ import { sanitizeFilesPayload } from './sanitization/sanitizer';
 export class LlmToIdeFacade {
   public constructor(
     private readonly _configService: ConfigService,
-    private readonly _logger: OutputChannelLogger
+    private readonly _logger: OutputChannelLogger,
+    private readonly _allowOutsideWorkspaceWrite: boolean,
+    private readonly _allowOutsideWorkspaceWriteViaConfirmation: boolean
   ) {}
 
   public async applyClipboardToFiles(): Promise<void> {

@@ -12,10 +12,21 @@ export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
   const configService = new ConfigService();
   const config = await configService.getLlmCopypasterConfig();
-  const allowOutsideWorkspaceRead = config.nonOverrideableSettings.allowOutsideWorkspaceRead;
 
-  const ideToLlmFacade = new IdeToLlmFacade(context, configService, logger, allowOutsideWorkspaceRead);
-  const llmToIdeFacade = new LlmToIdeFacade(configService, logger);
+  const ideToLlmFacade = new IdeToLlmFacade(
+    context,
+    configService,
+    logger,
+    config.nonOverrideableSettings.allowOutsideWorkspaceRead
+  );
+
+  const llmToIdeFacade = new LlmToIdeFacade(
+    configService,
+    logger,
+    config.nonOverrideableSettings.allowOutsideWorkspaceWrite,
+    config.nonOverrideableSettings.allowOutsideWorkspaceWriteViaConfirmation
+  );
+
   const quickInstructionFacade = new QuickInstructionFacade(context, configService);
 
   context.subscriptions.push(
