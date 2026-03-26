@@ -1,26 +1,27 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
+import { FilesPayload } from '../../contracts/file-contracts';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/helpers/text-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
+import { OutsideFilesProcessor } from './outside-files/outside-files-processor';
 import { RawLlmOutputParser } from './parsing/raw-llm-output-parser';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';
 
 export class LlmToIdeFacade {
   public constructor(
     private readonly _configService: ConfigService,
-    private readonly _logger: OutputChannelLogger,
-    private readonly _allowOutsideWorkspaceWrite: boolean,
-    private readonly _shouldAskConfirmationIfOutsideWorkspaceWriteAllowed: boolean
+    private readonly _logger: OutputChannelLogger
   ) {}
 
   public async applyClipboardToFiles(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
     const config = await this._configService.getLlmCopypasterConfig();
     const rawLlmOutputParser = new RawLlmOutputParser(config);
+    const outsideFilesProcessor = new OutsideFilesProcessor(config);
 
-    let parsedFilesPayload;
+    let parsedFilesPayload: FilesPayload;
 
     try {
       parsedFilesPayload = rawLlmOutputParser.parseFilesPayload(clipboardText);
@@ -31,6 +32,16 @@ export class LlmToIdeFacade {
 
       return;
     }
+
+    const outsideFilesProcessingResult = await outsideFilesProcessor.process(parsedFilesPayload);
+
+    if (!outsideFilesProcessingResult.shouldContinue) return;
+
+    if (parsedFilesPayload.warnings.length > 0) {
+      await vscode.window.showWarningMessage(parsedFilesPayload.warnings.join('\n'));
+    }
+
+    if (parsedFilesPayload.files.length === 0) return;
 
     const sanitizedPayload = sanitizeFilesPayload(parsedFilesPayload, config);
 

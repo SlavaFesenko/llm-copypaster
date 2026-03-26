@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { CollectedFileItem, ReadUrisAsFileItemsResult } from '../contracts/file-contracts';
 import { OutputChannelLogger } from './output-channel-logger';
@@ -103,6 +104,33 @@ export async function collectAllFilesInFolderRecursively(
   }
 
   return collectedFileUris;
+}
+
+export function isOutsideWorkspaceFilePath(filePath: string): boolean {
+  if (!path.isAbsolute(filePath)) return false;
+
+  return !isPathInsideWorkspaceRoot(filePath);
+}
+
+export function isPathInsideWorkspaceRoot(absoluteFilePath: string): boolean {
+  const workspaceRootFsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? null;
+
+  if (!workspaceRootFsPath) return false;
+
+  const normalizedWorkspaceRootFsPath = normalizePathForCompare(workspaceRootFsPath);
+  const normalizedAbsoluteFilePath = normalizePathForCompare(absoluteFilePath);
+
+  if (normalizedAbsoluteFilePath === normalizedWorkspaceRootFsPath) return true;
+
+  return normalizedAbsoluteFilePath.startsWith(normalizedWorkspaceRootFsPath + path.sep);
+}
+
+export function normalizePathForCompare(inputPath: string): string {
+  const normalizedPath = path.resolve(inputPath);
+
+  if (process.platform === 'win32') return normalizedPath.toLowerCase();
+
+  return normalizedPath;
 }
 
 async function getStat(uri: vscode.Uri, logger: OutputChannelLogger): Promise<vscode.FileStat | null> {

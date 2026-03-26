@@ -20,12 +20,7 @@ export async function activate(context: vscode.ExtensionContext) {
     config.nonOverrideableSettings.allowOutsideWorkspaceRead
   );
 
-  const llmToIdeFacade = new LlmToIdeFacade(
-    configService,
-    logger,
-    config.nonOverrideableSettings.allowOutsideWorkspaceWrite,
-    config.nonOverrideableSettings.shouldAskConfirmationIfOutsideWorkspaceWriteAllowed
-  );
+  const llmToIdeFacade = new LlmToIdeFacade(configService, logger);
 
   const quickInstructionFacade = new QuickInstructionFacade(context, configService);
 

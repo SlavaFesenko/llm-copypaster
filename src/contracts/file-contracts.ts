@@ -12,6 +12,7 @@ export interface FilePayload {
   sourceRangeStart?: number;
   sourceRangeEnd?: number;
   operation?: string;
+  isOutsideWorkspace?: boolean;
 }
 
 export interface TabBasedFileItemsResult {

@@ -1,5 +1,6 @@
 import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
 import { FilePayload, FilesPayload } from '../../../contracts/file-contracts';
+import { isOutsideWorkspaceFilePath } from '../../../utils/file-utils';
 
 export class RawLlmOutputParser {
   private readonly _codeListingHeaderAnchor: string;
@@ -69,6 +70,7 @@ export class RawLlmOutputParser {
         operation: parsedSection.operation,
         sourceRangeStart: sectionStartIndex,
         sourceRangeEnd: sectionEndIndex,
+        isOutsideWorkspace: isOutsideWorkspaceFilePath(path),
       });
     }
 

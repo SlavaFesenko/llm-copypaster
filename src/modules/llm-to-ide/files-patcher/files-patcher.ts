@@ -112,10 +112,6 @@ export async function applyFilesPayloadToWorkspace(
 
     for (const file of outsideWorkspaceFiles) {
       const externalTargetUri = vscode.Uri.file(file.path);
-
-      const isConfirmed = await confirmOutOfWorkspaceFileOperation(externalTargetUri);
-      if (!isConfirmed) return { ok: false, errorMessage: `Cancelled by user: ${file.path}` };
-
       const operation = file.operation ?? llmToIdeParsingAnchors.FILE_EDITED_FULL_ANCHOR;
 
       if (operation === llmToIdeParsingAnchors.FILE_DELETED_ANCHOR) {
@@ -158,26 +154,6 @@ export async function applyFilesPayloadToWorkspace(
   } catch (error) {
     return { ok: false, errorMessage: String(error) };
   }
-}
-
-async function confirmOutOfWorkspaceFileOperation(targetUri: vscode.Uri): Promise<boolean> {
-  const fileName = path.basename(targetUri.fsPath);
-  const messageLines = [
-    'You are about to write a file OUTSIDE the current workspace.',
-    'Double-check the path — Git may not be used for this location.',
-    '',
-    `File: ${fileName}`,
-    `Path: ${targetUri.fsPath}`,
-  ];
-
-  const pickedAction = await vscode.window.showWarningMessage(
-    messageLines.join('\n'),
-    { modal: true },
-    'Write file',
-    'Cancel'
-  );
-
-  return pickedAction === 'Write file';
 }
 
 async function fileExists(uri: vscode.Uri): Promise<boolean> {
