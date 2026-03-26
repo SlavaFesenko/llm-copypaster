@@ -25,9 +25,6 @@ export class OutsideFilesProcessor {
 
     if (!this._config.nonOverrideableSettings.allowOutsideWorkspaceWrite) return OutsideFilesProcessingAction.Skip;
 
-    if (!this._config.nonOverrideableSettings.shouldAskConfirmationIfOutsideWorkspaceWriteAllowed)
-      return OutsideFilesProcessingAction.Continue;
-
     const savedOutsideWorkspaceFileActions = this._getSavedOutsideWorkspaceFileActions();
 
     const outsideWorkspaceFilesToAsk = outsideWorkspaceFiles.filter(
@@ -62,12 +59,15 @@ export class OutsideFilesProcessor {
       .map(outsideWorkspaceFilePath => `• ${outsideWorkspaceFilePath}`)
       .join('\n');
 
+    const headerText = 'You are about to write file(s) OUTSIDE the current workspace.';
+    const ctaText = 'Would you prefer to skip these files, or continue patching them?';
+
     const pickedAction = await vscode.window.showWarningMessage(
-      `You are about to write file(s) OUTSIDE the current workspace.\n\n${filePathsList}`,
+      `${headerText}\n\n${filePathsList}\n\n${ctaText}`,
       { modal: true },
       'Continue',
       'Continue and remember',
-      'Skip outside files',
+      'Skip',
       'Skip and remember',
       'Clear Cache'
     );
@@ -77,8 +77,7 @@ export class OutsideFilesProcessor {
     if (pickedAction === 'Continue and remember')
       return { fileAction: OutsideWorkspaceFileCachedAction.Continue, shouldRemember: true };
 
-    if (pickedAction === 'Skip outside files')
-      return { fileAction: OutsideWorkspaceFileCachedAction.Skip, shouldRemember: false };
+    if (pickedAction === 'Skip') return { fileAction: OutsideWorkspaceFileCachedAction.Skip, shouldRemember: false };
 
     if (pickedAction === 'Skip and remember')
       return { fileAction: OutsideWorkspaceFileCachedAction.Skip, shouldRemember: true };

@@ -1,9 +1,7 @@
 {
   "nonOverrideableSettings": {
     "allowOutsideWorkspaceRead": true,
-    "shouldAskConfirmationIfOutsideWorkspaceReadAllowed": true,
     "allowOutsideWorkspaceWrite": true,
-    "shouldAskConfirmationIfOutsideWorkspaceWriteAllowed": true,
     "vitalParsingAnchors": {
       "PROMPT_DELIMITER_ANCHOR": "---",
       "CODE_LISTING_HEADER_ANCHOR": "## LLM-CPP-FILE:",

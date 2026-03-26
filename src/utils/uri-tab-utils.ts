@@ -54,9 +54,9 @@ export function toDisplayPath(uri: vscode.Uri, allowOutsideWorkspaceOps: boolean
   const workspaceRelativePath = toWorkspaceRelativePath(uri);
 
   if (!allowOutsideWorkspaceOps && workspaceRelativePath) return workspaceRelativePath;
-  if (allowOutsideWorkspaceOps && uri.scheme === 'file' && uri.fsPath) return uri.fsPath;
+  if (allowOutsideWorkspaceOps && uri.scheme === 'file' && uri.fsPath) return normalizeWindowsDriveLetter(uri.fsPath);
   if (workspaceRelativePath) return workspaceRelativePath;
-  if (uri.scheme === 'file' && uri.fsPath) return uri.fsPath;
+  if (uri.scheme === 'file' && uri.fsPath) return normalizeWindowsDriveLetter(uri.fsPath);
 
   return uri.toString();
 }
@@ -67,4 +67,8 @@ export function buildSkippedOutsideWorkspaceWarningMessage(skippedOutsideWorkspa
   );
 
   return `Skipped ${skippedOutsideWorkspaceUris.length} file(s) outside workspace: ${skippedPaths.join(', ')}`;
+}
+
+function normalizeWindowsDriveLetter(path: string): string {
+  return path.replace(/^[a-z]:/, driveLetterPrefix => driveLetterPrefix.toUpperCase());
 }
