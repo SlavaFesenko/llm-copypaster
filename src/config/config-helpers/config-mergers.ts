@@ -56,8 +56,9 @@ export function mergeNonOverrideableSettingsConfig(
   return {
     allowOutsideWorkspaceRead: userSettings.allowOutsideWorkspaceRead ?? baseSettings.allowOutsideWorkspaceRead,
     allowOutsideWorkspaceWrite: userSettings.allowOutsideWorkspaceWrite ?? baseSettings.allowOutsideWorkspaceWrite,
-    allowOutsideWorkspaceWriteViaConfirmation:
-      userSettings.allowOutsideWorkspaceWriteViaConfirmation ?? baseSettings.allowOutsideWorkspaceWriteViaConfirmation,
+    shouldAskConfirmationIfOutsideWorkspaceWriteAllowed:
+      userSettings.shouldAskConfirmationIfOutsideWorkspaceWriteAllowed ??
+      baseSettings.shouldAskConfirmationIfOutsideWorkspaceWriteAllowed,
     vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseSettings.vitalParsingAnchors, userSettings.vitalParsingAnchors),
   };
 }

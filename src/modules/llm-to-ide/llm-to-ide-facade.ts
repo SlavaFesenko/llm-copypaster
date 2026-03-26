@@ -12,7 +12,7 @@ export class LlmToIdeFacade {
     private readonly _configService: ConfigService,
     private readonly _logger: OutputChannelLogger,
     private readonly _allowOutsideWorkspaceWrite: boolean,
-    private readonly _allowOutsideWorkspaceWriteViaConfirmation: boolean
+    private readonly _shouldAskConfirmationIfOutsideWorkspaceWriteAllowed: boolean
   ) {}
 
   public async applyClipboardToFiles(): Promise<void> {

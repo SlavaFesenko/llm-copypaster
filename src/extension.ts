@@ -24,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
     configService,
     logger,
     config.nonOverrideableSettings.allowOutsideWorkspaceWrite,
-    config.nonOverrideableSettings.allowOutsideWorkspaceWriteViaConfirmation
+    config.nonOverrideableSettings.shouldAskConfirmationIfOutsideWorkspaceWriteAllowed
   );
 
   const quickInstructionFacade = new QuickInstructionFacade(context, configService);
