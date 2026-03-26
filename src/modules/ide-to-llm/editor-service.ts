@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 
-import { getUriFromTab, readUrisAsFileItems, toWorkspaceRelativePath } from '../../utils/uri-tab-utils';
+import { TabBasedFileItemsResult } from '../../contracts/files-payload';
+import { TabsCollector } from '../../utils/tabs-collector';
+import { toWorkspaceRelativePath } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
-import { IdeToLlmDeps, IdeToLlmFile, TabBasedFileItemsResult } from './contracts';
+import { IdeToLlmDeps, IdeToLlmFile } from './contracts';
 import { buildFinalPromptText } from './helpers/common.helpers';
 import { CopiedNotificator } from './helpers/copied-notificator';
 import { buildTextSizeStats } from './helpers/text-size-helper';
@@ -26,7 +28,7 @@ export class EditorService {
   }
 
   public async copyThisTabGroupAsContext(): Promise<void> {
-    const selection = await this._collectActiveTabGroupFileItems();
+    const selection = await new TabsCollector().collectActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -44,7 +46,7 @@ export class EditorService {
   }
 
   public async copyAllOpenFilesAsContext(): Promise<void> {
-    const selection = await this._collectAllOpenTabsFileItems();
+    const selection = await new TabsCollector().collectAllOpenTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -62,7 +64,7 @@ export class EditorService {
   }
 
   public async copyAllPinnedFilesAsContext(): Promise<void> {
-    const selection = await this._collectAllPinnedTabsFileItems();
+    const selection = await new TabsCollector().collectAllPinnedTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -80,7 +82,7 @@ export class EditorService {
   }
 
   public async copyAllUnpinnedFilesAsContext(): Promise<void> {
-    const selection = await this._collectAllUnpinnedTabsFileItems();
+    const selection = await new TabsCollector().collectAllUnpinnedTabsFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -98,7 +100,7 @@ export class EditorService {
   }
 
   public async copyPinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await this._collectPinnedTabsInActiveTabGroupFileItems();
+    const selection = await new TabsCollector().collectPinnedTabsInActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -116,7 +118,7 @@ export class EditorService {
   }
 
   public async copyUnpinnedFilesInActiveTabGroupAsContext(): Promise<void> {
-    const selection = await this._collectUnpinnedTabsInActiveTabGroupFileItems();
+    const selection = await new TabsCollector().collectUnpinnedTabsInActiveTabGroupFileItems();
 
     const totalFilesCount = selection.fileItems.length + selection.deletedFileUris.length + selection.unresolvedTabs.length;
 
@@ -131,170 +133,6 @@ export class EditorService {
       commandName: 'Copy Unpinned Tab Group',
       totalFilesCount,
     });
-  }
-
-  private async _collectActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-
-    const tabGroup = vscode.window.tabGroups.activeTabGroup;
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tab of tabGroup.tabs) {
-      const tabUri = getUriFromTab(tab);
-      if (!tabUri) {
-        unresolvedTabs.push(tab);
-        continue;
-      }
-
-      if (tabUri.scheme !== 'file') continue;
-
-      tabUris.push(tabUri);
-    }
-
-    const readResult = await readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectAllOpenTabsFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        const tabUri = getUriFromTab(tab);
-        if (!tabUri) {
-          unresolvedTabs.push(tab);
-          continue;
-        }
-
-        if (tabUri.scheme !== 'file') continue;
-
-        tabUris.push(tabUri);
-      }
-    }
-
-    const readResult = await readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectAllPinnedTabsFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        if (!tab.isPinned) continue;
-
-        const tabUri = getUriFromTab(tab);
-        if (!tabUri) {
-          unresolvedTabs.push(tab);
-          continue;
-        }
-
-        if (tabUri.scheme !== 'file') continue;
-
-        tabUris.push(tabUri);
-      }
-    }
-
-    const readResult = await readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectAllUnpinnedTabsFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tabGroup of vscode.window.tabGroups.all) {
-      for (const tab of tabGroup.tabs) {
-        if (tab.isPinned) continue;
-
-        const tabUri = getUriFromTab(tab);
-        if (!tabUri) {
-          unresolvedTabs.push(tab);
-          continue;
-        }
-
-        if (tabUri.scheme !== 'file') continue;
-
-        tabUris.push(tabUri);
-      }
-    }
-
-    const readResult = await readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectPinnedTabsInActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-
-    const tabGroup = vscode.window.tabGroups.activeTabGroup;
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tab of tabGroup.tabs) {
-      if (!tab.isPinned) continue;
-
-      const tabUri = getUriFromTab(tab);
-      if (!tabUri) {
-        unresolvedTabs.push(tab);
-        continue;
-      }
-
-      if (tabUri.scheme !== 'file') continue;
-
-      tabUris.push(tabUri);
-    }
-
-    const readResult = await readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
-  }
-
-  private async _collectUnpinnedTabsInActiveTabGroupFileItems(): Promise<TabBasedFileItemsResult> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) return { fileItems: [], deletedFileUris: [], unresolvedTabs: [] };
-
-    const tabGroup = vscode.window.tabGroups.activeTabGroup;
-
-    const tabUris: vscode.Uri[] = [];
-    const unresolvedTabs: vscode.Tab[] = [];
-
-    for (const tab of tabGroup.tabs) {
-      if (tab.isPinned) continue;
-
-      const tabUri = getUriFromTab(tab);
-      if (!tabUri) {
-        unresolvedTabs.push(tab);
-        continue;
-      }
-
-      if (tabUri.scheme !== 'file') continue;
-
-      tabUris.push(tabUri);
-    }
-
-    const readResult = await readUrisAsFileItems(tabUris);
-
-    return { ...readResult, unresolvedTabs };
   }
 
   private async _copyTabBasedSelectionAsContext(args: {

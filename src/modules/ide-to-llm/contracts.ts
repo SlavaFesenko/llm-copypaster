@@ -15,12 +15,6 @@ export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];
 }
 
-export interface TabBasedFileItemsResult {
-  fileItems: CollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-  unresolvedTabs: vscode.Tab[];
-}
-
 export interface EditorToLlmPromptSizeStats {
   linesCount: number;
   approxTokensCount: number;
