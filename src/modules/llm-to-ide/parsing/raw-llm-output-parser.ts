@@ -1,5 +1,5 @@
 import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
-import { FilePayloadOperationType, FilesPayload, FilesPayloadFile } from '../../../contracts/files-payload';
+import { FilePayload, FilesPayload } from '../../../contracts/files-payload';
 
 export class RawLlmOutputParser {
   private readonly _codeListingHeaderAnchor: string;
@@ -43,7 +43,7 @@ export class RawLlmOutputParser {
     if (matches.length === 0)
       throw new Error(`No file headers found (expected "${this._codeListingHeaderAnchor} path/filename.ext")`);
 
-    const files: FilesPayloadFile[] = [];
+    const files: FilePayload[] = [];
 
     for (let index = 0; index < matches.length; index++) {
       const current = matches[index];
@@ -67,7 +67,8 @@ export class RawLlmOutputParser {
         path,
         content: parsedSection.content,
         operation: parsedSection.operation,
-        sourceRange: { start: sectionStartIndex, end: sectionEndIndex },
+        sourceRangeStart: sectionStartIndex,
+        sourceRangeEnd: sectionEndIndex,
       });
     }
 
@@ -78,7 +79,7 @@ export class RawLlmOutputParser {
     rawSectionText: string,
     fileStatusPrefix: string,
     llmToIdeParsingAnchors: VitalParsingAnchorsConfig
-  ): { content: string; operation?: FilePayloadOperationType } {
+  ): { content: string; operation?: string } {
     const { firstLine, restText } = this._splitFirstLine(rawSectionText);
 
     if (!firstLine) return { content: rawSectionText };
@@ -112,7 +113,7 @@ export class RawLlmOutputParser {
     line: string,
     fileStatusPrefix: string,
     llmToIdeParsingAnchors: VitalParsingAnchorsConfig
-  ): FilePayloadOperationType | null {
+  ): string | null {
     const trimmedLine = line.trim();
     const trimmedPrefix = fileStatusPrefix.trim();
 

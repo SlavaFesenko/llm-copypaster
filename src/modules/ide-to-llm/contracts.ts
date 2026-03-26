@@ -15,11 +15,6 @@ export interface CopySelectedExplorerItemsArgs {
   selectedUris?: vscode.Uri[];
 }
 
-export interface ReadUrisAsFileItemsResult {
-  fileItems: CollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-}
-
 export interface TabBasedFileItemsResult {
   fileItems: CollectedFileItem[];
   deletedFileUris: vscode.Uri[];

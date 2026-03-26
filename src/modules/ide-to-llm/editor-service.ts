@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 
-import { toWorkspaceRelativePath } from '../../utils/path-utils';
+import { getUriFromTab, readUrisAsFileItems, toWorkspaceRelativePath } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { IdeToLlmDeps, IdeToLlmFile, TabBasedFileItemsResult } from './contracts';
-import { buildFinalPromptText, getUriFromTab, readUrisAsFileItems } from './helpers/common.helpers';
+import { buildFinalPromptText } from './helpers/common.helpers';
 import { CopiedNotificator } from './helpers/copied-notificator';
 import { buildTextSizeStats } from './helpers/text-size-helper';
 

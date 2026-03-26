@@ -1,19 +1,15 @@
-export type FilePayloadOperationType = string;
+import * as vscode from 'vscode';
 
-export interface FilesPayloadSourceRange {
-  start: number;
-  end: number;
-}
-
-export interface FilesPayloadFile {
+export interface FilePayload {
   path: string;
   content: string;
-  sourceRange?: FilesPayloadSourceRange;
-  operation?: FilePayloadOperationType;
+  sourceRangeStart?: number;
+  sourceRangeEnd?: number;
+  operation?: string;
 }
 
 export interface FilesPayload {
-  files: FilesPayloadFile[];
+  files: FilePayload[];
   warnings: string[];
   errors: string[];
 }
@@ -23,4 +19,9 @@ export interface CollectedFileItem {
   content: string | null;
   languageId?: string;
   readError?: string;
+}
+
+export interface ReadUrisAsFileItemsResult {
+  fileItems: CollectedFileItem[];
+  deletedFileUris: vscode.Uri[];
 }

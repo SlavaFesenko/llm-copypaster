@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { PostFilePatchActionsConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
 import { FilesPayload } from '../../../contracts/files-payload';
 import { OutputChannelLogger } from '../../../utils/output-channel-logger';
-import { toWorkspaceUri } from '../../../utils/path-utils';
+import { toWorkspaceUri } from '../../../utils/uri-tab-utils';
 
 export interface ApplyOk {
   ok: true;

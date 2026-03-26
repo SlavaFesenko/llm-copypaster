@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 
+import { ReadUrisAsFileItemsResult } from '../../contracts/files-payload';
+import { buildUriKey, readUrisAsFileItems } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
-import { CopySelectedExplorerItemsArgs, IdeToLlmDeps, ReadUrisAsFileItemsResult } from './contracts';
-import { buildFinalPromptText, buildUriKey, readUrisAsFileItems } from './helpers/common.helpers';
+import { CopySelectedExplorerItemsArgs, IdeToLlmDeps } from './contracts';
+import { buildFinalPromptText } from './helpers/common.helpers';
 import { CopiedNotificator } from './helpers/copied-notificator';
 import { buildTextSizeStats } from './helpers/text-size-helper';
 
