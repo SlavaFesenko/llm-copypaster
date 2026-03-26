@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { CollectedFileItem, ReadUrisAsFileItemsResult } from '../contracts/files-payload';
+import { OutputChannelLogger } from './output-channel-logger';
 
 export function toWorkspaceRelativePath(uri: vscode.Uri): string | null {
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
@@ -62,6 +63,100 @@ export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisA
   }
 
   return { fileItems, deletedFileUris };
+}
+
+export function uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
+  const uniqueUris: vscode.Uri[] = [];
+  const uniqueKeys = new Set<string>();
+
+  for (const uri of uris) {
+    const key = buildUriKey(uri);
+    if (uniqueKeys.has(key)) continue;
+
+    uniqueKeys.add(key);
+    uniqueUris.push(uri);
+  }
+
+  return uniqueUris;
+}
+
+export async function collectExplorerItemsFileItems(
+  selectedUris: vscode.Uri[],
+  logger: OutputChannelLogger
+): Promise<ReadUrisAsFileItemsResult> {
+  const allFileUris: vscode.Uri[] = [];
+
+  for (const selectedUri of selectedUris) {
+    const stat = await getStat(selectedUri, logger);
+    if (!stat) continue;
+
+    if (stat.type & vscode.FileType.Directory) {
+      const folderFileUris = await collectAllFilesInFolderRecursively(selectedUri, logger);
+
+      for (const fileUri of folderFileUris) {
+        allFileUris.push(fileUri);
+      }
+
+      continue;
+    }
+
+    if (stat.type & vscode.FileType.File) {
+      allFileUris.push(selectedUri);
+      continue;
+    }
+  }
+
+  return await readUrisAsFileItems(allFileUris);
+}
+
+export async function collectAllFilesInFolderRecursively(
+  folderUri: vscode.Uri,
+  logger: OutputChannelLogger
+): Promise<vscode.Uri[]> {
+  const collectedFileUris: vscode.Uri[] = [];
+
+  const entries = await readDirectory(folderUri, logger);
+  if (!entries) return collectedFileUris;
+
+  for (const [entryName, entryType] of entries) {
+    const entryUri = vscode.Uri.joinPath(folderUri, entryName);
+
+    if (entryType & vscode.FileType.Directory) {
+      const nestedFileUris = await collectAllFilesInFolderRecursively(entryUri, logger);
+
+      for (const nestedFileUri of nestedFileUris) {
+        collectedFileUris.push(nestedFileUri);
+      }
+
+      continue;
+    }
+
+    if (entryType & vscode.FileType.File) {
+      collectedFileUris.push(entryUri);
+      continue;
+    }
+  }
+
+  return collectedFileUris;
+}
+
+async function getStat(uri: vscode.Uri, logger: OutputChannelLogger): Promise<vscode.FileStat | null> {
+  try {
+    return await vscode.workspace.fs.stat(uri);
+  } catch (error) {
+    logger.warn(`Explorer stat failed for ${uri.toString()}: ${String(error)}`);
+    return null;
+  }
+}
+
+async function readDirectory(uri: vscode.Uri, logger: OutputChannelLogger): Promise<[string, vscode.FileType][] | null> {
+  try {
+    return await vscode.workspace.fs.readDirectory(uri);
+  } catch (error) {
+    // to~do most likely it should be aggregated user-warning, but for now it's ok
+    logger.warn(`Explorer readDirectory failed for ${uri.toString()}: ${String(error)}`);
+    return null;
+  }
 }
 
 async function tryReadFileAsText(
