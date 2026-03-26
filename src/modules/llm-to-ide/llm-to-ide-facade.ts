@@ -1,25 +1,31 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
+import { LlmCopypasterConfig } from '../../config/system-config-contracts';
 import { FilesPayload } from '../../contracts/file-contracts';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { OutsideFilesProcessor } from '../../utils/outside-files-processor';
+import { OutsideFilesProcessingAction, OutsideFilesProcessor } from '../../utils/outside-files-processor';
 import { buildPromptSizeStatsSuffix, buildTextSizeStats } from '../ide-to-llm/helpers/text-size-helper';
 import { applyFilesPayloadToWorkspace } from './files-patcher/files-patcher';
 import { RawLlmOutputParser } from './parsing/raw-llm-output-parser';
 import { sanitizeFilesPayload } from './sanitization/sanitizer';
 
+interface HandleOutsideFilesProcessingActionResult {
+  filesPayload: FilesPayload;
+  shouldAbort: boolean;
+}
+
 export class LlmToIdeFacade {
   public constructor(
     private readonly _configService: ConfigService,
-    private readonly _logger: OutputChannelLogger
+    private readonly _logger: OutputChannelLogger,
+    private readonly _extensionContext: vscode.ExtensionContext
   ) {}
 
   public async applyClipboardToFiles(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
     const config = await this._configService.getLlmCopypasterConfig();
     const rawLlmOutputParser = new RawLlmOutputParser(config);
-    const outsideFilesProcessor = new OutsideFilesProcessor(config);
 
     let parsedFilesPayload: FilesPayload;
 
@@ -33,15 +39,13 @@ export class LlmToIdeFacade {
       return;
     }
 
-    const outsideFilesProcessingResult = await outsideFilesProcessor.process(parsedFilesPayload);
+    const outsideFilesProcessingActionResult = await this._handleOutsideFilesProcessingAction(config, parsedFilesPayload);
 
-    if (!outsideFilesProcessingResult.shouldContinue) return;
+    if (outsideFilesProcessingActionResult.shouldAbort) return;
+    else parsedFilesPayload = outsideFilesProcessingActionResult.filesPayload;
 
-    if (parsedFilesPayload.warnings.length > 0) {
-      await vscode.window.showWarningMessage(parsedFilesPayload.warnings.join('\n'));
-    }
-
-    if (parsedFilesPayload.files.length === 0) return;
+    const shouldStopProcessing = await this._handleWarningsAndEmptyFiles(parsedFilesPayload);
+    if (shouldStopProcessing) return;
 
     const sanitizedPayload = sanitizeFilesPayload(parsedFilesPayload, config);
 
@@ -62,12 +66,40 @@ export class LlmToIdeFacade {
       promptText: clipboardText,
       contextConfig: config.coreSettings.llmToIde,
     });
+
     const promptSizeStatsSuffix = buildPromptSizeStatsSuffix(promptStatsResult);
+
     const message = promptSizeStatsSuffix
       ? `PASTED ${applyResult.appliedFilesCount} file(s) | ${promptSizeStatsSuffix}`
       : `PASTED ${applyResult.appliedFilesCount} file(s)`;
 
     if (promptStatsResult.isExceeded) await vscode.window.showWarningMessage(message);
     else await vscode.window.showInformationMessage(message);
+  }
+
+  private async _handleOutsideFilesProcessingAction(
+    config: LlmCopypasterConfig,
+    parsedFilesPayload: FilesPayload
+  ): Promise<HandleOutsideFilesProcessingActionResult> {
+    const outsideFilesProcessor = new OutsideFilesProcessor(config, this._extensionContext);
+    const outsideFilesProcessingAction = await outsideFilesProcessor.process(parsedFilesPayload);
+
+    if (outsideFilesProcessingAction === OutsideFilesProcessingAction.Abort) {
+      await vscode.window.showInformationMessage('Paste operation was aborted');
+
+      return { filesPayload: parsedFilesPayload, shouldAbort: true };
+    }
+
+    if (outsideFilesProcessingAction === OutsideFilesProcessingAction.Skip)
+      parsedFilesPayload.files = parsedFilesPayload.files.filter(file => !file.isOutsideWorkspace);
+
+    return { filesPayload: parsedFilesPayload, shouldAbort: false };
+  }
+
+  private async _handleWarningsAndEmptyFiles(parsedFilesPayload: FilesPayload): Promise<boolean> {
+    if (parsedFilesPayload.warnings.length > 0)
+      await vscode.window.showWarningMessage(parsedFilesPayload.warnings.join('\n'));
+
+    return parsedFilesPayload.files.length === 0;
   }
 }

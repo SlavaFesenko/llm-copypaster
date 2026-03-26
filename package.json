@@ -61,6 +61,10 @@
         "title": "Prepend Quick Instructions To Clipboard"
       },
       {
+        "command": "llm-copypaster.clearOutsideWorkspaceCache",
+        "title": "[DEBUG] Clear App Cache"
+      },
+      {
         "command": "llm-copypaster.lsConfig",
         "title": "[DEBUG] Open Config Details"
       }
@@ -138,9 +142,14 @@
           "group": "0-navigation@6"
         },
         {
-          "command": "llm-copypaster.lsConfig",
+          "command": "llm-copypaster.clearOutsideWorkspaceCache",
           "when": "resourceScheme == file",
           "group": "0-navigation@7"
+        },
+        {
+          "command": "llm-copypaster.lsConfig",
+          "when": "resourceScheme == file",
+          "group": "0-navigation@8"
         }
       ]
     },

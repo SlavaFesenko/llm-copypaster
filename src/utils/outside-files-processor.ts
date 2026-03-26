@@ -1,56 +1,130 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import { LlmCopypasterConfig } from '../config/system-config-contracts';
-import { FilePayload, FilesPayload } from '../contracts/file-contracts';
+import { FilesPayload } from '../contracts/file-contracts';
+import { clearExtensionCache } from './extension-cache-service';
 
-export interface OutsideFilesProcessingResult {
-  shouldContinue: boolean;
+export enum OutsideFilesProcessingAction {
+  Continue = 'continue',
+  Skip = 'skip',
+  Abort = 'abort',
 }
 
 export class OutsideFilesProcessor {
-  public constructor(private readonly _config: LlmCopypasterConfig) {}
+  private static readonly _workspaceStateKey = 'outsideWorkspaceFileActions';
 
-  public async process(filesPayload: FilesPayload): Promise<OutsideFilesProcessingResult> {
+  public constructor(
+    private readonly _config: LlmCopypasterConfig,
+    private readonly _extensionContext?: vscode.ExtensionContext
+  ) {}
+
+  public async process(filesPayload: FilesPayload): Promise<OutsideFilesProcessingAction> {
     const outsideWorkspaceFiles = filesPayload.files.filter(file => file.isOutsideWorkspace);
 
-    if (outsideWorkspaceFiles.length === 0) return { shouldContinue: true };
+    if (outsideWorkspaceFiles.length === 0) return OutsideFilesProcessingAction.Continue;
 
-    if (!this._config.nonOverrideableSettings.allowOutsideWorkspaceWrite) {
-      filesPayload.files = filesPayload.files.filter(file => !file.isOutsideWorkspace);
-      filesPayload.warnings.push(this._buildOutsideWorkspaceSkippedWarning(outsideWorkspaceFiles));
-
-      return { shouldContinue: true };
-    }
+    if (!this._config.nonOverrideableSettings.allowOutsideWorkspaceWrite) return OutsideFilesProcessingAction.Skip;
 
     if (!this._config.nonOverrideableSettings.shouldAskConfirmationIfOutsideWorkspaceWriteAllowed)
-      return { shouldContinue: true };
+      return OutsideFilesProcessingAction.Continue;
 
-    const isConfirmed = await this._confirmOutsideWorkspaceWrite(outsideWorkspaceFiles.map(file => file.path));
+    const savedOutsideWorkspaceFileActions = this._getSavedOutsideWorkspaceFileActions();
 
-    if (!isConfirmed) return { shouldContinue: false };
+    const outsideWorkspaceFilesToAsk = outsideWorkspaceFiles.filter(
+      outsideWorkspaceFile => savedOutsideWorkspaceFileActions[outsideWorkspaceFile.path] === undefined
+    );
 
-    return { shouldContinue: true };
+    if (outsideWorkspaceFilesToAsk.length === 0) {
+      const hasSkipAction = outsideWorkspaceFiles.some(
+        outsideWorkspaceFile =>
+          savedOutsideWorkspaceFileActions[outsideWorkspaceFile.path] === OutsideWorkspaceFileCachedAction.Skip
+      );
+
+      return hasSkipAction ? OutsideFilesProcessingAction.Skip : OutsideFilesProcessingAction.Continue;
+    }
+
+    const pickedAction = await this._confirmOutsideWorkspaceWrite(outsideWorkspaceFilesToAsk.map(file => file.path));
+
+    if (pickedAction === undefined) return OutsideFilesProcessingAction.Abort;
+
+    if (pickedAction.shouldRemember)
+      await this._saveOutsideWorkspaceFileAction(outsideWorkspaceFilesToAsk, pickedAction.fileAction);
+
+    return pickedAction.fileAction === OutsideWorkspaceFileCachedAction.Skip
+      ? OutsideFilesProcessingAction.Skip
+      : OutsideFilesProcessingAction.Continue;
   }
 
-  private _buildOutsideWorkspaceSkippedWarning(outsideWorkspaceFiles: FilePayload[]): string {
-    const outsideWorkspaceFileNames = outsideWorkspaceFiles.map(file => file.path).join(', ');
-
-    return `Skipped ${outsideWorkspaceFiles.length} outside-workspace file(s): ${outsideWorkspaceFileNames}`;
-  }
-
-  private async _confirmOutsideWorkspaceWrite(outsideWorkspaceFilePaths: string[]): Promise<boolean> {
-    const fileNamesList = outsideWorkspaceFilePaths
-      .map(outsideWorkspaceFilePath => `• ${path.basename(outsideWorkspaceFilePath)}`)
+  private async _confirmOutsideWorkspaceWrite(
+    outsideWorkspaceFilePaths: string[]
+  ): Promise<{ fileAction: OutsideWorkspaceFileCachedAction; shouldRemember: boolean } | undefined> {
+    const filePathsList = outsideWorkspaceFilePaths
+      .map(outsideWorkspaceFilePath => `• ${outsideWorkspaceFilePath}`)
       .join('\n');
 
     const pickedAction = await vscode.window.showWarningMessage(
-      `You are about to write file(s) OUTSIDE the current workspace.\n\n${fileNamesList}`,
+      `You are about to write file(s) OUTSIDE the current workspace.\n\n${filePathsList}`,
       { modal: true },
       'Continue',
-      'Cancel'
+      'Continue and remember',
+      'Skip outside files',
+      'Skip and remember',
+      'Clear Cache'
     );
 
-    return pickedAction === 'Continue';
+    if (pickedAction === 'Continue') return { fileAction: OutsideWorkspaceFileCachedAction.Continue, shouldRemember: false };
+
+    if (pickedAction === 'Continue and remember')
+      return { fileAction: OutsideWorkspaceFileCachedAction.Continue, shouldRemember: true };
+
+    if (pickedAction === 'Skip outside files')
+      return { fileAction: OutsideWorkspaceFileCachedAction.Skip, shouldRemember: false };
+
+    if (pickedAction === 'Skip and remember')
+      return { fileAction: OutsideWorkspaceFileCachedAction.Skip, shouldRemember: true };
+
+    if (pickedAction === 'Clear Cache') {
+      if (this._extensionContext) await clearExtensionCache(this._extensionContext);
+
+      vscode.window.showInformationMessage('Cache cleared successfully!');
+
+      return this._confirmOutsideWorkspaceWrite(outsideWorkspaceFilePaths);
+    }
+
+    return undefined;
   }
+
+  private _getSavedOutsideWorkspaceFileActions(): Record<string, OutsideWorkspaceFileCachedAction> {
+    return (
+      this._extensionContext?.workspaceState.get<Record<string, OutsideWorkspaceFileCachedAction>>(
+        OutsideFilesProcessor._workspaceStateKey,
+        {}
+      ) ?? {}
+    );
+  }
+
+  private async _saveOutsideWorkspaceFileAction(
+    outsideWorkspaceFiles: FilesPayload['files'],
+    outsideWorkspaceFileAction: OutsideWorkspaceFileCachedAction
+  ): Promise<void> {
+    if (!this._extensionContext) return;
+
+    const nextSavedOutsideWorkspaceFileActions = {
+      ...this._getSavedOutsideWorkspaceFileActions(),
+    };
+
+    outsideWorkspaceFiles.forEach(outsideWorkspaceFile => {
+      nextSavedOutsideWorkspaceFileActions[outsideWorkspaceFile.path] = outsideWorkspaceFileAction;
+    });
+
+    await this._extensionContext.workspaceState.update(
+      OutsideFilesProcessor._workspaceStateKey,
+      nextSavedOutsideWorkspaceFileActions
+    );
+  }
+}
+
+enum OutsideWorkspaceFileCachedAction {
+  Continue = 'continue',
+  Skip = 'skip',
 }

@@ -6,6 +6,7 @@ import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/contracts';
 import { IdeToLlmFacade } from './modules/ide-to-llm/ide-to-llm-facade';
 import { LlmToIdeFacade } from './modules/llm-to-ide/llm-to-ide-facade';
 import { QuickInstructionFacade } from './modules/quick-instruction/quick-instruction-facade';
+import { clearExtensionCache } from './utils/extension-cache-service';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -20,7 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
     config.nonOverrideableSettings.allowOutsideWorkspaceRead
   );
 
-  const llmToIdeFacade = new LlmToIdeFacade(configService, logger);
+  const llmToIdeFacade = new LlmToIdeFacade(configService, logger, context);
 
   const quickInstructionFacade = new QuickInstructionFacade(context, configService);
 
@@ -60,6 +61,11 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
     vscode.commands.registerCommand('llm-copypaster.prependInstructionToClipboard', async () => {
       await quickInstructionFacade.prependInstructionToClipboard();
+    }),
+    vscode.commands.registerCommand('llm-copypaster.clearOutsideWorkspaceCache', async () => {
+      await clearExtensionCache(context);
+
+      vscode.window.showInformationMessage('Cache cleared successfully!');
     }),
     vscode.commands.registerCommand('llm-copypaster.lsConfig', async () => {
       await new ConfigReportFacade({
