@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
 import { ConfigService } from './config/config-service';
 import { ConfigReportFacade } from './config/reporters/config-report-facade';
-import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/explorer-helper';
-import { IdeToLlmModule } from './modules/ide-to-llm/ide-to-llm-module';
-import { LlmToIdeModule } from './modules/llm-to-ide/llm-to-ide-module';
-import { QuickInstructionModule } from './modules/quick-instruction/quick-instruction-module';
+import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/contracts';
+import { IdeToLlmFacade } from './modules/ide-to-llm/ide-to-llm-facade';
+import { LlmToIdeFacade } from './modules/llm-to-ide/llm-to-ide-facade';
+import { QuickInstructionFacade } from './modules/quick-instruction/quick-instruction-facade';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-export const commandIds = {
+const commandIds = {
   helloWorld: 'llm-copypaster.helloWorld',
 
   copyThisFileAsLlmContext: 'llm-copypaster.copyThisFileAsLlmContext',
@@ -26,68 +26,61 @@ export const commandIds = {
   lsConfig: 'llm-copypaster.lsConfig',
 } as const;
 
-export type CommandId = (typeof commandIds)[keyof typeof commandIds];
-
 export interface RegisterCommandsDeps {
-  editorToLlmModule: IdeToLlmModule;
-  llmToEditorModule: LlmToIdeModule;
-  quickInstructionModule: QuickInstructionModule;
+  editorToLlmFacade: IdeToLlmFacade;
+  llmToIdeFacade: LlmToIdeFacade;
+  quickInstructionFacade: QuickInstructionFacade;
   configService: ConfigService;
   logger: OutputChannelLogger;
 }
 
 export function registerCommands(context: vscode.ExtensionContext, deps: RegisterCommandsDeps) {
   const commandDisposables: vscode.Disposable[] = [
-    // #region Editor 2 LLM
     vscode.commands.registerCommand(commandIds.copyThisFileAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyThisFileAsContext();
+      await deps.editorToLlmFacade.copyThisFileAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyThisTabGroupAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyThisTabGroupAsContext();
+      await deps.editorToLlmFacade.copyThisTabGroupAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyAllOpenFilesAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyAllOpenFilesAsContext();
+      await deps.editorToLlmFacade.copyAllOpenFilesAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyAllPinnedFilesAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyAllPinnedFilesAsContext();
+      await deps.editorToLlmFacade.copyAllPinnedFilesAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyAllUnpinnedFilesAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyAllUnpinnedFilesAsContext();
+      await deps.editorToLlmFacade.copyAllUnpinnedFilesAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyPinnedFilesInActiveTabGroupAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyPinnedFilesInActiveTabGroupAsContext();
+      await deps.editorToLlmFacade.copyPinnedFilesInActiveTabGroupAsContext();
     }),
 
     vscode.commands.registerCommand(commandIds.copyUnpinnedFilesInActiveTabGroupAsLlmContext, async () => {
-      await deps.editorToLlmModule.copyUnpinnedFilesInActiveTabGroupAsContext();
+      await deps.editorToLlmFacade.copyUnpinnedFilesInActiveTabGroupAsContext();
     }),
 
     vscode.commands.registerCommand(
       commandIds.copySelectedExplorerItemsAsLlmContext,
       async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await deps.editorToLlmModule.copySelectedExplorerItemsAsContext({ selectedUris } as CopySelectedExplorerItemsArgs);
+        await deps.editorToLlmFacade.copySelectedExplorerItemsAsContext({ selectedUris } as CopySelectedExplorerItemsArgs);
       }
     ),
 
-    // #endregion
-
-    // #region LLM 2 Editor
-
     vscode.commands.registerCommand(commandIds.applyClipboardToFiles, async () => {
-      await deps.llmToEditorModule.applyClipboardToFiles();
+      await deps.llmToIdeFacade.applyClipboardToFiles();
     }),
 
     vscode.commands.registerCommand(commandIds.replaceClipboardByInstruction, async () => {
-      await deps.quickInstructionModule.replaceClipboardByInstruction();
+      await deps.quickInstructionFacade.replaceClipboardByInstruction();
     }),
 
     vscode.commands.registerCommand(commandIds.prependInstructionToClipboard, async () => {
-      await deps.quickInstructionModule.prependInstructionToClipboard();
+      await deps.quickInstructionFacade.prependInstructionToClipboard();
     }),
 
     vscode.commands.registerCommand(commandIds.lsConfig, async () => {
@@ -96,8 +89,6 @@ export function registerCommands(context: vscode.ExtensionContext, deps: Registe
         configService: deps.configService,
       }).displayLsConfigReport();
     }),
-
-    // #endregion
   ];
 
   context.subscriptions.push(...commandDisposables);

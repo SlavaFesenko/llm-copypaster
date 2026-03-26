@@ -9,7 +9,7 @@ interface QuickInstructionQuickPickItem extends vscode.QuickPickItem {
   instructionId: string;
 }
 
-export class QuickInstructionModule {
+export class QuickInstructionFacade {
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService

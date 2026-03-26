@@ -1,19 +1,18 @@
 import * as vscode from 'vscode';
 
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
+import { IdeToLlmDeps, TabBasedFileItemsResult } from './contracts';
 import {
-  EditorToLlmModulePrivateHelpersDependencies,
+  buildFinalPromptText,
+  collectActiveFileSelection,
   readUrisAsFileItems,
-  TabBasedFileItemsResult,
   tryGetUriFromTab,
-} from './common.helpers';
-import { CopyResultNotificator } from './copy-result-notificator';
-import { collectActiveFileSelection } from './utils/file-selection';
-import { buildFinalPromptText } from './utils/llm-context-formatter';
-import { buildTextSizeStats } from './utils/prompt-size-helper';
+} from './helpers/common.helpers';
+import { CopyResultNotificator } from './helpers/copy-result-notificator';
+import { buildTextSizeStats } from './helpers/prompt-size-helper';
 
-export class EditorHelper {
-  public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
+export class EditorService {
+  public constructor(private readonly _deps: IdeToLlmDeps) {}
 
   public async copyThisFileAsContext(): Promise<void> {
     const fileItem = await collectActiveFileSelection();

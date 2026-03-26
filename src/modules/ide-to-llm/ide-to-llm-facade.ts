@@ -2,27 +2,27 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { EditorToLlmModulePrivateHelpersDependencies } from './common.helpers';
-import { EditorHelper } from './editor-helper';
-import { CopySelectedExplorerItemsArgs, ExplorerHelper } from './explorer-helper';
+import { CopySelectedExplorerItemsArgs, IdeToLlmDeps } from './contracts';
+import { EditorService } from './editor-service';
+import { ExplorerService } from './explorer-service';
 
-export class IdeToLlmModule {
-  private readonly _editorHelper: EditorHelper;
-  private readonly _explorerHelper: ExplorerHelper;
+export class IdeToLlmFacade {
+  private readonly _editorHelper: EditorService;
+  private readonly _explorerHelper: ExplorerService;
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _configService: ConfigService,
     private readonly _logger: OutputChannelLogger
   ) {
-    const privateHelpersDeps: EditorToLlmModulePrivateHelpersDependencies = {
+    const privateHelpersDeps: IdeToLlmDeps = {
       extensionContext: this._extensionContext,
       configService: this._configService,
       logger: this._logger,
     };
 
-    this._editorHelper = new EditorHelper(privateHelpersDeps);
-    this._explorerHelper = new ExplorerHelper(privateHelpersDeps);
+    this._editorHelper = new EditorService(privateHelpersDeps);
+    this._explorerHelper = new ExplorerService(privateHelpersDeps);
   }
 
   public async copyThisFileAsContext(): Promise<void> {

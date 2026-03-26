@@ -1,22 +1,13 @@
 import * as vscode from 'vscode';
 
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
-import {
-  EditorToLlmModulePrivateHelpersDependencies,
-  ReadUrisAsFileItemsResult,
-  buildUriKey,
-  readUrisAsFileItems,
-} from './common.helpers';
-import { CopyResultNotificator } from './copy-result-notificator';
-import { buildFinalPromptText } from './utils/llm-context-formatter';
-import { buildTextSizeStats } from './utils/prompt-size-helper';
+import { CopySelectedExplorerItemsArgs, IdeToLlmDeps, ReadUrisAsFileItemsResult } from './contracts';
+import { buildFinalPromptText, buildUriKey, readUrisAsFileItems } from './helpers/common.helpers';
+import { CopyResultNotificator } from './helpers/copy-result-notificator';
+import { buildTextSizeStats } from './helpers/prompt-size-helper';
 
-export interface CopySelectedExplorerItemsArgs {
-  selectedUris?: vscode.Uri[];
-}
-
-export class ExplorerHelper {
-  public constructor(private readonly _deps: EditorToLlmModulePrivateHelpersDependencies) {}
+export class ExplorerService {
+  public constructor(private readonly _deps: IdeToLlmDeps) {}
 
   public async copySelectedExplorerItemsAsContext(args?: CopySelectedExplorerItemsArgs): Promise<void> {
     const selectedUrisCopy = [...(args?.selectedUris ?? [])];
@@ -101,7 +92,7 @@ function uniqueByUriKeyKeepOrder(uris: vscode.Uri[]): vscode.Uri[] {
 }
 
 async function collectExplorerItemsFileItems(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
+  deps: IdeToLlmDeps,
   selectedUris: vscode.Uri[]
 ): Promise<ReadUrisAsFileItemsResult> {
   const allFileUris: vscode.Uri[] = [];
@@ -125,10 +116,7 @@ async function collectExplorerItemsFileItems(
   return await readUrisAsFileItems(allFileUris);
 }
 
-async function collectAllFilesInFolderRecursively(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  folderUri: vscode.Uri
-): Promise<vscode.Uri[]> {
+async function collectAllFilesInFolderRecursively(deps: IdeToLlmDeps, folderUri: vscode.Uri): Promise<vscode.Uri[]> {
   const collectedFileUris: vscode.Uri[] = [];
 
   const entries = await tryReadDirectory(deps, folderUri);
@@ -152,7 +140,7 @@ async function collectAllFilesInFolderRecursively(
   return collectedFileUris;
 }
 
-async function tryStat(deps: EditorToLlmModulePrivateHelpersDependencies, uri: vscode.Uri): Promise<vscode.FileStat | null> {
+async function tryStat(deps: IdeToLlmDeps, uri: vscode.Uri): Promise<vscode.FileStat | null> {
   try {
     return await vscode.workspace.fs.stat(uri);
   } catch (error) {
@@ -161,10 +149,7 @@ async function tryStat(deps: EditorToLlmModulePrivateHelpersDependencies, uri: v
   }
 }
 
-async function tryReadDirectory(
-  deps: EditorToLlmModulePrivateHelpersDependencies,
-  uri: vscode.Uri
-): Promise<[string, vscode.FileType][] | null> {
+async function tryReadDirectory(deps: IdeToLlmDeps, uri: vscode.Uri): Promise<[string, vscode.FileType][] | null> {
   try {
     return await vscode.workspace.fs.readDirectory(uri);
   } catch (error) {

@@ -1,37 +1,9 @@
 import * as vscode from 'vscode';
 
-import { ConfigService } from '../../config/config-service';
-import { CollectedFileItem } from '../../contracts/files-payload';
-import { OutputChannelLogger } from '../../utils/output-channel-logger';
-import { ShowCopyResultNotificationArgs } from './copy-result-notificator';
-
-export interface EditorToLlmModulePrivateHelpersDependencies {
-  extensionContext: vscode.ExtensionContext;
-  configService: ConfigService;
-  logger: OutputChannelLogger;
-}
-
-export interface ReadUrisAsFileItemsResult {
-  fileItems: CollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-}
-
-export interface TabBasedFileItemsResult {
-  fileItems: CollectedFileItem[];
-  deletedFileUris: vscode.Uri[];
-  unresolvedTabs: vscode.Tab[];
-}
-
-export interface EditorToLlmPromptSizeStats {
-  linesCount: number;
-  approxTokensCount: number;
-  maxLinesCountInContext: number;
-  maxTokensCountInContext: number;
-  isExceeded: boolean;
-  exceededBy: string[];
-}
-
-export { ShowCopyResultNotificationArgs };
+import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
+import { CollectedFileItem } from '../../../contracts/files-payload';
+import { toWorkspaceRelativePath } from '../../../utils/path-utils';
+import { BuildLlmContextTextArgs, EditorToLlmFileItem, ReadUrisAsFileItemsResult } from '../contracts';
 
 export function tryGetUriFromTab(tab: vscode.Tab): vscode.Uri | null {
   if (tab.input instanceof vscode.TabInputText) {
@@ -82,6 +54,67 @@ export async function readUrisAsFileItems(uris: vscode.Uri[]): Promise<ReadUrisA
   }
 
   return { fileItems, deletedFileUris };
+}
+
+export async function collectActiveFileSelection(): Promise<EditorToLlmFileItem | null> {
+  const activeEditor = vscode.window.activeTextEditor;
+  if (!activeEditor) {
+    await vscode.window.showWarningMessage('No active file to copy');
+    return null;
+  }
+
+  const fileItem = await readEditorDocumentAsFileItem(activeEditor.document);
+  if (fileItem?.content === null) {
+    await vscode.window.showWarningMessage('No active file to copy');
+    return null;
+  }
+
+  return fileItem;
+}
+
+async function readEditorDocumentAsFileItem(document: vscode.TextDocument): Promise<EditorToLlmFileItem> {
+  const relativePath = toWorkspaceRelativePath(document.uri);
+
+  if (!relativePath) {
+    return {
+      path: document.uri.fsPath,
+      content: document.getText(),
+      languageId: document.languageId,
+    };
+  }
+
+  return {
+    path: relativePath,
+    content: document.getText(),
+    languageId: document.languageId,
+  };
+}
+
+export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
+  const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
+
+  const techPromptDelimiter = args.config.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR;
+
+  if (args.ignorePromptInstructions) return `\n${techPromptDelimiter}\n${listings}`;
+
+  const instructionsText = args.instructionsText ?? '';
+
+  if (!instructionsText.trim()) return listings;
+
+  return `\n${techPromptDelimiter}\n${instructionsText}\n${techPromptDelimiter}\n${listings}`;
+}
+
+function buildSingleFileListing(fileItem: EditorToLlmFileItem, config: LlmCopypasterConfig): string {
+  const headerLine = `${config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR} ${fileItem.path}`;
+
+  const contentLines: string[] = [];
+
+  if (fileItem.readError?.trim()) contentLines.push(`// READ ERROR: ${fileItem.readError}`);
+
+  const content = fileItem.content ?? '';
+  contentLines.push(content);
+
+  return `${headerLine}\n${contentLines.join('\n')}\n`;
 }
 
 async function tryReadFileAsText(

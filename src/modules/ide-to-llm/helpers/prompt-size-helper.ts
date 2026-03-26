@@ -1,28 +1,4 @@
-import { IdeToLlmConfig, LlmToIdeConfig } from '../../../config/system-config-contracts';
-
-export interface TextSizeStatsInput {
-  promptText: string;
-  contextConfig: IdeToLlmConfig | LlmToIdeConfig;
-}
-
-export enum PromptSizeExceededBy {
-  LINES = 'LINES',
-  TOKENS = 'TOKENS',
-}
-
-export interface TextSizeStatsOutput {
-  linesCount: number;
-  approxTokensCount: number;
-  linesMaxToShowWarning: number;
-  tokensMaxToShowWarning: number;
-  isExceeded: boolean;
-  exceededBy: PromptSizeExceededBy[];
-}
-
-interface LlmContextLimits {
-  linesMaxToShowWarning: number;
-  tokensMaxToShowWarning: number;
-}
+import { PromptSizeExceededBy, TextSizeStatsInput, TextSizeStatsOutput } from '../contracts';
 
 export function buildTextSizeStats(input: TextSizeStatsInput): TextSizeStatsOutput {
   const normalizedPromptText = input.promptText ?? '';
@@ -84,6 +60,7 @@ function countLines(text: string): number {
   if (!text) return 0;
 
   const parts = text.split(/\r\n|\r|\n/);
+
   return parts.length;
 }
 
@@ -106,4 +83,9 @@ function formatCountInThousands(value: number): string {
   const text = roundedK % 1 === 0 ? roundedK.toFixed(0) : roundedK.toFixed(1);
 
   return `${text}K`;
+}
+
+interface LlmContextLimits {
+  linesMaxToShowWarning: number;
+  tokensMaxToShowWarning: number;
 }
