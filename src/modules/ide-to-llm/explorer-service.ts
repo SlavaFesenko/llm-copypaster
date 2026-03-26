@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
-import { collectExplorerItemsFileItems, uniqueByUriKeyKeepOrder } from '../../utils/uri-tab-utils';
+import { collectExplorerItemsFileItems } from '../../utils/file-utils';
+import { uniqueByUriKeyKeepOrder } from '../../utils/uri-tab-utils';
 import { InstructionsBuilder } from '../common/instructions-builder/instructions-builder';
 import { CopySelectedExplorerItemsArgs, IdeToLlmDeps } from './contracts';
 import { buildFinalPromptText } from './helpers/common.helpers';

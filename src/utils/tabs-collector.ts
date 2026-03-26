@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 
 import { TabBasedFileItemsResult } from '../contracts/file-contracts';
-import { getUriFromTab, readUrisAsFileItems, toWorkspaceRelativePath } from './uri-tab-utils';
+import { readUrisAsFileItems } from './file-utils';
+import { getUriFromTab, toWorkspaceRelativePath } from './uri-tab-utils';
 
 export enum TabsCollectorBuildOption {
   ActiveEditorFile = 'ActiveEditorFile',
