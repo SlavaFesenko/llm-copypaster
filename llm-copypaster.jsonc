@@ -34,7 +34,7 @@
         "BLOB_GITHUB_BASE_URL": "https://github.com/",
         "AUTHOR_REPO": "SlavaFesenko/llm-copypaster/",
         "IS_REMOTE_FILE_EDIT_ALLOWED": "true",
-        "KEY_REFERENCE_URLS_RELATIVE_PATHS": "package.json | src/register-commands.ts | src/extension.ts | src/config/config-service.ts | src/config/system-config-contracts.ts ",
+        "KEY_REFERENCE_URLS_RELATIVE_PATHS": "package.json | src/extension.ts | src/config/config-service.ts | src/config/system-config-contracts.ts ",
       },
     },
   },
