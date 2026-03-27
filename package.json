@@ -153,23 +153,10 @@
         }
       ]
     },
-    "views": {
-      "explorer": [
-        {
-          "id": "llmCopypaster.promptWorkbench",
-          "name": "Prompt Workbench"
-        }
-      ]
-    },
     "keybindings": [
       {
-        "command": "llm-copypaster.replaceClipboardByInstruction",
-        "key": "alt+4",
-        "when": "editorTextFocus"
-      },
-      {
-        "command": "llm-copypaster.prependInstructionToClipboard",
-        "key": "alt+5",
+        "command": "llm-copypaster.applyClipboardToFiles",
+        "key": "ctrl+alt+v",
         "when": "editorTextFocus"
       }
     ]
