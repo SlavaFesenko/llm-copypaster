@@ -75,9 +75,5 @@ TODO: покзать пример llm-copypaster.json с несложными п
 
 ## TBD before Marketplace publish
 
-- Marketplace install link
 - publisher id / `ext install ...`
 - screenshot / gif
-- public support/issues link
-- privacy / telemetry note, if required
-- final short description in `package.json` instead of the temporary `Added Paste from Editor Feature`
