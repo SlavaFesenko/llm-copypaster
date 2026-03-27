@@ -1,7 +1,7 @@
 {
   "name": "llm-copypaster",
   "displayName": "LLM Copypaster",
-  "description": "Added Paste from Editor Feature",
+  "description": "Copy project and file context with reusable instructions to any AI via clipboard, then apply the AI response back to your files.",
   "version": "0.13.0",
   "repository": {
     "type": "git",
@@ -11,7 +11,30 @@
     "vscode": "^1.109.0"
   },
   "categories": [
+    "Machine Learning",
     "Other"
+  ],
+  "keywords": [
+    "llm",
+    "ai",
+    "chatgpt",
+    "claude",
+    "cursor",
+    "copilot",
+    "prompt-engineering",
+    "context-engineering",
+    "project-context",
+    "file-context",
+    "code-context",
+    "multi-file-context",
+    "codebase-context",
+    "prompt-context",
+    "project-instructions",
+    "clipboard",
+    "copy-to-clipboard",
+    "apply-ai-output",
+    "patch-files",
+    "ai-coding"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -46,7 +69,7 @@
       },
       {
         "command": "llm-copypaster.copySelectedExplorerItemsAsLlmContext",
-        "title": "LLM Copypaster: Copy File(s)"
+        "title": "LLM Copypaster: Copy Selected File(s)"
       },
       {
         "command": "llm-copypaster.applyClipboardToFiles",
