@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from './config/config-service';
 import { ConfigReportFacade } from './config/reporters/config-report-facade';
+import { ConfigValidator } from './config/validation/config-validator';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/contracts';
 import { IdeToLlmFacade } from './modules/ide-to-llm/ide-to-llm-facade';
 import { LlmToIdeFacade } from './modules/llm-to-ide/llm-to-ide-facade';
@@ -11,9 +12,16 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
-
   const configService = new ConfigService();
-  const isConfigValid = await configService.isConfigValid();
+
+  const isConfigValid = await new ConfigValidator({
+    extensionContext: context,
+    systemUserMergedConfig: await configService.getSystemUserMergedConfig(),
+    systemConfig: await configService.getSystemConfig(),
+    userConfig: await configService.getUserConfig(),
+    overrideOptions: configService.overrideOptions,
+  }).validate();
+
   if (!isConfigValid) return;
 
   const config = await configService.getSystemUserMergedConfig();

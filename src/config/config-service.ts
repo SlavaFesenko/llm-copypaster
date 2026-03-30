@@ -11,10 +11,6 @@ export class ConfigService {
   private _systemUserMergedConfig?: LlmCopypasterConfig;
   private _overrideOptions?: OverrideOptionMetadata[] | null;
 
-  public async isConfigValid(): Promise<boolean> {
-    return true;
-  }
-
   public get overrideOptions(): OverrideOptionMetadata[] | null {
     if (this._overrideOptions === null) return null;
 
@@ -31,11 +27,20 @@ export class ConfigService {
     return this._systemConfig;
   }
 
+  public async getUserConfig(): Promise<LlmCopypasterUserConfig | null> {
+    if (this._userConfig !== undefined) return this._userConfig;
+
+    this._userConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
+    this._overrideOptions = this._setOverrideOptions(this._userConfig);
+
+    return this._userConfig;
+  }
+
   public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
     if (this._systemUserMergedConfig) return this._systemUserMergedConfig;
 
     const systemConfig = await this.getSystemConfig();
-    const userConfig = await this._getUserConfig();
+    const userConfig = await this.getUserConfig();
 
     this._systemUserMergedConfig = mergeConfigs(
       systemConfig,
@@ -53,7 +58,7 @@ export class ConfigService {
 
   public async getSystemUserMergedConfigByOverrideIds(overrideIds: string[]): Promise<MergedConfigWithOverrideIdResult> {
     const systemUserMergedConfig = await this.getSystemUserMergedConfig();
-    const userConfig = await this._getUserConfig();
+    const userConfig = await this.getUserConfig();
     const systemConfig = await this.getSystemConfig();
 
     let mergedConfig: LlmCopypasterConfig = {
@@ -81,15 +86,6 @@ export class ConfigService {
         mergedConfig,
       }),
     };
-  }
-
-  private async _getUserConfig(): Promise<LlmCopypasterUserConfig | null> {
-    if (this._userConfig !== undefined) return this._userConfig;
-
-    this._userConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
-    this._overrideOptions = this._setOverrideOptions(this._userConfig);
-
-    return this._userConfig;
   }
 
   private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {
