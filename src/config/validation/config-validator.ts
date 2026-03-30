@@ -12,9 +12,13 @@ import {
   ValidationSourceConfigId,
   ValidationTargetConfig,
 } from './contracts';
+import { allSharedVariablesConfigRefsMustPointToExistingConfigSectionsRule } from './rules/all-sharedVariables-config-refs-must-point-to-existing-config-sections';
 import { allVitalParsingAnchorsAreLongerThan2CharsRule } from './rules/all-vitalParsingAnchors-are-longer-than-2-chars';
 
-export const configValidationRules: ValidationRule[] = [allVitalParsingAnchorsAreLongerThan2CharsRule];
+export const configValidationRules: ValidationRule[] = [
+  allVitalParsingAnchorsAreLongerThan2CharsRule,
+  allSharedVariablesConfigRefsMustPointToExistingConfigSectionsRule,
+];
 
 export interface ConfigValidatorArgs {
   extensionContext: vscode.ExtensionContext;
