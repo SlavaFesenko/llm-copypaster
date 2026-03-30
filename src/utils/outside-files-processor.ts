@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfig } from '../config/system-config-contracts';
+import { LlmCopypasterConfig } from '../config/contracts/system-config-contracts';
 import { FilesPayload } from '../contracts/file-contracts';
 import { clearExtensionCache } from './extension-cache-service';
 

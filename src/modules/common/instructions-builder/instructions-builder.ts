@@ -8,7 +8,7 @@ import {
   InstructionConfig,
   InstructionsAndVariablesConfig,
   LlmCopypasterConfig,
-} from '../../../config/system-config-contracts';
+} from '../../../config/contracts/system-config-contracts';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
 import {
   collapseEmptyLines,

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
-import { LlmCopypasterConfig } from '../../config/system-config-contracts';
+import { LlmCopypasterConfig } from '../../config/contracts/system-config-contracts';
 import { FilesPayload } from '../../contracts/file-contracts';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 import { OutsideFilesProcessingAction, OutsideFilesProcessor } from '../../utils/outside-files-processor';

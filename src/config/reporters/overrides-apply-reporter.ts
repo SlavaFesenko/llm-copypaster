@@ -1,4 +1,4 @@
-import { MergedConfigDebugData } from '../config-service';
+import { MergedConfigDebugData } from '../contracts/other-contracts';
 import {
   JSON_DIFF_STATUS,
   NORMALIZED_CONFIG_STATUS,

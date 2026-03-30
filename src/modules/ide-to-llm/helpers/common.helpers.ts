@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../config/system-config-contracts';
+import { LlmCopypasterConfig } from '../../../config/contracts/system-config-contracts';
 import { BuildLlmContextTextArgs, IdeToLlmFile } from '../contracts';
 
 export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {

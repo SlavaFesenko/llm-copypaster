@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/system-config-contracts';
+import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/contracts/system-config-contracts';
 import { FilePayload, FilesPayload } from '../../../contracts/file-contracts';
 import { isOutsideWorkspaceFilePath } from '../../../utils/file-utils';
 

@@ -9,7 +9,7 @@ import {
   NonOverrideableSettingsConfig,
   PostFilePatchActionsConfig,
   VitalParsingAnchorsConfig,
-} from '../system-config-contracts';
+} from '../contracts/system-config-contracts';
 import {
   CoreSettingsUserConfig,
   IdeToLlmUserConfig,
@@ -21,7 +21,7 @@ import {
   NonOverrideableSettingsUserConfig,
   PostFilePatchActionsUserConfig,
   VitalParsingAnchorsUserConfig,
-} from '../user-config-contracts';
+} from '../contracts/user-config-contracts';
 
 export function mergeConfigs(
   systemConfig: LlmCopypasterConfig,

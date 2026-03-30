@@ -1,8 +1,9 @@
 import { GLOB_CONSTS } from '../../contracts/global-constants';
-import { ConfigService, OverrideOptionMetadata } from '../config-service';
+import { ConfigService } from '../config-service';
+import { OverrideOptionMetadata } from '../contracts/other-contracts';
+import { CoreSettingsConfig } from '../contracts/system-config-contracts';
+import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
 import { readUserJsonConfigFile } from '../helpers/config-file-readers';
-import { CoreSettingsConfig } from '../system-config-contracts';
-import { LlmCopypasterUserConfig } from '../user-config-contracts';
 import {
   BuildConfigReportMarkdownArgs,
   PreparedOverrideReportEntry,

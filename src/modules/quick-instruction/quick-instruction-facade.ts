@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
-import { InstructionConfig } from '../../config/system-config-contracts';
+import { InstructionConfig } from '../../config/contracts/system-config-contracts';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
 import { InstructionsBuilder, InstructionsBuilderMode } from '../common/instructions-builder/instructions-builder';
 

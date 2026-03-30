@@ -1,41 +1,19 @@
+import { MergedConfigWithOverrideIdResult, OverrideOptionMetadata } from './contracts/other-contracts';
+import { LlmCopypasterConfig } from './contracts/system-config-contracts';
+import { LlmCopypasterUserConfig } from './contracts/user-config-contracts';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
 import { mergeConfigs } from './helpers/config-mergers';
-import { CoreSettingsConfig, LlmCopypasterConfig } from './system-config-contracts';
-import { LlmCopypasterUserConfig } from './user-config-contracts';
-
-export interface OverrideOptionMetadata {
-  id: string;
-  description?: string;
-  version?: string;
-}
-
-export interface OverrideReportEntryData {
-  overrideOption: OverrideOptionMetadata;
-  rawOverrideCoreSettingsConfig: unknown;
-  normalizedOverrideCoreSettingsConfig: CoreSettingsConfig;
-}
-
-export interface MergedConfigDebugData {
-  hasUserConfig: boolean;
-  overrideOptions: OverrideOptionMetadata[] | null;
-  activeOverrideIds: string[];
-  systemUserMergedConfig: CoreSettingsConfig;
-  mergedCoreSettingsConfig: CoreSettingsConfig;
-  rawUserCoreSettingsConfig: unknown;
-  rawSystemCoreSettingsConfig: unknown;
-  overrideReportEntries: OverrideReportEntryData[];
-}
-
-export interface MergedConfigWithOverrideIdResult {
-  mergedConfig: LlmCopypasterConfig;
-  debugData: MergedConfigDebugData;
-}
+import { buildMergedConfigDebugData } from './reporters/reporting-helpers';
 
 export class ConfigService {
   private _systemConfig?: LlmCopypasterConfig;
   private _userConfig?: LlmCopypasterUserConfig | null;
   private _systemUserMergedConfig?: LlmCopypasterConfig;
   private _overrideOptions?: OverrideOptionMetadata[] | null;
+
+  public async isConfigValid(): Promise<boolean> {
+    return true;
+  }
 
   public get overrideOptions(): OverrideOptionMetadata[] | null {
     if (this._overrideOptions === null) return null;
@@ -51,10 +29,6 @@ export class ConfigService {
     this._systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>();
 
     return this._systemConfig;
-  }
-
-  public async isConfigValid(): Promise<boolean> {
-    return true;
   }
 
   public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
@@ -97,8 +71,9 @@ export class ConfigService {
 
     return {
       mergedConfig,
-      debugData: this._buildMergedConfigDebugData({
-        overrideIds,
+      debugData: buildMergedConfigDebugData({
+        overrideOptions: this.overrideOptions,
+        activeOverrideIds: overrideIds,
         systemConfig,
         userConfig,
         systemUserMergedConfig,
@@ -114,47 +89,6 @@ export class ConfigService {
     this._overrideOptions = this._setOverrideOptions(this._userConfig);
 
     return this._userConfig;
-  }
-
-  private _buildMergedConfigDebugData(args: {
-    overrideIds: string[];
-    systemConfig: LlmCopypasterConfig;
-    userConfig: LlmCopypasterUserConfig | null;
-    systemUserMergedConfig: LlmCopypasterConfig;
-    mergedConfig: LlmCopypasterConfig;
-  }): MergedConfigDebugData {
-    return {
-      hasUserConfig: !!args.userConfig,
-      overrideOptions: this.overrideOptions,
-      activeOverrideIds: args.overrideIds,
-      systemUserMergedConfig: args.systemUserMergedConfig.coreSettings,
-      mergedCoreSettingsConfig: args.mergedConfig.coreSettings,
-      rawUserCoreSettingsConfig: args.userConfig?.coreSettings ?? null,
-      rawSystemCoreSettingsConfig: args.systemConfig.coreSettings,
-      overrideReportEntries: this._buildOverrideReportEntries({
-        userConfig: args.userConfig,
-        baseConfig: args.systemUserMergedConfig,
-      }),
-    };
-  }
-
-  private _buildOverrideReportEntries(args: {
-    userConfig: LlmCopypasterUserConfig | null;
-    baseConfig: LlmCopypasterConfig;
-  }): OverrideReportEntryData[] {
-    return (this.overrideOptions ?? []).map(overrideOption => {
-      const overrideCoreSettings = args.userConfig?.overridesById?.[overrideOption.id]?.coreSettings;
-
-      const normalizedOverrideCoreSettingsConfig = overrideCoreSettings
-        ? mergeConfigs(args.baseConfig, { coreSettings: overrideCoreSettings }).coreSettings
-        : args.baseConfig.coreSettings;
-
-      return {
-        overrideOption,
-        rawOverrideCoreSettingsConfig: args.userConfig?.overridesById?.[overrideOption.id]?.coreSettings ?? null,
-        normalizedOverrideCoreSettingsConfig,
-      };
-    });
   }
 
   private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {
