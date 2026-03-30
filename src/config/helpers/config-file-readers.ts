@@ -21,6 +21,7 @@ export async function readUserJsonConfigFile<TConfig>(): Promise<TConfig | null>
   const parseErrors: ParseError[] = [];
   const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
 
+  // TODO :выевести ошибки в репорт через тостер и заинтегрить это в прерывание вызывающего флоу
   if (parseErrors.length > 0)
     throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
 
@@ -34,6 +35,7 @@ export async function readSystemJsonConfigFile<TConfig>(): Promise<TConfig> {
   const parseErrors: ParseError[] = [];
   const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
 
+  // TODO :выевести ошибки в репорт через тостер и заинтегрить это в прерывание вызывающего флоу
   if (parseErrors.length > 0)
     throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
 
