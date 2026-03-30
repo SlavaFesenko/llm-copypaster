@@ -1,5 +1,5 @@
-import { readSystemJsonConfigFile, readUserJsonConfigFile } from './config-helpers/config-file-readers';
-import { mergeConfigs } from './config-helpers/config-mergers';
+import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
+import { mergeConfigs } from './helpers/config-mergers';
 import { CoreSettingsConfig, LlmCopypasterConfig } from './system-config-contracts';
 import { LlmCopypasterUserConfig, OverrideUserConfig } from './user-config-contracts';
 
