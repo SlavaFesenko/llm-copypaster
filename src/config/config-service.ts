@@ -17,7 +17,7 @@ export interface OverrideReportEntryData {
 
 export interface MergedConfigDebugData {
   hasUserConfig: boolean;
-  overrideOptions: OverrideOptionMetadata[];
+  overrideOptions: OverrideOptionMetadata[] | null;
   activeOverrideIds: string[];
   systemUserMergedConfig: CoreSettingsConfig;
   mergedCoreSettingsConfig: CoreSettingsConfig;
@@ -35,9 +35,13 @@ export class ConfigService {
   private _systemConfig?: LlmCopypasterConfig;
   private _userConfig?: LlmCopypasterUserConfig | null;
   private _systemUserMergedConfig?: LlmCopypasterConfig;
-  private _overrideOptions: OverrideOptionMetadata[] = [];
+  private _overrideOptions?: OverrideOptionMetadata[] | null;
 
-  public get overrideOptions(): OverrideOptionMetadata[] {
+  public get overrideOptions(): OverrideOptionMetadata[] | null {
+    if (this._overrideOptions === null) return null;
+
+    this._overrideOptions ??= this._setOverrideOptions(this._userConfig ?? null);
+
     return this._overrideOptions;
   }
 
@@ -97,7 +101,7 @@ export class ConfigService {
     if (this._userConfig !== undefined) return this._userConfig;
 
     this._userConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
-    this._setOverrideOptions(this._userConfig);
+    this._overrideOptions = this._setOverrideOptions(this._userConfig);
 
     return this._userConfig;
   }
@@ -143,7 +147,7 @@ export class ConfigService {
     userConfig: LlmCopypasterUserConfig | null;
     baseConfig: LlmCopypasterConfig;
   }): OverrideReportEntryData[] {
-    return this.overrideOptions.map(overrideOption => {
+    return (this.overrideOptions ?? []).map(overrideOption => {
       const overrideUserConfig = this._buildOverrideWrapperUserConfig(args.userConfig?.overridesById?.[overrideOption.id]);
 
       const normalizedOverrideCoreSettingsConfig = overrideUserConfig
@@ -158,21 +162,24 @@ export class ConfigService {
     });
   }
 
-  private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): void {
-    this._overrideOptions = [];
+  private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {
+    if (!userConfig) return null;
 
-    const overridesById = userConfig?.overridesById ?? {};
+    const overrideOptions: OverrideOptionMetadata[] = [];
+    const overridesById = userConfig.overridesById ?? {};
 
     for (const overrideId of Object.keys(overridesById)) {
       const overrideConfig = overridesById[overrideId];
 
       if (overrideConfig.shouldBeSkipped) continue;
 
-      this._overrideOptions.push({
+      overrideOptions.push({
         id: overrideId,
         description: overrideConfig.description,
         version: overrideConfig.version,
       });
     }
+
+    return overrideOptions;
   }
 }
