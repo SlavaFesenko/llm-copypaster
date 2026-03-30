@@ -5,6 +5,7 @@ export const allVitalParsingAnchorsAreLongerThan2CharsRule: ValidationRule = {
   id: 'all-vitalParsingAnchors-are-longer-than-2-chars',
   rationale: 'Short vitalParsingAnchors increase the chance of accidental matches and make parsing more fragile',
   severity: ValidationIssueSeverity.Critical,
+  skipForOverrides: true,
   getViolationDescription(validationRuleContext: ValidationRuleContext): string | null {
     const invalidVitalParsingAnchors = getInvalidVitalParsingAnchors(
       validationRuleContext.mergedConfig.nonOverrideableSettings.vitalParsingAnchors

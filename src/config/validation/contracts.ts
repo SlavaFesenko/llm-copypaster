@@ -61,5 +61,6 @@ export interface ValidationRule {
   id: string;
   rationale: string;
   severity: ValidationIssueSeverity;
+  skipForOverrides?: boolean;
   getViolationDescription(validationRuleContext: ValidationRuleContext): string | null;
 }

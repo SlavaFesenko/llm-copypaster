@@ -87,7 +87,13 @@ export class ConfigValidator {
   }
 
   private _validateSingleTarget(validationTarget: ValidationTargetConfig): ValidationIssue[] {
-    return configValidationRules.flatMap(validationRule => {
+    const applicableValidationRules = configValidationRules.filter(validationRule => {
+      if (!validationTarget.rawOverrideConfig) return true;
+
+      return !validationRule.skipForOverrides;
+    });
+
+    return applicableValidationRules.flatMap(validationRule => {
       const validationRuleContext: ValidationRuleContext = {
         sourceConfigId: validationTarget.sourceConfigId,
         mergedConfig: validationTarget.mergedConfig,
