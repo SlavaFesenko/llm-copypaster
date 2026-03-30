@@ -14,7 +14,7 @@ export async function buildOverridesAppliedReportText(debugData: MergedConfigDeb
   const preparedAppliedOverrideReportEntries = buildPreparedAppliedOverrideReportEntriesFromData(debugData);
 
   const normalizedOverrideDiffChangeset = await buildJsonDiffChangeset(
-    debugData.baseCoreSettingsConfig,
+    debugData.systemUserMergedConfig,
     debugData.mergedCoreSettingsConfig
   );
 
@@ -45,7 +45,7 @@ export async function buildOverridesAppliedReportText(debugData: MergedConfigDeb
   reportText += buildJsonCodeBlock(debugData.mergedCoreSettingsConfig);
 
   reportText += `## ${NORMALIZED_CONFIG_STATUS} Base Config (before overrides)\n\n`;
-  reportText += buildJsonCodeBlock(debugData.baseCoreSettingsConfig);
+  reportText += buildJsonCodeBlock(debugData.systemUserMergedConfig);
 
   return reportText.trimEnd();
 }

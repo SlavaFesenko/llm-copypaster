@@ -19,7 +19,7 @@ export interface MergedConfigDebugData {
   hasUserConfig: boolean;
   overrideOptions: OverrideOptionMetadata[];
   activeOverrideIds: string[];
-  baseCoreSettingsConfig: CoreSettingsConfig;
+  systemUserMergedConfig: CoreSettingsConfig;
   mergedCoreSettingsConfig: CoreSettingsConfig;
   rawUserCoreSettingsConfig: unknown;
   rawSystemCoreSettingsConfig: unknown;
@@ -64,18 +64,17 @@ export class ConfigService {
     return this._systemUserMergedConfig;
   }
 
-  public async getSystemUserMergedConfigByOverrideIds(overrideIds?: string[]): Promise<MergedConfigWithOverrideIdResult> {
+  public async getSystemUserMergedConfigByOverrideIds(overrideIds: string[]): Promise<MergedConfigWithOverrideIdResult> {
     const systemUserMergedConfig = await this.getSystemUserMergedConfig();
     const userConfig = await this._getUserConfig();
     const systemConfig = await this.getSystemConfig();
-    const normalizedOverrideIds = this._normalizeOverrideIds(overrideIds);
 
     let mergedConfig: LlmCopypasterConfig = {
       nonOverrideableSettings: systemUserMergedConfig.nonOverrideableSettings,
       coreSettings: systemUserMergedConfig.coreSettings,
     };
 
-    for (const overrideId of normalizedOverrideIds) {
+    for (const overrideId of overrideIds) {
       const overrideUserConfig = this._buildOverrideWrapperUserConfig(userConfig?.overridesById?.[overrideId]);
       if (!overrideUserConfig) continue;
 
@@ -85,10 +84,10 @@ export class ConfigService {
     return {
       mergedConfig,
       debugData: this._buildMergedConfigDebugData({
-        normalizedOverrideIds,
+        overrideIds,
         systemConfig,
         userConfig,
-        baseConfig: systemUserMergedConfig,
+        systemUserMergedConfig,
         mergedConfig,
       }),
     };
@@ -119,23 +118,23 @@ export class ConfigService {
   }
 
   private _buildMergedConfigDebugData(args: {
-    normalizedOverrideIds: string[];
+    overrideIds: string[];
     systemConfig: LlmCopypasterConfig;
     userConfig: LlmCopypasterUserConfig | null;
-    baseConfig: LlmCopypasterConfig;
+    systemUserMergedConfig: LlmCopypasterConfig;
     mergedConfig: LlmCopypasterConfig;
   }): MergedConfigDebugData {
     return {
       hasUserConfig: !!args.userConfig,
       overrideOptions: this.overrideOptions,
-      activeOverrideIds: args.normalizedOverrideIds,
-      baseCoreSettingsConfig: args.baseConfig.coreSettings,
+      activeOverrideIds: args.overrideIds,
+      systemUserMergedConfig: args.systemUserMergedConfig.coreSettings,
       mergedCoreSettingsConfig: args.mergedConfig.coreSettings,
       rawUserCoreSettingsConfig: args.userConfig?.coreSettings ?? null,
       rawSystemCoreSettingsConfig: args.systemConfig.coreSettings,
       overrideReportEntries: this._buildOverrideReportEntries({
         userConfig: args.userConfig,
-        baseConfig: args.baseConfig,
+        baseConfig: args.systemUserMergedConfig,
       }),
     };
   }
@@ -175,9 +174,5 @@ export class ConfigService {
         version: overrideConfig.version,
       });
     }
-  }
-
-  private _normalizeOverrideIds(overrideIds?: string[]): string[] {
-    return [...(overrideIds ?? [])].filter(Boolean);
   }
 }
