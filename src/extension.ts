@@ -11,7 +11,11 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
+
   const configService = new ConfigService();
+  const isConfigValid = await configService.isConfigValid();
+  if (!isConfigValid) return;
+
   const config = await configService.getSystemUserMergedConfig();
 
   const ideToLlmFacade = new IdeToLlmFacade(

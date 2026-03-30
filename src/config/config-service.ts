@@ -49,6 +49,10 @@ export class ConfigService {
     return this._systemConfig;
   }
 
+  public async isConfigValid(): Promise<boolean> {
+    return true;
+  }
+
   public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
     if (this._systemUserMergedConfig) return this._systemUserMergedConfig;
 
