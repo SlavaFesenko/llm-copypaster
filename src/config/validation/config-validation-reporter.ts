@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
-import { ValidationIssue, ValidationResult } from './contracts';
+import { ValidationIssue, ValidationIssueSource, ValidationResult } from './contracts';
 
 export interface ConfigValidationReporterArgs {
   extensionContext: vscode.ExtensionContext;
@@ -50,19 +50,29 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
 
   for (const validationIssue of validationIssues) {
     sectionMarkdown += `${buildValidationIssueHeader(validationIssue)}\n\n`;
-    sectionMarkdown += `- Rule ID: \`${validationIssue.violatedRuleId}\`\n`;
     sectionMarkdown += `- Severity: ${validationIssue.severity}\n`;
     sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n`;
-    sectionMarkdown += `- Violation Description: ${validationIssue.violationDescription}\n\n`;
+    sectionMarkdown += `- Violation Description: ${validationIssue.violationDescription}\n`;
+    sectionMarkdown += `- Sources:\n${buildValidationIssueSourcesMarkdown(validationIssue.sources)}\n\n`;
   }
 
   return sectionMarkdown.trimEnd();
 }
 
 function buildValidationIssueHeader(validationIssue: ValidationIssue): string {
-  if (validationIssue.sourceConfigId === 'systemUserMerged') {
-    return `### System + User Merged Config ${validationIssue.sourceConfigId}`;
+  return `### Violated Rule: ${validationIssue.violatedRuleId}`;
+}
+
+function buildValidationIssueSourcesMarkdown(validationIssueSources: ValidationIssueSource[]): string {
+  return validationIssueSources
+    .map(validationIssueSource => `  - ${buildValidationIssueSourceLabel(validationIssueSource)}`)
+    .join('\n');
+}
+
+function buildValidationIssueSourceLabel(validationIssueSource: ValidationIssueSource): string {
+  if (validationIssueSource.sourceConfigId === 'systemUserMerged') {
+    return 'System + User Merged Config';
   }
 
-  return `### OVERRIDE: ${validationIssue.sourceConfigId}`;
+  return `OVERRIDE: ${validationIssueSource.sourceConfigId}`;
 }

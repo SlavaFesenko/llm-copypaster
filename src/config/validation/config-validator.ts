@@ -53,9 +53,10 @@ export class ConfigValidator {
 
   private _buildValidationResult(): ValidationResult {
     const validationTargets = this._buildValidationTargets();
-    const validationIssues = validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget));
+    const rawValidationIssues = validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget));
+    const deduplicatedValidationIssues = this._deduplicateValidationIssues(rawValidationIssues);
 
-    return new ValidationResult(validationIssues);
+    return new ValidationResult(deduplicatedValidationIssues);
   }
 
   private _buildValidationTargets(): ValidationTargetConfig[] {
@@ -110,11 +111,35 @@ export class ConfigValidator {
   ): ValidationIssue {
     return {
       sourceConfigId,
+      sources: [{ sourceConfigId }],
       violatedRuleId: validationRule.id,
       ruleRationale: validationRule.rationale,
       violationDescription,
       severity: validationRule.severity,
     };
+  }
+
+  private _deduplicateValidationIssues(validationIssues: ValidationIssue[]): ValidationIssue[] {
+    const validationIssuesByDeduplicationKey = new Map<string, ValidationIssue>();
+
+    for (const validationIssue of validationIssues) {
+      const deduplicationKey = this._buildValidationIssueDeduplicationKey(validationIssue);
+      const existingValidationIssue = validationIssuesByDeduplicationKey.get(deduplicationKey);
+
+      if (!existingValidationIssue) {
+        validationIssuesByDeduplicationKey.set(deduplicationKey, validationIssue);
+
+        continue;
+      }
+
+      existingValidationIssue.sources.push(...validationIssue.sources);
+    }
+
+    return Array.from(validationIssuesByDeduplicationKey.values());
+  }
+
+  private _buildValidationIssueDeduplicationKey(validationIssue: ValidationIssue): string {
+    return `${validationIssue.violatedRuleId}::${validationIssue.violationDescription}`;
   }
 
   private _buildValidationToastMessage(validationResult: ValidationResult): string {

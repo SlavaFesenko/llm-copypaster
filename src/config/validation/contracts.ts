@@ -29,8 +29,13 @@ export class ValidationResult {
   }
 }
 
+export interface ValidationIssueSource {
+  sourceConfigId: ValidationSourceConfigId;
+}
+
 export interface ValidationIssue {
   sourceConfigId: ValidationSourceConfigId;
+  sources: ValidationIssueSource[];
   violatedRuleId: string;
   ruleRationale: string;
   violationDescription: string;
