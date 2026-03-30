@@ -27,7 +27,7 @@ export class CopiedNotificator {
     let isTechPromptErased = false;
 
     while (true) {
-      const mergedConfigResult = await this._deps.configService.getMergedConfigByOverrideIds(selectedProfileIds);
+      const mergedConfigResult = await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
       const effectiveConfig = mergedConfigResult.mergedConfig;
 
       const promptStatsResult = buildTextSizeStats({
@@ -98,7 +98,8 @@ export class CopiedNotificator {
 
         selectedProfileIds = nextPickResult.profileIds;
 
-        const nextMergedConfigResult = await this._deps.configService.getMergedConfigByOverrideIds(selectedProfileIds);
+        const nextMergedConfigResult =
+          await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
 
         currentPromptText = await this._buildLlmPromptText({
           effectiveConfig: nextMergedConfigResult.mergedConfig,

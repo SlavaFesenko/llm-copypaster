@@ -21,7 +21,7 @@ export interface BuildLsConfigReportTextArgs {
 export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs): Promise<string> {
   const systemConfig = await args.configService.getSystemConfig();
   const userConfig = await readUserConfig();
-  const basePublicConfig = await args.configService.getLlmCopypasterConfig();
+  const basePublicConfig = await args.configService.getSystemUserMergedConfig();
   const overrideOptions = args.configService.overrideOptions;
 
   const preparedOverrideReportEntries = await buildPreparedOverrideReportEntries({
@@ -59,7 +59,9 @@ async function buildPreparedOverrideReportEntries(args: {
 }): Promise<PreparedOverrideReportEntry[]> {
   return await Promise.all(
     args.overrideOptions.map(async overrideOption => {
-      const mergedOverrideConfigResult = await args.configService.getMergedConfigByOverrideIds([overrideOption.id]);
+      const mergedOverrideConfigResult = await args.configService.getSystemUserMergedConfigByOverrideIds([
+        overrideOption.id,
+      ]);
 
       const normalizedOverrideCoreSettingsConfig = mergedOverrideConfigResult.mergedConfig.coreSettings;
 

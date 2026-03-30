@@ -32,14 +32,14 @@ export interface MergedConfigWithOverrideIdResult {
 }
 
 export class ConfigService {
+  private _systemConfig?: LlmCopypasterConfig;
+  private _userConfig?: LlmCopypasterUserConfig | null;
+  private _systemUserMergedConfig?: LlmCopypasterConfig;
+  private _overrideOptions: OverrideOptionMetadata[] = [];
+
   public get overrideOptions(): OverrideOptionMetadata[] {
     return this._overrideOptions;
   }
-
-  private _systemConfig?: LlmCopypasterConfig;
-  private _userConfig?: LlmCopypasterUserConfig | null;
-  private _llmCopypasterConfig?: LlmCopypasterConfig;
-  private _overrideOptions: OverrideOptionMetadata[] = [];
 
   public async getSystemConfig(): Promise<LlmCopypasterConfig> {
     if (this._systemConfig) return this._systemConfig;
@@ -49,19 +49,26 @@ export class ConfigService {
     return this._systemConfig;
   }
 
-  public async getLlmCopypasterConfig(): Promise<LlmCopypasterConfig> {
-    return await this._getLlmCopypasterConfig();
+  public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
+    if (this._systemUserMergedConfig) return this._systemUserMergedConfig;
+
+    const systemConfig = await this.getSystemConfig();
+    const userConfig = await this._getUserConfig();
+
+    this._systemUserMergedConfig = mergeConfigs(systemConfig, userConfig ? this._buildBaseOnlyUserConfig(userConfig) : null);
+
+    return this._systemUserMergedConfig;
   }
 
-  public async getMergedConfigByOverrideIds(overrideIds?: string[]): Promise<MergedConfigWithOverrideIdResult> {
-    const baseConfig = await this._getLlmCopypasterConfig();
+  public async getSystemUserMergedConfigByOverrideIds(overrideIds?: string[]): Promise<MergedConfigWithOverrideIdResult> {
+    const systemUserMergedConfig = await this.getSystemUserMergedConfig();
     const userConfig = await this._getUserConfig();
     const systemConfig = await this.getSystemConfig();
     const normalizedOverrideIds = this._normalizeOverrideIds(overrideIds);
 
     let mergedConfig: LlmCopypasterConfig = {
-      nonOverrideableSettings: baseConfig.nonOverrideableSettings,
-      coreSettings: baseConfig.coreSettings,
+      nonOverrideableSettings: systemUserMergedConfig.nonOverrideableSettings,
+      coreSettings: systemUserMergedConfig.coreSettings,
     };
 
     for (const overrideId of normalizedOverrideIds) {
@@ -77,18 +84,10 @@ export class ConfigService {
         normalizedOverrideIds,
         systemConfig,
         userConfig,
-        baseConfig,
+        baseConfig: systemUserMergedConfig,
         mergedConfig,
       }),
     };
-  }
-
-  private async _getLlmCopypasterConfig(): Promise<LlmCopypasterConfig> {
-    if (this._llmCopypasterConfig) return this._llmCopypasterConfig;
-
-    this._llmCopypasterConfig = await this._buildLlmCopypasterConfig();
-
-    return this._llmCopypasterConfig;
   }
 
   private async _getUserConfig(): Promise<LlmCopypasterUserConfig | null> {
@@ -98,13 +97,6 @@ export class ConfigService {
     this._setOverrideOptions(this._userConfig);
 
     return this._userConfig;
-  }
-
-  private async _buildLlmCopypasterConfig(): Promise<LlmCopypasterConfig> {
-    const systemConfig = await this.getSystemConfig();
-    const userFileConfig = await this._getUserConfig();
-
-    return mergeConfigs(systemConfig, userFileConfig ? this._buildBaseOnlyUserConfig(userFileConfig) : null);
   }
 
   private _buildBaseOnlyUserConfig(userConfig: LlmCopypasterUserConfig): LlmCopypasterUserConfig {

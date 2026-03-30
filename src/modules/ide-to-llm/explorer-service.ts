@@ -28,7 +28,7 @@ export class ExplorerService {
   }
 
   private async _copyExplorerUrisAsContext(inputUris: vscode.Uri[]): Promise<void> {
-    const config = await this._deps.configService.getLlmCopypasterConfig();
+    const config = await this._deps.configService.getSystemUserMergedConfig();
 
     const selection = await collectExplorerItemsFileItems(inputUris, this._deps.logger, this._allowOutsideWorkspaceRead);
 
