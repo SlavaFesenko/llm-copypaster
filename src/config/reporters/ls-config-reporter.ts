@@ -1,5 +1,5 @@
 import { GLOB_CONSTS } from '../../contracts/global-constants';
-import { readUserJsonConfigFile } from '../config-helpers/config-tech-helpers';
+import { readUserJsonConfigFile } from '../config-helpers/config-file-readers';
 import { ConfigService, OverrideOptionMetadata } from '../config-service';
 import { CoreSettingsConfig } from '../system-config-contracts';
 import { LlmCopypasterUserConfig } from '../user-config-contracts';
