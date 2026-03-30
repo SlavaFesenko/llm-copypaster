@@ -30,7 +30,7 @@ export async function buildOverridesAppliedReportText(debugData: MergedConfigDeb
 
   reportText += buildStatusOverviewMarkdown({
     hasUserConfig: debugData.hasUserConfig,
-    overrideOptions: debugData.overrideOptions,
+    overrideOptions: debugData.overrideOptions ?? [],
     activeOverrideIds: debugData.activeOverrideIds,
     shouldAlwaysMarkCurrentSourceAsApplied: true,
     shouldOmitOverrideNamesInCurrentSourceLine: true,

@@ -16,7 +16,7 @@ export class CopiedNotificator {
   public async showCopyResultNotification(args: ShowCopyResultNotificationArgs): Promise<void> {
     const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
-    const overrideOptions = this._deps.configService.overrideOptions;
+    const overrideOptions = this._deps.configService.overrideOptions ?? [];
     const hasProfiles = overrideOptions.length > 0;
 
     const openPromptInEditor = 'Open Prompt in Editor';
