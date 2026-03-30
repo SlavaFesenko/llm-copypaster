@@ -6,12 +6,25 @@ import { GLOB_CONSTS } from '../../contracts/global-constants';
 
 export async function readUserJsonConfigFile<TConfig>(): Promise<TConfig | null> {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-
   if (!workspaceFolder) return null;
 
   const configUri = vscode.Uri.joinPath(workspaceFolder.uri, GLOB_CONSTS.USER_CONFIG_FILE_NAME);
 
-  return await readJsoncConfigFile<TConfig>(configUri);
+  try {
+    await vscode.workspace.fs.stat(configUri);
+  } catch {
+    return null;
+  }
+
+  const bytes = await vscode.workspace.fs.readFile(configUri);
+  const jsonText = Buffer.from(bytes).toString('utf8');
+  const parseErrors: ParseError[] = [];
+  const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
+
+  if (parseErrors.length > 0)
+    throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
+
+  return parsed;
 }
 
 export async function readSystemJsonConfigFile<TConfig>(): Promise<TConfig> {
@@ -21,26 +34,8 @@ export async function readSystemJsonConfigFile<TConfig>(): Promise<TConfig> {
   const parseErrors: ParseError[] = [];
   const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
 
-  if (parseErrors.length > 0) {
+  if (parseErrors.length > 0)
     throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
-  }
 
   return parsed;
-}
-
-export async function readJsoncConfigFile<TConfig>(configUri: vscode.Uri): Promise<TConfig | null> {
-  try {
-    const bytes = await vscode.workspace.fs.readFile(configUri);
-    const jsonText = Buffer.from(bytes).toString('utf8');
-    const parseErrors: ParseError[] = [];
-    const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
-
-    if (parseErrors.length > 0) {
-      throw new Error(`JSONC parse errors: ${parseErrors.map(parseError => parseError.error).join(', ')}`);
-    }
-
-    return parsed;
-  } catch (error) {
-    return null;
-  }
 }
