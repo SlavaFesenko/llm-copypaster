@@ -46,6 +46,8 @@
         "llm-response-rules": {
           "path": ".sys-instructions/llm-response-rules.liquid",
           "skip": false,
+          "showInOverrideMode": true,
+          "showInQuickInstructionMode": false,
         },
       },
       "sharedVariablesById": {
