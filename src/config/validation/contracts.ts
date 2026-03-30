@@ -36,7 +36,7 @@ export interface ValidationIssueSource {
 export interface ValidationIssue {
   sourceConfigId: ValidationSourceConfigId;
   sources: ValidationIssueSource[];
-  violatedRuleId: string;
+  violatedRuleName: string;
   ruleRationale: string;
   violationDescription: string;
   severity: ValidationIssueSeverity;
@@ -58,7 +58,7 @@ export interface ValidationRuleContext {
 }
 
 export interface ValidationRule {
-  id: string;
+  name: string;
   rationale: string;
   severity: ValidationIssueSeverity;
   skipForOverrides?: boolean;

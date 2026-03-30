@@ -60,7 +60,7 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
 }
 
 function buildValidationIssueHeader(validationIssue: ValidationIssue): string {
-  return `### Violated Rule: ${validationIssue.violatedRuleId}`;
+  return `### Violated Rule: ${validationIssue.violatedRuleName}`;
 }
 
 function buildValidationIssueSourcesMarkdown(validationIssueSources: ValidationIssueSource[]): string {

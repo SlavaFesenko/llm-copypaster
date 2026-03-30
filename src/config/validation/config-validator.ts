@@ -12,13 +12,10 @@ import {
   ValidationSourceConfigId,
   ValidationTargetConfig,
 } from './contracts';
-import { allSharedVariablesConfigRefsMustPointToExistingConfigSectionsRule } from './rules/all-sharedVariables-config-refs-must-point-to-existing-config-sections';
-import { allVitalParsingAnchorsAreLongerThan2CharsRule } from './rules/all-vitalParsingAnchors-are-longer-than-2-chars';
+import { VarRefsExistRule } from './rules/var-refs-exists-rule';
+import { VitalAnchorsMinLengthRule } from './rules/vital-anchors-min-length-rule';
 
-export const configValidationRules: ValidationRule[] = [
-  allVitalParsingAnchorsAreLongerThan2CharsRule,
-  allSharedVariablesConfigRefsMustPointToExistingConfigSectionsRule,
-];
+export const configValidationRules: ValidationRule[] = [new VitalAnchorsMinLengthRule(), new VarRefsExistRule()];
 
 export interface ConfigValidatorArgs {
   extensionContext: vscode.ExtensionContext;
@@ -122,7 +119,7 @@ export class ConfigValidator {
     return {
       sourceConfigId,
       sources: [{ sourceConfigId }],
-      violatedRuleId: validationRule.id,
+      violatedRuleName: validationRule.name,
       ruleRationale: validationRule.rationale,
       violationDescription,
       severity: validationRule.severity,
@@ -149,7 +146,7 @@ export class ConfigValidator {
   }
 
   private _buildValidationIssueDeduplicationKey(validationIssue: ValidationIssue): string {
-    return `${validationIssue.violatedRuleId}::${validationIssue.violationDescription}`;
+    return `${validationIssue.violatedRuleName}::${validationIssue.violationDescription}`;
   }
 
   private _buildValidationToastMessage(validationResult: ValidationResult): string {
