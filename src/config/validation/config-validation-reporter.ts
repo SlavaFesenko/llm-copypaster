@@ -52,7 +52,8 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
     sectionMarkdown += `${buildValidationIssueHeader(validationIssue)}\n\n`;
     sectionMarkdown += `- Rule ID: \`${validationIssue.violatedRuleId}\`\n`;
     sectionMarkdown += `- Severity: ${validationIssue.severity}\n`;
-    sectionMarkdown += `- Description: ${validationIssue.violationDescription}\n\n`;
+    sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n`;
+    sectionMarkdown += `- Violation Description: ${validationIssue.violationDescription}\n\n`;
   }
 
   return sectionMarkdown.trimEnd();

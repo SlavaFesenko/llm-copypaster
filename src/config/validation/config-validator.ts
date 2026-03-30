@@ -96,17 +96,23 @@ export class ConfigValidator {
         rawOverrideConfig: validationTarget.rawOverrideConfig,
       };
 
-      if (validationRule.validate(validationRuleContext)) return [];
+      const violationDescription = validationRule.getViolationDescription(validationRuleContext);
+      if (!violationDescription) return [];
 
-      return [this._buildValidationIssue(validationTarget.sourceConfigId, validationRule)];
+      return [this._buildValidationIssue(validationTarget.sourceConfigId, validationRule, violationDescription)];
     });
   }
 
-  private _buildValidationIssue(sourceConfigId: ValidationSourceConfigId, validationRule: ValidationRule): ValidationIssue {
+  private _buildValidationIssue(
+    sourceConfigId: ValidationSourceConfigId,
+    validationRule: ValidationRule,
+    violationDescription: string
+  ): ValidationIssue {
     return {
       sourceConfigId,
       violatedRuleId: validationRule.id,
-      violationDescription: validationRule.description,
+      ruleRationale: validationRule.rationale,
+      violationDescription,
       severity: validationRule.severity,
     };
   }

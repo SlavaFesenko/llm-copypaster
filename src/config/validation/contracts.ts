@@ -32,6 +32,7 @@ export class ValidationResult {
 export interface ValidationIssue {
   sourceConfigId: ValidationSourceConfigId;
   violatedRuleId: string;
+  ruleRationale: string;
   violationDescription: string;
   severity: ValidationIssueSeverity;
 }
@@ -53,7 +54,7 @@ export interface ValidationRuleContext {
 
 export interface ValidationRule {
   id: string;
-  description: string;
+  rationale: string;
   severity: ValidationIssueSeverity;
-  validate(validationRuleContext: ValidationRuleContext): boolean;
+  getViolationDescription(validationRuleContext: ValidationRuleContext): string | null;
 }

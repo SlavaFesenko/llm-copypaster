@@ -3,15 +3,21 @@ import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '
 
 export const allVitalParsingAnchorsAreLongerThan2CharsRule: ValidationRule = {
   id: 'all-vitalParsingAnchors-are-longer-than-2-chars',
-  description: 'vitalParsingAnchors should be longer than 2 chars to make regexes work smoothly',
+  rationale: 'Short vitalParsingAnchors increase the chance of accidental matches and make parsing more fragile',
   severity: ValidationIssueSeverity.Critical,
-  validate(validationRuleContext: ValidationRuleContext): boolean {
-    const vitalParsingAnchors = validationRuleContext.mergedConfig.nonOverrideableSettings.vitalParsingAnchors;
+  getViolationDescription(validationRuleContext: ValidationRuleContext): string | null {
+    const invalidVitalParsingAnchors = getInvalidVitalParsingAnchors(
+      validationRuleContext.mergedConfig.nonOverrideableSettings.vitalParsingAnchors
+    );
 
-    return getNonNullableVitalParsingAnchorsValues(vitalParsingAnchors).every(anchorValue => anchorValue.length > 2);
+    if (!invalidVitalParsingAnchors.length) return null;
+
+    return `These vitalParsingAnchors must be longer than 2 chars:\n- ${invalidVitalParsingAnchors.join('\n- ')}`;
   },
 };
 
-function getNonNullableVitalParsingAnchorsValues(vitalParsingAnchors: VitalParsingAnchorsConfig): string[] {
-  return Object.values(vitalParsingAnchors).filter((anchorValue): anchorValue is string => anchorValue !== null);
+function getInvalidVitalParsingAnchors(vitalParsingAnchors: VitalParsingAnchorsConfig): string[] {
+  return Object.entries(vitalParsingAnchors)
+    .filter(([, anchorValue]) => anchorValue !== null && anchorValue.length <= 2)
+    .map(([anchorKey, anchorValue]) => `${anchorKey}: "${anchorValue}"`);
 }
