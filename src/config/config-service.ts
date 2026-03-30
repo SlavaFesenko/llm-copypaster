@@ -43,6 +43,7 @@ export class ConfigService {
         ? {
             nonOverrideableSettings: userConfig.nonOverrideableSettings,
             coreSettings: userConfig.coreSettings,
+            overridesById: undefined, // overridesById should not be exposed
           }
         : null
     );
