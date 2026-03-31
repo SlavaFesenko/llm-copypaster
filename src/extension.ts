@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from './config/config-service';
+import { LlmCopypasterConfig } from './config/contracts/system-config-contracts';
 import { ConfigReportFacade } from './config/reporters/config-report-facade';
 import { ConfigValidator } from './config/validation/config-validator';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/contracts';
@@ -14,17 +15,8 @@ export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
   const configService = new ConfigService();
 
-  const isConfigValid = await new ConfigValidator({
-    extensionContext: context,
-    systemUserMergedConfig: await configService.getSystemUserMergedConfig(),
-    systemConfig: await configService.getSystemConfig(),
-    userConfig: await configService.getUserConfig(),
-    overrideOptions: configService.overrideOptions,
-  }).validate();
-
-  if (!isConfigValid) return;
-
-  const config = await configService.getSystemUserMergedConfig();
+  const config = await handleConfigStartup(context, configService);
+  if (!config) return;
 
   const ideToLlmFacade = new IdeToLlmFacade(
     context,
@@ -88,4 +80,31 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   logger.info('Extension activated');
+}
+
+async function handleConfigStartup(
+  context: vscode.ExtensionContext,
+  configService: ConfigService
+): Promise<LlmCopypasterConfig | null> {
+  try {
+    const systemUserMergedConfig = await configService.getSystemUserMergedConfig();
+    const systemConfig = await configService.getSystemConfig();
+    const userConfig = await configService.getUserConfig();
+
+    const isConfigValid = await new ConfigValidator({
+      extensionContext: context,
+      systemUserMergedConfig,
+      systemConfig,
+      userConfig,
+      overrideOptions: configService.overrideOptions,
+    }).validate();
+
+    if (!isConfigValid) return null;
+
+    return systemUserMergedConfig;
+  } catch (error) {
+    await vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Unspecified error happened');
+
+    return null;
+  }
 }
