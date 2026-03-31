@@ -3,6 +3,7 @@ import { OverrideOptionMetadata } from '../contracts/other-contracts';
 import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
 import { mergeConfigs } from '../helpers/config-mergers';
+import { VarRefsExistRule } from './business-rules/var-refs-exists-rule';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
   ValidationIssue,
@@ -13,10 +14,8 @@ import {
   ValidationSourceConfigId,
   ValidationTargetConfig,
 } from './contracts';
-import { VarRefsExistRule } from './rules/var-refs-exists-rule';
-import { VitalAnchorsMinLengthRule } from './rules/vital-anchors-min-length-rule';
 
-export const configValidationRules: ValidationRule[] = [new VitalAnchorsMinLengthRule(), new VarRefsExistRule()];
+export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
 export interface ConfigValidatorArgs {
   extensionContext: vscode.ExtensionContext;

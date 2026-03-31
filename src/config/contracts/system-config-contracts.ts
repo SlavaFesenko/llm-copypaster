@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  buildNullableVitalAnchorSchema,
+  buildVitalAnchorSchema,
+} from '../validation/static-rules/vital-parsing-anchors-rules';
 
 export interface LlmCopypasterConfig {
   nonOverrideableSettings: NonOverrideableSettingsConfig;
@@ -34,14 +38,14 @@ export interface VitalParsingAnchorsConfig {
 }
 
 export const vitalParsingAnchorsConfigSchema = z.object({
-  PROMPT_DELIMITER_ANCHOR: z.string(),
-  CODE_LISTING_HEADER_ANCHOR: z.string(),
-  FILE_STATUS_ANCHOR: z.string(),
-  FILE_EDITED_FULL_ANCHOR: z.string(),
-  FILE_CREATED_ANCHOR: z.string(),
-  FILE_DELETED_ANCHOR: z.string(),
-  END_OF_OUTPUT_ANCHOR: z.string().nullable(),
-  CONFIG_REF_VAR_ANCHOR: z.string(),
+  PROMPT_DELIMITER_ANCHOR: buildVitalAnchorSchema(),
+  CODE_LISTING_HEADER_ANCHOR: buildVitalAnchorSchema(),
+  FILE_STATUS_ANCHOR: buildVitalAnchorSchema(),
+  FILE_EDITED_FULL_ANCHOR: buildVitalAnchorSchema(),
+  FILE_CREATED_ANCHOR: buildVitalAnchorSchema(),
+  FILE_DELETED_ANCHOR: buildVitalAnchorSchema(),
+  END_OF_OUTPUT_ANCHOR: buildNullableVitalAnchorSchema(),
+  CONFIG_REF_VAR_ANCHOR: buildVitalAnchorSchema(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
 
 export interface CoreSettingsConfig {
