@@ -1,13 +1,26 @@
+import { z } from 'zod';
+
 export interface LlmCopypasterConfig {
   nonOverrideableSettings: NonOverrideableSettingsConfig;
   coreSettings: CoreSettingsConfig;
 }
+
+export const llmCopypasterConfigSchema = z.object({
+  nonOverrideableSettings: z.lazy(() => nonOverrideableSettingsConfigSchema),
+  coreSettings: z.lazy(() => coreSettingsConfigSchema),
+}) satisfies z.ZodType<LlmCopypasterConfig>;
 
 export interface NonOverrideableSettingsConfig {
   allowOutsideWorkspaceRead: boolean;
   allowOutsideWorkspaceWrite: boolean;
   vitalParsingAnchors: VitalParsingAnchorsConfig;
 }
+
+export const nonOverrideableSettingsConfigSchema = z.object({
+  allowOutsideWorkspaceRead: z.boolean(),
+  allowOutsideWorkspaceWrite: z.boolean(),
+  vitalParsingAnchors: z.lazy(() => vitalParsingAnchorsConfigSchema),
+}) satisfies z.ZodType<NonOverrideableSettingsConfig>;
 
 export interface VitalParsingAnchorsConfig {
   PROMPT_DELIMITER_ANCHOR: string;
@@ -20,6 +33,17 @@ export interface VitalParsingAnchorsConfig {
   CONFIG_REF_VAR_ANCHOR: string;
 }
 
+export const vitalParsingAnchorsConfigSchema = z.object({
+  PROMPT_DELIMITER_ANCHOR: z.string(),
+  CODE_LISTING_HEADER_ANCHOR: z.string(),
+  FILE_STATUS_ANCHOR: z.string(),
+  FILE_EDITED_FULL_ANCHOR: z.string(),
+  FILE_CREATED_ANCHOR: z.string(),
+  FILE_DELETED_ANCHOR: z.string(),
+  END_OF_OUTPUT_ANCHOR: z.string().nullable(),
+  CONFIG_REF_VAR_ANCHOR: z.string(),
+}) satisfies z.ZodType<VitalParsingAnchorsConfig>;
+
 export interface CoreSettingsConfig {
   skipInstructions: boolean;
   skipCodeListings: boolean;
@@ -30,6 +54,19 @@ export interface CoreSettingsConfig {
   llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
+export const coreSettingsConfigSchema = z.object({
+  skipInstructions: z.boolean(),
+  skipCodeListings: z.boolean(),
+  ideToLlm: z.lazy(() => ideToLlmConfigSchema),
+  llmToIde: z.lazy(() => llmToIdeConfigSchema),
+  postFilePatchActions: z.lazy(() => postFilePatchActionsConfigSchema),
+  instructionsAndVariables: z.lazy(() => instructionsAndVariablesConfigSchema),
+  llmToIdeSanitizationRulesById: z.record(
+    z.string(),
+    z.lazy(() => llmToIdeSanitizationRuleConfigSchema)
+  ),
+}) satisfies z.ZodType<CoreSettingsConfig>;
+
 export interface PromptLimitsConfig {
   skipPromptSizeStatsInCopyNotification: boolean;
   charsPerToken: number;
@@ -37,9 +74,20 @@ export interface PromptLimitsConfig {
   tokensMaxToShowWarning: number;
 }
 
+export const promptLimitsConfigSchema = z.object({
+  skipPromptSizeStatsInCopyNotification: z.boolean(),
+  charsPerToken: z.number(),
+  linesMaxToShowWarning: z.number(),
+  tokensMaxToShowWarning: z.number(),
+}) satisfies z.ZodType<PromptLimitsConfig>;
+
 export interface IdeToLlmConfig extends PromptLimitsConfig {}
 
+export const ideToLlmConfigSchema = promptLimitsConfigSchema satisfies z.ZodType<IdeToLlmConfig>;
+
 export interface LlmToIdeConfig extends PromptLimitsConfig {}
+
+export const llmToIdeConfigSchema = promptLimitsConfigSchema satisfies z.ZodType<LlmToIdeConfig>;
 
 export interface PostFilePatchActionsConfig {
   enableSaveAfterFilePatch: boolean;
@@ -47,10 +95,24 @@ export interface PostFilePatchActionsConfig {
   enableOpeningPatchedFilesInEditor: boolean;
 }
 
+export const postFilePatchActionsConfigSchema = z.object({
+  enableSaveAfterFilePatch: z.boolean(),
+  enableLintingAfterFilePatch: z.boolean(),
+  enableOpeningPatchedFilesInEditor: z.boolean(),
+}) satisfies z.ZodType<PostFilePatchActionsConfig>;
+
 export interface InstructionsAndVariablesConfig {
   instructionsById: Record<string, InstructionConfig>;
   sharedVariablesById: Record<string, string>;
 }
+
+export const instructionsAndVariablesConfigSchema = z.object({
+  instructionsById: z.record(
+    z.string(),
+    z.lazy(() => instructionConfigSchema)
+  ),
+  sharedVariablesById: z.record(z.string(), z.string()),
+}) satisfies z.ZodType<InstructionsAndVariablesConfig>;
 
 export interface InstructionConfig {
   path: string;
@@ -59,9 +121,23 @@ export interface InstructionConfig {
   showInQuickInstructionMode: boolean;
 }
 
+export const instructionConfigSchema = z.object({
+  path: z.string(),
+  skip: z.boolean(),
+  showInOverrideMode: z.boolean(),
+  showInQuickInstructionMode: z.boolean(),
+}) satisfies z.ZodType<InstructionConfig>;
+
 export interface LlmToIdeSanitizationRuleConfig {
   regexPattern: string;
   replaceWith: string;
   skipForLanguages: string[];
   skipForPaths: string[];
 }
+
+export const llmToIdeSanitizationRuleConfigSchema = z.object({
+  regexPattern: z.string(),
+  replaceWith: z.string(),
+  skipForLanguages: z.array(z.string()),
+  skipForPaths: z.array(z.string()),
+}) satisfies z.ZodType<LlmToIdeSanitizationRuleConfig>;

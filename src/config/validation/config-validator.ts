@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { OverrideOptionMetadata } from '../contracts/other-contracts';
-import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
+import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
 import { mergeConfigs } from '../helpers/config-mergers';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
   ValidationIssue,
+  ValidationIssueSeverity,
   ValidationResult,
   ValidationRule,
   ValidationRuleContext,
@@ -29,7 +30,18 @@ export class ConfigValidator {
   public constructor(private readonly _args: ConfigValidatorArgs) {}
 
   public async validate(): Promise<boolean> {
-    const validationResult = this._buildValidationResult();
+    const validationTargets = this._buildValidationTargets();
+
+    const zodValidationIssues = this._runStaticZodValidation(validationTargets);
+
+    const businessValidationIssues = this._runBusinessValidation(validationTargets);
+
+    const deduplicatedValidationIssues = this._deduplicateValidationIssues([
+      ...zodValidationIssues,
+      ...businessValidationIssues,
+    ]);
+
+    const validationResult = new ValidationResult(deduplicatedValidationIssues);
 
     if (validationResult.isValid) return true;
 
@@ -52,12 +64,19 @@ export class ConfigValidator {
     return false;
   }
 
-  private _buildValidationResult(): ValidationResult {
-    const validationTargets = this._buildValidationTargets();
-    const rawValidationIssues = validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget));
-    const deduplicatedValidationIssues = this._deduplicateValidationIssues(rawValidationIssues);
+  private _runStaticZodValidation(validationTargets: ValidationTargetConfig[]): ValidationIssue[] {
+    return validationTargets.flatMap(validationTarget => {
+      const zodValidationResult = llmCopypasterConfigSchema.safeParse(validationTarget.mergedConfig);
+      if (zodValidationResult.success) return [];
 
-    return new ValidationResult(deduplicatedValidationIssues);
+      return zodValidationResult.error.issues.map(zodIssue =>
+        this._buildZodValidationIssue(validationTarget.sourceConfigId, zodIssue.path, zodIssue.message)
+      );
+    });
+  }
+
+  private _runBusinessValidation(validationTargets: ValidationTargetConfig[]): ValidationIssue[] {
+    return validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget));
   }
 
   private _buildValidationTargets(): ValidationTargetConfig[] {
@@ -109,6 +128,23 @@ export class ConfigValidator {
 
       return [this._buildValidationIssue(validationTarget.sourceConfigId, validationRule, violationDescription)];
     });
+  }
+
+  private _buildZodValidationIssue(
+    sourceConfigId: ValidationSourceConfigId,
+    zodIssuePath: (string | number)[],
+    zodIssueMessage: string
+  ): ValidationIssue {
+    const normalizedPath = zodIssuePath.length ? zodIssuePath.join('.') : 'root';
+
+    return {
+      sourceConfigId,
+      sources: [{ sourceConfigId }],
+      violatedRuleName: 'Static Zod Config Schema Validation',
+      ruleRationale: 'Config must match the static runtime schema before business-rule validation can safely run',
+      violationDescription: `${normalizedPath}: ${zodIssueMessage}`,
+      severity: ValidationIssueSeverity.Critical,
+    };
   }
 
   private _buildValidationIssue(
