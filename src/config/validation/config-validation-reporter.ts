@@ -50,7 +50,7 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
 
   for (const validationIssue of validationIssues) {
     sectionMarkdown += `${buildValidationIssueHeader(validationIssue)}\n\n`;
-    sectionMarkdown += `- *Violation: ${validationIssue.violationDescription}*\n`;
+    sectionMarkdown += `- Violation: ${validationIssue.violationDescription}\n`;
     sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n`;
     sectionMarkdown += `- Sources:\n${buildValidationIssueSourcesMarkdown(validationIssue.sources)}\n\n`;
   }

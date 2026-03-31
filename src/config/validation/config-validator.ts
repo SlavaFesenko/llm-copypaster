@@ -60,7 +60,7 @@ export class ConfigValidator {
       }).displayValidationReport();
     }
 
-    return false;
+    return !validationResult.criticalIssues.length;
   }
 
   private _runStaticZodValidation(validationTargets: ValidationTargetConfig[]): ValidationIssue[] {

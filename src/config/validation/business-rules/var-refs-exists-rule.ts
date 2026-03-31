@@ -1,9 +1,9 @@
-import { LlmCopypasterConfig } from '../../contracts/system-config-contracts';
+import { resolveConfigVarRefValue } from '../../../utils/config-var-ref-resolver';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class VarRefsExistRule implements ValidationRule {
   public readonly name = 'Shared variable config refs must point to existing config sections';
-  public readonly rationale = 'Otherwise prompt variables resolve to broken paths';
+  public readonly rationale = 'Otherwise prompt variables will not be resolved';
   public readonly severity = ValidationIssueSeverity.Warning;
   public readonly skipForOverrides = false;
 
@@ -21,38 +21,18 @@ export class VarRefsExistRule implements ValidationRule {
     const sharedVariablesById = validationRuleContext.mergedConfig.coreSettings.instructionsAndVariables.sharedVariablesById;
 
     return Object.entries(sharedVariablesById)
-      .filter(([, sharedVariableValue]) => sharedVariableValue.startsWith(configRefVarAnchor))
-      .filter(
-        ([, sharedVariableValue]) =>
-          !this._doesConfigRefPathExist(validationRuleContext.mergedConfig, sharedVariableValue, configRefVarAnchor)
-      )
+      .filter(([, sharedVariableValue]) => {
+        const configVarRefResolution = resolveConfigVarRefValue(
+          validationRuleContext.mergedConfig,
+          sharedVariableValue,
+          configRefVarAnchor
+        );
+
+        return configVarRefResolution.isConfigVarRef && configVarRefResolution.resolvedValue === undefined;
+      })
       .map(
         ([sharedVariableId, sharedVariableValue]) =>
           `coreSettings.instructionsAndVariables.sharedVariablesById.${sharedVariableId}: "${sharedVariableValue}"`
       );
-  }
-
-  private _doesConfigRefPathExist(
-    mergedConfig: LlmCopypasterConfig,
-    sharedVariableValue: string,
-    configRefVarAnchor: string
-  ): boolean {
-    const configRefPath = sharedVariableValue.slice(configRefVarAnchor.length);
-    const configRefPathSegments = configRefPath.split('.').filter(configRefPathSegment => configRefPathSegment.length);
-
-    let currentConfigNode: unknown = mergedConfig;
-
-    for (const configRefPathSegment of configRefPathSegments) {
-      if (!this._isObjectLike(currentConfigNode)) return false;
-      if (!(configRefPathSegment in currentConfigNode)) return false;
-
-      currentConfigNode = currentConfigNode[configRefPathSegment];
-    }
-
-    return true;
-  }
-
-  private _isObjectLike(value: unknown): value is Record<string, unknown> {
-    return value !== null && typeof value === 'object';
   }
 }

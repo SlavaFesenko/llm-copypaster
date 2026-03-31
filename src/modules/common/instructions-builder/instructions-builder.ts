@@ -2,14 +2,13 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
-import get from 'lodash/get';
-
 import {
   InstructionConfig,
   InstructionsAndVariablesConfig,
   LlmCopypasterConfig,
 } from '../../../config/contracts/system-config-contracts';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
+import { resolveConfigVarRefValue } from '../../../utils/config-var-ref-resolver';
 import {
   collapseEmptyLines,
   normalizeDirectPlaceholderValue,
@@ -229,16 +228,10 @@ export class InstructionsBuilder {
     resolveIssues: InstructionsResolveIssuesBag
   ): unknown | undefined {
     const configVariablePrefix = this._config.nonOverrideableSettings.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
+    const configVarRefResolution = resolveConfigVarRefValue(this._config, rawTemplate, configVariablePrefix);
 
-    const normalized = (rawTemplate ?? '').trim();
-    if (!configVariablePrefix) return undefined;
-    if (!normalized.startsWith(configVariablePrefix)) return undefined;
-
-    const rawPath = normalized.slice(configVariablePrefix.length).trim();
-    if (!rawPath) return rawTemplate;
-
-    const resolvedValue = get(this._config, rawPath);
-    if (resolvedValue === undefined) {
+    if (!configVarRefResolution.isConfigVarRef) return undefined;
+    if (configVarRefResolution.resolvedValue === undefined) {
       resolveIssues.configVariablesIssues.push({
         sharedVariableId,
         rawTemplate,
@@ -249,7 +242,7 @@ export class InstructionsBuilder {
       return rawTemplate;
     }
 
-    return normalizeDirectPlaceholderValue(resolvedValue);
+    return normalizeDirectPlaceholderValue(configVarRefResolution.resolvedValue);
   }
 
   private async _readInstructionText(
