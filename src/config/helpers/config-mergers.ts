@@ -197,39 +197,44 @@ export function mapInstructionsById(
   baseInstructionsById: Record<string, InstructionConfig>,
   userInstructionsById: Record<string, InstructionUserConfig>
 ): Record<string, InstructionConfig> {
+  // Start from the base dictionary and override only instruction ids provided by the user
   const nextInstructionsById: Record<string, InstructionConfig> = { ...baseInstructionsById };
 
+  // Process only user-defined instruction ids, because untouched base instructions are already copied above
   for (const instructionId of Object.keys(userInstructionsById)) {
     const baseInstruction = baseInstructionsById[instructionId];
     const userInstruction = userInstructionsById[instructionId];
 
+    // This branch handles a brand new instruction that does not exist in the base config yet
     if (!baseInstruction) {
-      if (
-        userInstruction.path === undefined ||
-        userInstruction.skip === undefined ||
-        userInstruction.showInOverrideMode === undefined ||
-        userInstruction.showInQuickInstructionMode === undefined
-      )
-        continue;
+      // A new instruction is valid only when its required fields are provided explicitly
+      if (userInstruction.path === undefined || userInstruction.skip === undefined) continue;
 
       nextInstructionsById[instructionId] = {
         path: userInstruction.path,
         skip: userInstruction.skip,
-        showInOverrideMode: userInstruction.showInOverrideMode,
-        showInQuickInstructionMode: userInstruction.showInQuickInstructionMode,
+        // Optional visibility flags default to false for newly created instructions
+        showInOverrideMode: !!userInstruction.showInOverrideMode,
+        showInQuickInstructionMode: !!userInstruction.showInQuickInstructionMode,
       };
 
       continue;
     }
 
+    // This branch merges a user override into an existing base instruction
     nextInstructionsById[instructionId] = {
       path: mergeOptionalValue(baseInstruction.path, userInstruction.path),
       skip: mergeOptionalValue(baseInstruction.skip, userInstruction.skip),
-      showInOverrideMode: mergeOptionalValue(baseInstruction.showInOverrideMode, userInstruction.showInOverrideMode),
-      showInQuickInstructionMode: mergeOptionalValue(
-        baseInstruction.showInQuickInstructionMode,
-        userInstruction.showInQuickInstructionMode
-      ),
+      // Preserve the base flag when the user did not specify an override explicitly
+      showInOverrideMode:
+        userInstruction.showInOverrideMode === undefined
+          ? baseInstruction.showInOverrideMode
+          : userInstruction.showInOverrideMode,
+      // Preserve the base flag when the user did not specify an override explicitly
+      showInQuickInstructionMode:
+        userInstruction.showInQuickInstructionMode === undefined
+          ? baseInstruction.showInQuickInstructionMode
+          : userInstruction.showInQuickInstructionMode,
     };
   }
 
