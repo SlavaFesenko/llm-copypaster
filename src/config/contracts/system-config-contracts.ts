@@ -4,6 +4,10 @@ import {
   buildVitalAnchorSchema,
 } from '../validation/static-rules/vital-parsing-anchors-rules';
 
+const nonEmptyStringSchema = z.string().trim().min(1);
+const nonNegativeIntegerSchema = z.number().int().nonnegative();
+const positiveFiniteNumberSchema = z.number().finite().positive();
+
 export interface LlmCopypasterConfig {
   nonOverrideableSettings: NonOverrideableSettingsConfig;
   coreSettings: CoreSettingsConfig;
@@ -80,9 +84,9 @@ export interface PromptLimitsConfig {
 
 export const promptLimitsConfigSchema = z.object({
   skipPromptSizeStatsInCopyNotification: z.boolean(),
-  charsPerToken: z.number(),
-  linesMaxToShowWarning: z.number(),
-  tokensMaxToShowWarning: z.number(),
+  charsPerToken: positiveFiniteNumberSchema,
+  linesMaxToShowWarning: nonNegativeIntegerSchema,
+  tokensMaxToShowWarning: nonNegativeIntegerSchema,
 }) satisfies z.ZodType<PromptLimitsConfig>;
 
 export interface IdeToLlmConfig extends PromptLimitsConfig {}
@@ -126,7 +130,7 @@ export interface InstructionConfig {
 }
 
 export const instructionConfigSchema = z.object({
-  path: z.string(),
+  path: nonEmptyStringSchema,
   skip: z.boolean(),
   showInOverrideMode: z.boolean(),
   showInQuickInstructionMode: z.boolean(),
@@ -140,8 +144,8 @@ export interface LlmToIdeSanitizationRuleConfig {
 }
 
 export const llmToIdeSanitizationRuleConfigSchema = z.object({
-  regexPattern: z.string(),
+  regexPattern: nonEmptyStringSchema,
   replaceWith: z.string(),
-  skipForLanguages: z.array(z.string()),
-  skipForPaths: z.array(z.string()),
+  skipForLanguages: z.array(nonEmptyStringSchema),
+  skipForPaths: z.array(nonEmptyStringSchema),
 }) satisfies z.ZodType<LlmToIdeSanitizationRuleConfig>;
