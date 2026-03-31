@@ -54,9 +54,14 @@ export function mergeNonOverrideableSettingsConfig(
   if (!userSettings) return baseSettings;
 
   return {
-    allowOutsideWorkspaceRead: userSettings.allowOutsideWorkspaceRead ?? baseSettings.allowOutsideWorkspaceRead,
-    allowOutsideWorkspaceWrite: userSettings.allowOutsideWorkspaceWrite ?? baseSettings.allowOutsideWorkspaceWrite,
-
+    allowOutsideWorkspaceRead: mergeOptionalValue(
+      baseSettings.allowOutsideWorkspaceRead,
+      userSettings.allowOutsideWorkspaceRead
+    ),
+    allowOutsideWorkspaceWrite: mergeOptionalValue(
+      baseSettings.allowOutsideWorkspaceWrite,
+      userSettings.allowOutsideWorkspaceWrite
+    ),
     vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseSettings.vitalParsingAnchors, userSettings.vitalParsingAnchors),
   };
 }
@@ -68,13 +73,16 @@ export function mergeLlmToIdeParsingAnchors(
   if (!userAnchors) return baseAnchors;
 
   return {
-    PROMPT_DELIMITER_ANCHOR: userAnchors.PROMPT_DELIMITER_ANCHOR ?? baseAnchors.PROMPT_DELIMITER_ANCHOR,
-    CODE_LISTING_HEADER_ANCHOR: userAnchors.CODE_LISTING_HEADER_ANCHOR ?? baseAnchors.CODE_LISTING_HEADER_ANCHOR,
-    FILE_STATUS_ANCHOR: userAnchors.FILE_STATUS_ANCHOR ?? baseAnchors.FILE_STATUS_ANCHOR,
-    FILE_EDITED_FULL_ANCHOR: userAnchors.FILE_EDITED_FULL_ANCHOR ?? baseAnchors.FILE_EDITED_FULL_ANCHOR,
-    FILE_CREATED_ANCHOR: userAnchors.FILE_CREATED_ANCHOR ?? baseAnchors.FILE_CREATED_ANCHOR,
-    FILE_DELETED_ANCHOR: userAnchors.FILE_DELETED_ANCHOR ?? baseAnchors.FILE_DELETED_ANCHOR,
-    CONFIG_REF_VAR_ANCHOR: userAnchors.CONFIG_REF_VAR_ANCHOR ?? baseAnchors.CONFIG_REF_VAR_ANCHOR,
+    PROMPT_DELIMITER_ANCHOR: mergeOptionalValue(baseAnchors.PROMPT_DELIMITER_ANCHOR, userAnchors.PROMPT_DELIMITER_ANCHOR),
+    CODE_LISTING_HEADER_ANCHOR: mergeOptionalValue(
+      baseAnchors.CODE_LISTING_HEADER_ANCHOR,
+      userAnchors.CODE_LISTING_HEADER_ANCHOR
+    ),
+    FILE_STATUS_ANCHOR: mergeOptionalValue(baseAnchors.FILE_STATUS_ANCHOR, userAnchors.FILE_STATUS_ANCHOR),
+    FILE_EDITED_FULL_ANCHOR: mergeOptionalValue(baseAnchors.FILE_EDITED_FULL_ANCHOR, userAnchors.FILE_EDITED_FULL_ANCHOR),
+    FILE_CREATED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_CREATED_ANCHOR, userAnchors.FILE_CREATED_ANCHOR),
+    FILE_DELETED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_DELETED_ANCHOR, userAnchors.FILE_DELETED_ANCHOR),
+    CONFIG_REF_VAR_ANCHOR: mergeOptionalValue(baseAnchors.CONFIG_REF_VAR_ANCHOR, userAnchors.CONFIG_REF_VAR_ANCHOR),
     END_OF_OUTPUT_ANCHOR: mergeNullableAnchor(baseAnchors.END_OF_OUTPUT_ANCHOR, userAnchors.END_OF_OUTPUT_ANCHOR),
   };
 }
@@ -84,8 +92,6 @@ export function mergeNullableAnchor(
   userAnchorValue: string | null | undefined
 ): string | null {
   if (userAnchorValue === undefined) return baseAnchorValue;
-  if (userAnchorValue === null) return null;
-  if (!userAnchorValue.trim()) return null;
 
   return userAnchorValue;
 }
@@ -97,8 +103,8 @@ export function mergeCoreSettingsConfig(
   if (!userSettings) return baseSettings;
 
   return {
-    skipInstructions: userSettings.skipInstructions ?? baseSettings.skipInstructions,
-    skipCodeListings: userSettings.skipCodeListings ?? baseSettings.skipCodeListings,
+    skipInstructions: mergeOptionalValue(baseSettings.skipInstructions, userSettings.skipInstructions),
+    skipCodeListings: mergeOptionalValue(baseSettings.skipCodeListings, userSettings.skipCodeListings),
     ideToLlm: mergeIdeToLlmContextConfig(baseSettings.ideToLlm, userSettings.ideToLlm),
     llmToIde: mergeLlmToIdeContextConfig(baseSettings.llmToIde, userSettings.llmToIde),
     postFilePatchActions: mergePostFilePatchActionsConfig(
@@ -123,11 +129,13 @@ export function mergeIdeToLlmContextConfig(
   if (!userConfig) return baseConfig;
 
   return {
-    skipPromptSizeStatsInCopyNotification:
-      userConfig.skipPromptSizeStatsInCopyNotification ?? baseConfig.skipPromptSizeStatsInCopyNotification,
-    charsPerToken: userConfig.charsPerToken ?? baseConfig.charsPerToken,
-    linesMaxToShowWarning: userConfig.linesMaxToShowWarning ?? baseConfig.linesMaxToShowWarning,
-    tokensMaxToShowWarning: userConfig.tokensMaxToShowWarning ?? baseConfig.tokensMaxToShowWarning,
+    skipPromptSizeStatsInCopyNotification: mergeOptionalValue(
+      baseConfig.skipPromptSizeStatsInCopyNotification,
+      userConfig.skipPromptSizeStatsInCopyNotification
+    ),
+    charsPerToken: mergeOptionalValue(baseConfig.charsPerToken, userConfig.charsPerToken),
+    linesMaxToShowWarning: mergeOptionalValue(baseConfig.linesMaxToShowWarning, userConfig.linesMaxToShowWarning),
+    tokensMaxToShowWarning: mergeOptionalValue(baseConfig.tokensMaxToShowWarning, userConfig.tokensMaxToShowWarning),
   };
 }
 
@@ -138,11 +146,13 @@ export function mergeLlmToIdeContextConfig(
   if (!userConfig) return baseConfig;
 
   return {
-    skipPromptSizeStatsInCopyNotification:
-      userConfig.skipPromptSizeStatsInCopyNotification ?? baseConfig.skipPromptSizeStatsInCopyNotification,
-    charsPerToken: userConfig.charsPerToken ?? baseConfig.charsPerToken,
-    linesMaxToShowWarning: userConfig.linesMaxToShowWarning ?? baseConfig.linesMaxToShowWarning,
-    tokensMaxToShowWarning: userConfig.tokensMaxToShowWarning ?? baseConfig.tokensMaxToShowWarning,
+    skipPromptSizeStatsInCopyNotification: mergeOptionalValue(
+      baseConfig.skipPromptSizeStatsInCopyNotification,
+      userConfig.skipPromptSizeStatsInCopyNotification
+    ),
+    charsPerToken: mergeOptionalValue(baseConfig.charsPerToken, userConfig.charsPerToken),
+    linesMaxToShowWarning: mergeOptionalValue(baseConfig.linesMaxToShowWarning, userConfig.linesMaxToShowWarning),
+    tokensMaxToShowWarning: mergeOptionalValue(baseConfig.tokensMaxToShowWarning, userConfig.tokensMaxToShowWarning),
   };
 }
 
@@ -153,10 +163,15 @@ export function mergePostFilePatchActionsConfig(
   if (!userConfig) return baseConfig;
 
   return {
-    enableSaveAfterFilePatch: userConfig.enableSaveAfterFilePatch ?? baseConfig.enableSaveAfterFilePatch,
-    enableLintingAfterFilePatch: userConfig.enableLintingAfterFilePatch ?? baseConfig.enableLintingAfterFilePatch,
-    enableOpeningPatchedFilesInEditor:
-      userConfig.enableOpeningPatchedFilesInEditor ?? baseConfig.enableOpeningPatchedFilesInEditor,
+    enableSaveAfterFilePatch: mergeOptionalValue(baseConfig.enableSaveAfterFilePatch, userConfig.enableSaveAfterFilePatch),
+    enableLintingAfterFilePatch: mergeOptionalValue(
+      baseConfig.enableLintingAfterFilePatch,
+      userConfig.enableLintingAfterFilePatch
+    ),
+    enableOpeningPatchedFilesInEditor: mergeOptionalValue(
+      baseConfig.enableOpeningPatchedFilesInEditor,
+      userConfig.enableOpeningPatchedFilesInEditor
+    ),
   };
 }
 
@@ -189,23 +204,32 @@ export function mapInstructionsById(
     const userInstruction = userInstructionsById[instructionId];
 
     if (!baseInstruction) {
-      if (!userInstruction.path || userInstruction.skip === undefined) continue;
+      if (
+        userInstruction.path === undefined ||
+        userInstruction.skip === undefined ||
+        userInstruction.showInOverrideMode === undefined ||
+        userInstruction.showInQuickInstructionMode === undefined
+      )
+        continue;
 
       nextInstructionsById[instructionId] = {
         path: userInstruction.path,
         skip: userInstruction.skip,
-        showInOverrideMode: !!userInstruction.showInOverrideMode,
-        showInQuickInstructionMode: !!userInstruction.showInQuickInstructionMode,
+        showInOverrideMode: userInstruction.showInOverrideMode,
+        showInQuickInstructionMode: userInstruction.showInQuickInstructionMode,
       };
 
       continue;
     }
 
     nextInstructionsById[instructionId] = {
-      path: userInstruction.path ?? baseInstruction.path,
-      skip: userInstruction.skip ?? baseInstruction.skip,
-      showInOverrideMode: !!userInstruction.showInOverrideMode,
-      showInQuickInstructionMode: !!userInstruction.showInQuickInstructionMode,
+      path: mergeOptionalValue(baseInstruction.path, userInstruction.path),
+      skip: mergeOptionalValue(baseInstruction.skip, userInstruction.skip),
+      showInOverrideMode: mergeOptionalValue(baseInstruction.showInOverrideMode, userInstruction.showInOverrideMode),
+      showInQuickInstructionMode: mergeOptionalValue(
+        baseInstruction.showInQuickInstructionMode,
+        userInstruction.showInQuickInstructionMode
+      ),
     };
   }
 
@@ -234,10 +258,10 @@ export function mapLlmToIdeSanitizationRulesById(
 
     if (!baseRule) {
       if (
-        !userRule.regexPattern ||
+        userRule.regexPattern === undefined ||
         userRule.replaceWith === undefined ||
-        !userRule.skipForLanguages ||
-        !userRule.skipForPaths
+        userRule.skipForLanguages === undefined ||
+        userRule.skipForPaths === undefined
       )
         continue;
 
@@ -252,12 +276,18 @@ export function mapLlmToIdeSanitizationRulesById(
     }
 
     nextRulesById[ruleId] = {
-      regexPattern: userRule.regexPattern ?? baseRule.regexPattern,
-      replaceWith: userRule.replaceWith ?? baseRule.replaceWith,
-      skipForLanguages: userRule.skipForLanguages ?? baseRule.skipForLanguages,
-      skipForPaths: userRule.skipForPaths ?? baseRule.skipForPaths,
+      regexPattern: mergeOptionalValue(baseRule.regexPattern, userRule.regexPattern),
+      replaceWith: mergeOptionalValue(baseRule.replaceWith, userRule.replaceWith),
+      skipForLanguages: mergeOptionalValue(baseRule.skipForLanguages, userRule.skipForLanguages),
+      skipForPaths: mergeOptionalValue(baseRule.skipForPaths, userRule.skipForPaths),
     };
   }
 
   return nextRulesById;
+}
+
+export function mergeOptionalValue<T>(baseValue: T, userValue: T | undefined): T {
+  if (userValue === undefined) return baseValue;
+
+  return userValue;
 }
