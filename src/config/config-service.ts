@@ -3,6 +3,7 @@ import { LlmCopypasterConfig } from './contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from './contracts/user-config-contracts';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
 import { mergeConfigs } from './helpers/config-mergers';
+import { ConfigRefVarsResolver } from './helpers/config-ref-vars-resolver';
 import { buildMergedConfigDebugData } from './reporters/reporting-helpers';
 
 export class ConfigService {
@@ -10,6 +11,7 @@ export class ConfigService {
   private _userConfig?: LlmCopypasterUserConfig | null;
   private _systemUserMergedConfig?: LlmCopypasterConfig;
   private _overrideOptions?: OverrideOptionMetadata[] | null;
+  private readonly _configRefVarsResolver = new ConfigRefVarsResolver();
 
   public get overrideOptions(): OverrideOptionMetadata[] | null {
     if (this._overrideOptions === null) return null;
@@ -79,7 +81,7 @@ export class ConfigService {
     const systemConfig = await this.getSystemConfig();
     const userConfig = await this.getUserConfig();
 
-    return mergeConfigs(
+    const mergedConfig = mergeConfigs(
       systemConfig,
       userConfig
         ? {
@@ -89,6 +91,8 @@ export class ConfigService {
           }
         : null
     );
+
+    return this._configRefVarsResolver.resolve(mergedConfig);
   }
 
   private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {
