@@ -7,6 +7,7 @@ import {
 const nonEmptyStringSchema = z.string().trim().min(1);
 const nonNegativeIntegerSchema = z.number().int().nonnegative();
 const positiveFiniteNumberSchema = z.number().finite().positive();
+const sharedVariableValueTypeSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
 export interface LlmCopypasterConfig {
   nonOverrideableSettings: NonOverrideableSettingsConfig;
@@ -109,9 +110,11 @@ export const postFilePatchActionsConfigSchema = z.object({
   enableOpeningPatchedFilesInEditor: z.boolean(),
 }) satisfies z.ZodType<PostFilePatchActionsConfig>;
 
+export type SharedVariableValueType = string | number | boolean | null;
+
 export interface InstructionsAndVariablesConfig {
   instructionsById: Record<string, InstructionConfig>;
-  sharedVariablesById: Record<string, string>;
+  sharedVariablesById: Record<string, SharedVariableValueType>;
 }
 
 export const instructionsAndVariablesConfigSchema = z.object({
@@ -119,7 +122,7 @@ export const instructionsAndVariablesConfigSchema = z.object({
     z.string(),
     z.lazy(() => instructionConfigSchema)
   ),
-  sharedVariablesById: z.record(z.string(), z.string()),
+  sharedVariablesById: z.record(z.string(), sharedVariableValueTypeSchema),
 }) satisfies z.ZodType<InstructionsAndVariablesConfig>;
 
 export interface InstructionConfig {

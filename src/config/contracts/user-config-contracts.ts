@@ -48,9 +48,11 @@ export interface PostFilePatchActionsUserConfig {
   enableOpeningPatchedFilesInEditor?: boolean;
 }
 
+export type UserConfigSharedVariableValueType = string | number | boolean | null;
+
 export interface InstructionsAndVariablesUserConfig {
   instructionsById?: Record<string, InstructionUserConfig>;
-  sharedVariablesById?: Record<string, string>;
+  sharedVariablesById?: Record<string, UserConfigSharedVariableValueType>;
 }
 
 export interface InstructionUserConfig {

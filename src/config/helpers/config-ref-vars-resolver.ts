@@ -1,12 +1,6 @@
 import get from 'lodash/get';
 
-import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
-
-export interface ConfigVarRefResolution {
-  isConfigVarRef: boolean;
-  configRefPath: string | null;
-  resolvedValue: unknown;
-}
+import { LlmCopypasterConfig, SharedVariableValueType } from '../contracts/system-config-contracts';
 
 export class ConfigRefVarsResolver {
   public static readonly unresolvedConfigVarRefValue = '__unresolved_ref_var_value__';
@@ -34,62 +28,54 @@ export class ConfigRefVarsResolver {
     };
   }
 
-  public resolveConfigVarRefValue(config: LlmCopypasterConfig, rawTemplate: string): ConfigVarRefResolution {
+  private _resolveConfigVarRefValue(
+    config: LlmCopypasterConfig,
+    rawTemplate: SharedVariableValueType
+  ): SharedVariableValueType | undefined {
+    if (typeof rawTemplate !== 'string') return undefined;
+
     const configRefVarAnchor = config.nonOverrideableSettings.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
     const normalizedRawTemplate = (rawTemplate ?? '').trim();
 
-    if (!configRefVarAnchor || !normalizedRawTemplate.startsWith(configRefVarAnchor)) {
-      return {
-        isConfigVarRef: false,
-        configRefPath: null,
-        resolvedValue: undefined,
-      };
-    }
+    if (!configRefVarAnchor || !normalizedRawTemplate.startsWith(configRefVarAnchor)) return undefined;
 
     const configRefPath = normalizedRawTemplate.slice(configRefVarAnchor.length).trim();
 
-    if (!configRefPath) {
-      return {
-        isConfigVarRef: true,
-        configRefPath,
-        resolvedValue: rawTemplate,
-      };
-    }
+    if (!configRefPath) return rawTemplate;
 
-    return {
-      isConfigVarRef: true,
-      configRefPath,
-      resolvedValue: get(config, configRefPath),
-    };
-  }
+    const resolvedValue = get(config, configRefPath);
 
-  private _resolveSharedVariableValue(config: LlmCopypasterConfig, sharedVariableValue: string): string {
-    const configVarRefResolution = this.resolveConfigVarRefValue(config, sharedVariableValue);
+    if (resolvedValue === undefined) return ConfigRefVarsResolver.unresolvedConfigVarRefValue;
+    if (resolvedValue === null) return null;
 
-    if (!configVarRefResolution.isConfigVarRef) return sharedVariableValue;
-
-    if (configVarRefResolution.resolvedValue === undefined) return ConfigRefVarsResolver.unresolvedConfigVarRefValue;
-    if (configVarRefResolution.resolvedValue === null) return ConfigRefVarsResolver.unresolvedConfigVarRefValue;
-
-    if (typeof configVarRefResolution.resolvedValue === 'string') return configVarRefResolution.resolvedValue;
-    if (typeof configVarRefResolution.resolvedValue === 'number') return String(configVarRefResolution.resolvedValue);
-    if (typeof configVarRefResolution.resolvedValue === 'boolean') return String(configVarRefResolution.resolvedValue);
+    if (typeof resolvedValue === 'string') return resolvedValue;
+    if (typeof resolvedValue === 'number') return resolvedValue;
+    if (typeof resolvedValue === 'boolean') return resolvedValue;
 
     // Arrays need two modes:
     // * scalar items => item1|item2|item3
     // * object/nested items => stableJson(item1)|stableJson(item2)
-    if (Array.isArray(configVarRefResolution.resolvedValue))
-      return this._stringifyArrayValue(configVarRefResolution.resolvedValue);
+    if (Array.isArray(resolvedValue)) return this._stringifyArrayValue(resolvedValue);
 
     // Plain objects are serialized with stable key order so the prompt text is deterministic
-    if (typeof configVarRefResolution.resolvedValue === 'object')
-      return this._stringifyStableJsonValue(configVarRefResolution.resolvedValue);
+    if (typeof resolvedValue === 'object') return this._stringifyStableJsonValue(resolvedValue);
 
     return ConfigRefVarsResolver.unresolvedConfigVarRefValue;
   }
 
+  private _resolveSharedVariableValue(
+    config: LlmCopypasterConfig,
+    sharedVariableValue: SharedVariableValueType
+  ): SharedVariableValueType {
+    const resolvedConfigVarValue = this._resolveConfigVarRefValue(config, sharedVariableValue);
+
+    if (resolvedConfigVarValue === undefined) return sharedVariableValue;
+
+    return resolvedConfigVarValue;
+  }
+
   private _stringifyArrayValue(arrayValue: unknown[]): string {
-    if (arrayValue.every(arrayItem => this._isScalarValue(arrayItem)))
+    if (arrayValue.every(arrayItem => this._isScalarValue(arrayItem) || arrayItem === null))
       return arrayValue.map(arrayItem => String(arrayItem)).join('|');
 
     return arrayValue.map(arrayItem => this._stringifyStableJsonValue(arrayItem)).join('|');
