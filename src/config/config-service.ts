@@ -59,6 +59,7 @@ export class ConfigService {
       const overrideCoreSettings = userConfig?.overridesById?.[overrideId]?.coreSettings;
       if (!overrideCoreSettings) continue;
 
+      // every new iteration modifies already modified value preparing multi-override config
       mergedConfig = mergeConfigs(mergedConfig, {
         coreSettings: overrideCoreSettings,
       });
