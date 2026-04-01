@@ -7,14 +7,9 @@ import {
   InstructionsAndVariablesConfig,
   LlmCopypasterConfig,
 } from '../../../config/contracts/system-config-contracts';
+import { ConfigRefVarsResolver } from '../../../config/helpers/config-ref-vars-resolver';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
-import { resolveConfigVarRefValue } from '../../../utils/config-var-ref-resolver';
-import {
-  collapseEmptyLines,
-  normalizeDirectPlaceholderValue,
-  tryExtractConfigVariablePath,
-  tryParseScalarLiquidValue,
-} from './helpers';
+import { collapseEmptyLines } from './helpers';
 import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './report-helpers';
 
 export enum InstructionsBuilderMode {
@@ -60,7 +55,7 @@ export class InstructionsBuilder {
       liquidJsIssues: [],
     };
 
-    const resolvedSharedVariablesById = await this._resolveSharedVariablesById(resolveIssuesBag);
+    const resolvedSharedVariablesById = this._resolveSharedVariablesById(resolveIssuesBag);
 
     const finalInstructionsText: string[] = [];
 
@@ -168,81 +163,24 @@ export class InstructionsBuilder {
     return normalizedRenderedText;
   }
 
-  private async _resolveSharedVariablesById(resolveIssues: InstructionsResolveIssuesBag): Promise<Record<string, unknown>> {
-    const rawSharedVariablesById = this._config.coreSettings.instructionsAndVariables.sharedVariablesById ?? {};
+  private _resolveSharedVariablesById(resolveIssues: InstructionsResolveIssuesBag): Record<string, unknown> {
+    const resolvedSharedVariablesById = this._config.coreSettings.instructionsAndVariables.sharedVariablesById ?? {};
 
-    const resolvedSharedVariablesById: Record<string, unknown> = {};
+    for (const sharedVariableId of Object.keys(resolvedSharedVariablesById)) {
+      const resolvedSharedVariableValue = resolvedSharedVariablesById[sharedVariableId];
 
-    for (const sharedVariableId of Object.keys(rawSharedVariablesById)) {
-      const rawTemplate = rawSharedVariablesById[sharedVariableId] ?? '';
+      // Shared variables are already pre-resolved before InstructionsBuilder.
+      // We only keep this check to preserve the existing report contract for unresolved refs.
+      if (resolvedSharedVariableValue !== ConfigRefVarsResolver.unresolvedConfigVarRefValue) continue;
 
-      const directResolvedConfigValueOrUndefined = this._tryResolveDirectConfigTemplate(
-        rawTemplate,
+      resolveIssues.configVariablesIssues.push({
         sharedVariableId,
-        resolveIssues
-      );
-      if (directResolvedConfigValueOrUndefined !== undefined) {
-        resolvedSharedVariablesById[sharedVariableId] = directResolvedConfigValueOrUndefined;
-        continue;
-      }
-
-      let renderedValueOrNull: string | null = null;
-
-      try {
-        renderedValueOrNull = await this._liquidStrict.parseAndRender(rawTemplate, {
-          LLM_CPP_CFG: this._config,
-        });
-      } catch (error: unknown) {
-        const errorText = error instanceof Error ? error.message || error.name : String(error);
-
-        resolveIssues.configVariablesIssues.push({
-          sharedVariableId,
-          rawTemplate,
-          configVariablePath: tryExtractConfigVariablePath(
-            rawTemplate,
-            this._config.nonOverrideableSettings.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR
-          ),
-          errorText,
-        });
-      }
-
-      if (renderedValueOrNull === null) {
-        try {
-          renderedValueOrNull = await this._liquidLight.parseAndRender(rawTemplate, {
-            LLM_CPP_CFG: this._config,
-          });
-        } catch {
-          renderedValueOrNull = rawTemplate;
-        }
-      }
-
-      resolvedSharedVariablesById[sharedVariableId] = tryParseScalarLiquidValue(renderedValueOrNull ?? '');
+        rawTemplate: String(resolvedSharedVariableValue),
+        errorText: 'Config value not found for direct placeholder resolution',
+      });
     }
 
     return resolvedSharedVariablesById;
-  }
-
-  private _tryResolveDirectConfigTemplate(
-    rawTemplate: string,
-    sharedVariableId: string,
-    resolveIssues: InstructionsResolveIssuesBag
-  ): unknown | undefined {
-    const configVariablePrefix = this._config.nonOverrideableSettings.vitalParsingAnchors.CONFIG_REF_VAR_ANCHOR;
-    const configVarRefResolution = resolveConfigVarRefValue(this._config, rawTemplate, configVariablePrefix);
-
-    if (!configVarRefResolution.isConfigVarRef) return undefined;
-    if (configVarRefResolution.resolvedValue === undefined) {
-      resolveIssues.configVariablesIssues.push({
-        sharedVariableId,
-        rawTemplate,
-        configVariablePath: tryExtractConfigVariablePath(rawTemplate, configVariablePrefix),
-        errorText: 'Config value not found for direct placeholder resolution',
-      });
-
-      return rawTemplate;
-    }
-
-    return normalizeDirectPlaceholderValue(configVarRefResolution.resolvedValue);
   }
 
   private async _readInstructionText(
