@@ -31,7 +31,6 @@ export class ConfigService {
     if (this._userConfig !== undefined) return this._userConfig;
 
     this._userConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
-    this._overrideOptions = this._setOverrideOptions(this._userConfig);
 
     return this._userConfig;
   }
@@ -39,19 +38,7 @@ export class ConfigService {
   public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
     if (this._systemUserMergedConfig) return this._systemUserMergedConfig;
 
-    const systemConfig = await this.getSystemConfig();
-    const userConfig = await this.getUserConfig();
-
-    this._systemUserMergedConfig = mergeConfigs(
-      systemConfig,
-      userConfig
-        ? {
-            nonOverrideableSettings: userConfig.nonOverrideableSettings,
-            coreSettings: userConfig.coreSettings,
-            overridesById: undefined, // overridesById should not be exposed
-          }
-        : null
-    );
+    this._systemUserMergedConfig = await this._buildSystemUserMergedConfig();
 
     return this._systemUserMergedConfig;
   }
@@ -86,6 +73,22 @@ export class ConfigService {
         mergedConfig,
       }),
     };
+  }
+
+  private async _buildSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
+    const systemConfig = await this.getSystemConfig();
+    const userConfig = await this.getUserConfig();
+
+    return mergeConfigs(
+      systemConfig,
+      userConfig
+        ? {
+            nonOverrideableSettings: userConfig.nonOverrideableSettings,
+            coreSettings: userConfig.coreSettings,
+            overridesById: undefined, // overridesById should not be exposed
+          }
+        : null
+    );
   }
 
   private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {
