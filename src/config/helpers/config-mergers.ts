@@ -82,7 +82,6 @@ export function mergeLlmToIdeParsingAnchors(
     FILE_EDITED_FULL_ANCHOR: mergeOptionalValue(baseAnchors.FILE_EDITED_FULL_ANCHOR, userAnchors.FILE_EDITED_FULL_ANCHOR),
     FILE_CREATED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_CREATED_ANCHOR, userAnchors.FILE_CREATED_ANCHOR),
     FILE_DELETED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_DELETED_ANCHOR, userAnchors.FILE_DELETED_ANCHOR),
-    CONFIG_REF_VAR_ANCHOR: mergeOptionalValue(baseAnchors.CONFIG_REF_VAR_ANCHOR, userAnchors.CONFIG_REF_VAR_ANCHOR),
     END_OF_OUTPUT_ANCHOR: mergeNullableAnchor(baseAnchors.END_OF_OUTPUT_ANCHOR, userAnchors.END_OF_OUTPUT_ANCHOR),
   };
 }
@@ -182,13 +181,19 @@ export function mergeInstructionsAndVariablesConfig(
   if (!userConfig) return baseConfig;
 
   const baseSharedVariablesById = baseConfig.sharedVariablesById;
+  const baseSharedReferenceVariablesById = baseConfig.sharedReferenceVariablesById;
   const baseInstructionsById = baseConfig.instructionsById;
 
   const nextSharedVariablesById = { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
+  const nextSharedReferenceVariablesById = {
+    ...baseSharedReferenceVariablesById,
+    ...(userConfig.sharedReferenceVariablesById ?? {}),
+  };
   const nextInstructionsById = mapInstructionsById(baseInstructionsById, userConfig.instructionsById ?? {});
 
   return {
     sharedVariablesById: nextSharedVariablesById,
+    sharedReferenceVariablesById: nextSharedReferenceVariablesById,
     instructionsById: nextInstructionsById,
   };
 }

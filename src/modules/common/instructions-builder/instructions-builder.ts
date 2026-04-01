@@ -55,7 +55,7 @@ export class InstructionsBuilder {
       liquidJsIssues: [],
     };
 
-    const resolvedSharedVariablesById = this._resolveSharedVariablesById(resolveIssuesBag);
+    const resolvedTemplateVariablesById = this._resolveTemplateVariablesById(resolveIssuesBag);
 
     const finalInstructionsText: string[] = [];
 
@@ -67,7 +67,7 @@ export class InstructionsBuilder {
       const instructionText = await this._buildInstructionsText({
         instructionId: instructionId,
         instructionDetails: instructionDetails,
-        resolvedSharedVariablesById,
+        resolvedTemplateVariablesById,
         resolveIssuesBag: resolveIssuesBag,
       });
 
@@ -120,7 +120,7 @@ export class InstructionsBuilder {
   private async _buildInstructionsText(args: {
     instructionId: string;
     instructionDetails: InstructionConfig;
-    resolvedSharedVariablesById: Record<string, unknown>;
+    resolvedTemplateVariablesById: Record<string, unknown>;
     resolveIssuesBag: InstructionsResolveIssuesBag;
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
@@ -135,7 +135,9 @@ export class InstructionsBuilder {
     let renderedTextOrNull: string | null = null;
 
     try {
-      renderedTextOrNull = await this._liquidStrict.parseAndRender(instructionText, { ...args.resolvedSharedVariablesById });
+      renderedTextOrNull = await this._liquidStrict.parseAndRender(instructionText, {
+        ...args.resolvedTemplateVariablesById,
+      });
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
@@ -148,7 +150,7 @@ export class InstructionsBuilder {
     if (renderedTextOrNull === null) {
       try {
         renderedTextOrNull = await this._liquidLight.parseAndRender(instructionText, {
-          ...args.resolvedSharedVariablesById,
+          ...args.resolvedTemplateVariablesById,
         });
       } catch {
         return null;
@@ -163,24 +165,44 @@ export class InstructionsBuilder {
     return normalizedRenderedText;
   }
 
-  private _resolveSharedVariablesById(resolveIssues: InstructionsResolveIssuesBag): Record<string, unknown> {
-    const resolvedSharedVariablesById = this._config.coreSettings.instructionsAndVariables.sharedVariablesById ?? {};
+  private _resolveTemplateVariablesById(resolveIssues: InstructionsResolveIssuesBag): Record<string, unknown> {
+    const instructionsAndVariables = this._config.coreSettings.instructionsAndVariables;
+    const sharedVariablesById = instructionsAndVariables.sharedVariablesById ?? {};
+    const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById ?? {};
 
-    for (const sharedVariableId of Object.keys(resolvedSharedVariablesById)) {
-      const resolvedSharedVariableValue = resolvedSharedVariablesById[sharedVariableId];
+    this._appendUnresolvedConfigVariablesIssues({
+      variablesById: sharedVariablesById,
+      resolveIssues,
+    });
+    this._appendUnresolvedConfigVariablesIssues({
+      variablesById: sharedReferenceVariablesById,
+      resolveIssues,
+    });
 
-      // Shared variables are already pre-resolved before InstructionsBuilder.
-      // We only keep this check to preserve the existing report contract for unresolved refs.
-      if (resolvedSharedVariableValue !== ConfigRefVarsResolver.unresolvedConfigVarRefValue) continue;
+    return {
+      ...sharedVariablesById,
+      ...sharedReferenceVariablesById,
+    };
+  }
 
-      resolveIssues.configVariablesIssues.push({
+  private _appendUnresolvedConfigVariablesIssues(args: {
+    variablesById: Record<string, unknown>;
+    resolveIssues: InstructionsResolveIssuesBag;
+  }): void {
+    for (const sharedVariableId of Object.keys(args.variablesById)) {
+      const resolvedSharedVariableValue = args.variablesById[sharedVariableId];
+      const unresolvedConfigVarRefValue =
+        ConfigRefVarsResolver.tryParseUnresolvedConfigVarRefValue(resolvedSharedVariableValue);
+
+      if (!unresolvedConfigVarRefValue) continue;
+
+      args.resolveIssues.configVariablesIssues.push({
         sharedVariableId,
-        rawTemplate: String(resolvedSharedVariableValue),
-        errorText: 'Config value not found for direct placeholder resolution',
+        rawTemplate: unresolvedConfigVarRefValue.fullVariablePath,
+        configVariablePath: unresolvedConfigVarRefValue.configReferenceValuePath,
+        errorText: unresolvedConfigVarRefValue.unresolvedReason,
       });
     }
-
-    return resolvedSharedVariablesById;
   }
 
   private async _readInstructionText(

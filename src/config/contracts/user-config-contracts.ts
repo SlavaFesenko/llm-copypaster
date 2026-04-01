@@ -18,7 +18,6 @@ export interface VitalParsingAnchorsUserConfig {
   FILE_CREATED_ANCHOR?: string;
   FILE_DELETED_ANCHOR?: string;
   END_OF_OUTPUT_ANCHOR?: string | null;
-  CONFIG_REF_VAR_ANCHOR?: string;
 }
 
 export interface CoreSettingsUserConfig {
@@ -48,11 +47,10 @@ export interface PostFilePatchActionsUserConfig {
   enableOpeningPatchedFilesInEditor?: boolean;
 }
 
-export type UserConfigSharedVariableValueType = string | number | boolean | null;
-
 export interface InstructionsAndVariablesUserConfig {
   instructionsById?: Record<string, InstructionUserConfig>;
-  sharedVariablesById?: Record<string, UserConfigSharedVariableValueType>;
+  sharedVariablesById?: Record<string, unknown>;
+  sharedReferenceVariablesById?: Record<string, string>;
 }
 
 export interface InstructionUserConfig {

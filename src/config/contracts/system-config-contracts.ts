@@ -7,7 +7,6 @@ import {
 const nonEmptyStringSchema = z.string().trim().min(1);
 const nonNegativeIntegerSchema = z.number().int().nonnegative();
 const positiveFiniteNumberSchema = z.number().finite().positive();
-const sharedVariableValueTypeSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 
 export interface LlmCopypasterConfig {
   nonOverrideableSettings: NonOverrideableSettingsConfig;
@@ -39,7 +38,6 @@ export interface VitalParsingAnchorsConfig {
   FILE_CREATED_ANCHOR: string;
   FILE_DELETED_ANCHOR: string;
   END_OF_OUTPUT_ANCHOR: string | null;
-  CONFIG_REF_VAR_ANCHOR: string;
 }
 
 export const vitalParsingAnchorsConfigSchema = z.object({
@@ -50,7 +48,6 @@ export const vitalParsingAnchorsConfigSchema = z.object({
   FILE_CREATED_ANCHOR: buildVitalAnchorSchema(),
   FILE_DELETED_ANCHOR: buildVitalAnchorSchema(),
   END_OF_OUTPUT_ANCHOR: buildNullableVitalAnchorSchema(),
-  CONFIG_REF_VAR_ANCHOR: buildVitalAnchorSchema(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
 
 export interface CoreSettingsConfig {
@@ -110,11 +107,10 @@ export const postFilePatchActionsConfigSchema = z.object({
   enableOpeningPatchedFilesInEditor: z.boolean(),
 }) satisfies z.ZodType<PostFilePatchActionsConfig>;
 
-export type SharedVariableValueType = string | number | boolean | null;
-
 export interface InstructionsAndVariablesConfig {
   instructionsById: Record<string, InstructionConfig>;
-  sharedVariablesById: Record<string, SharedVariableValueType>;
+  sharedVariablesById: Record<string, unknown>;
+  sharedReferenceVariablesById: Record<string, unknown>;
 }
 
 export const instructionsAndVariablesConfigSchema = z.object({
@@ -122,7 +118,8 @@ export const instructionsAndVariablesConfigSchema = z.object({
     z.string(),
     z.lazy(() => instructionConfigSchema)
   ),
-  sharedVariablesById: z.record(z.string(), sharedVariableValueTypeSchema),
+  sharedVariablesById: z.record(z.string(), z.unknown()),
+  sharedReferenceVariablesById: z.record(z.string(), z.unknown()),
 }) satisfies z.ZodType<InstructionsAndVariablesConfig>;
 
 export interface InstructionConfig {
