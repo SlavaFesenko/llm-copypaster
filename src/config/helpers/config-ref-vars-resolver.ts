@@ -9,8 +9,8 @@ export interface ConfigVarRefResolution {
 }
 
 export class ConfigRefVarsResolver {
-  public static readonly unresolvedConfigVarRefValue = '__unresolved_ref_var__';
-  public static readonly arrayOrObjectNotSupportedRefVarValue = '__array_or_object_not_supported_for_ref_vars__';
+  public static readonly unresolvedConfigVarRefValue = '__unresolved_ref_var_value__';
+  public static readonly objectNotSupportedAsRefVarValue = '__object_not_supported_as_ref_var_value__';
 
   public resolve(config: LlmCopypasterConfig): LlmCopypasterConfig {
     const instructionsAndVariables = config.coreSettings.instructionsAndVariables;
@@ -74,10 +74,12 @@ export class ConfigRefVarsResolver {
     if (typeof configVarRefResolution.resolvedValue === 'string') return configVarRefResolution.resolvedValue;
     if (typeof configVarRefResolution.resolvedValue === 'number') return String(configVarRefResolution.resolvedValue);
     if (typeof configVarRefResolution.resolvedValue === 'boolean') return String(configVarRefResolution.resolvedValue);
+
     if (Array.isArray(configVarRefResolution.resolvedValue))
-      return ConfigRefVarsResolver.arrayOrObjectNotSupportedRefVarValue;
+      return configVarRefResolution.resolvedValue.map(arrayItem => String(arrayItem)).join('|');
+
     if (typeof configVarRefResolution.resolvedValue === 'object')
-      return ConfigRefVarsResolver.arrayOrObjectNotSupportedRefVarValue;
+      return ConfigRefVarsResolver.objectNotSupportedAsRefVarValue;
 
     return ConfigRefVarsResolver.unresolvedConfigVarRefValue;
   }
