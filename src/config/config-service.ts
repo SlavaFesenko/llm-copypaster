@@ -50,7 +50,7 @@ export class ConfigService {
     const userConfig = await this.getUserConfig();
     const systemConfig = await this.getSystemConfig();
 
-    let mergedConfig: LlmCopypasterConfig = {
+    let multiOverrideConfig: LlmCopypasterConfig = {
       nonOverrideableSettings: systemUserMergedConfig.nonOverrideableSettings,
       coreSettings: systemUserMergedConfig.coreSettings,
     };
@@ -60,20 +60,24 @@ export class ConfigService {
       if (!overrideCoreSettings) continue;
 
       // every new iteration modifies already modified value preparing multi-override config
-      mergedConfig = mergeConfigs(mergedConfig, {
+      multiOverrideConfig = mergeConfigs(multiOverrideConfig, {
         coreSettings: overrideCoreSettings,
       });
     }
 
+    const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
+
+    // TODO: add validation call here, т.к. мы не можем прверять все варианты оверрайдов на этапе инит как для mergedConfig
+
     return {
-      mergedConfig,
+      mergedConfig: refVarResolvedMultiOverrideConfig,
       debugData: buildMergedConfigDebugData({
         overrideOptions: this.overrideOptions,
         activeOverrideIds: overrideIds,
         systemConfig,
         userConfig,
         systemUserMergedConfig,
-        mergedConfig,
+        mergedConfig: refVarResolvedMultiOverrideConfig,
       }),
     };
   }
