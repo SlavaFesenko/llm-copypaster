@@ -10,6 +10,7 @@ import {
   ValidationRuleContext,
 } from './contracts';
 import { VarRefsExistRule } from './system-config-rules/var-refs-exists-rule';
+import { UserConfigValidator } from './user-config-validator';
 
 export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
@@ -26,7 +27,7 @@ export class ConfigValidator {
 
     if (userConfig !== null) {
       validationResults.push(
-        await this._validateUserTypeConfig(userConfig),
+        this._buildValidationResult(new UserConfigValidator(userConfig, targetConfig).validate(), ['User Config']),
         await this._validateSystemTypeConfig(targetConfig, targetConfigName)
       );
     }
@@ -44,12 +45,6 @@ export class ConfigValidator {
       await this._showToastAndReportForValidationResult(aggregatedValidationResult);
 
     return !aggregatedValidationResult.criticalIssues.length;
-  }
-
-  private async _validateUserTypeConfig(userConfig: LlmCopypasterUserConfig | null): Promise<ValidationResult> {
-    void userConfig;
-
-    return this._buildValidationResult([], ['User Config']);
   }
 
   private async _validateSystemTypeConfig(
