@@ -119,7 +119,7 @@ export const instructionsAndVariablesConfigSchema = z.object({
     z.lazy(() => instructionConfigSchema)
   ),
   sharedVariablesById: z.record(z.string(), z.unknown()),
-  sharedReferenceVariablesById: z.record(z.string(), z.unknown()),
+  sharedReferenceVariablesById: z.record(z.string(), z.string()),
 }) satisfies z.ZodType<InstructionsAndVariablesConfig>;
 
 export interface InstructionConfig {

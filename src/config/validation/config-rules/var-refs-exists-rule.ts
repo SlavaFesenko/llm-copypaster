@@ -2,17 +2,20 @@ import { ConfigRefVarsResolver, UnresolvedConfigVarRefValuePayload } from '../..
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class VarRefsExistRule implements ValidationRule {
+  getViolationDescriptions(validationRuleContext: ValidationRuleContext): string[] {
+    throw new Error('Method not implemented.');
+  }
   public readonly name = 'Shared variable config refs must point to existing config sections';
   public readonly rationale = 'Otherwise instructions will receive garbage instead of expected variables-values';
   public readonly severity = ValidationIssueSeverity.Warning;
   public readonly skipForOverrides = false;
 
-  public getViolationDescriptions(validationRuleContext: ValidationRuleContext): string[] {
+  public getViolationDescription(validationRuleContext: ValidationRuleContext): string | null {
     const invalidConfigRefs = this._getInvalidConfigRefs(validationRuleContext);
 
-    if (!invalidConfigRefs.length) return [];
+    if (!invalidConfigRefs.length) return null;
 
-    return [`These ref-vars were not resolved:\n- ${invalidConfigRefs.join('\n- ')}`];
+    return `These ref-vars were not resolved:\n- ${invalidConfigRefs.join('\n- ')}`;
   }
 
   private _getInvalidConfigRefs(validationRuleContext: ValidationRuleContext): string[] {

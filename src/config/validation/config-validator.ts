@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
+import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
@@ -9,10 +9,20 @@ import {
   ValidationRule,
   ValidationRuleContext,
 } from './contracts';
-import { UserConfigValidator } from './user-config-validator';
+import { OverridesValidationPlaceholderRule } from './validation-rules/overrides-validation-placeholder-rule';
+import { SystemConfigSchemaValidationRule } from './validation-rules/system-config-schema-validation-rule';
+import { UserConfigSchemaValidationRule } from './validation-rules/user-config-schema-validation-rule';
 import { VarRefsExistRule } from './validation-rules/var-refs-exists-rule';
 
-export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
+export const systemConfigValidationRules: ValidationRule[] = [
+  new SystemConfigSchemaValidationRule(),
+  new VarRefsExistRule(),
+];
+
+export const userConfigValidationRules: ValidationRule[] = [
+  new UserConfigSchemaValidationRule(),
+  new OverridesValidationPlaceholderRule(),
+];
 
 export class ConfigValidator {
   public constructor(private readonly _extensionContext: vscode.ExtensionContext) {}
@@ -23,12 +33,13 @@ export class ConfigValidator {
     systemConfig: LlmCopypasterConfig,
     userConfig: LlmCopypasterUserConfig | null
   ): Promise<boolean> {
-    const validationResults: ValidationResult[] = [await this._validateSystemTypeConfig(systemConfig, 'System Config')];
+    const validationResults: ValidationResult[] = [
+      this._validateWithRules(targetConfig, targetConfigName, systemConfig, userConfig, systemConfigValidationRules),
+    ];
 
     if (userConfig !== null) {
       validationResults.push(
-        this._buildValidationResult(new UserConfigValidator(userConfig, targetConfig).validate(), ['User Config']),
-        await this._validateSystemTypeConfig(targetConfig, targetConfigName)
+        this._validateWithRules(targetConfig, 'User Config', systemConfig, userConfig, userConfigValidationRules)
       );
     }
 
@@ -47,47 +58,29 @@ export class ConfigValidator {
     return !aggregatedValidationResult.criticalIssues.length;
   }
 
-  private async _validateSystemTypeConfig(
+  private _validateWithRules(
     targetConfig: LlmCopypasterConfig,
-    targetConfigName: string
-  ): Promise<ValidationResult> {
-    const validationIssues: ValidationIssue[] = [];
+    targetConfigName: string,
+    systemConfig: LlmCopypasterConfig,
+    userConfig: LlmCopypasterUserConfig | null,
+    validationRules: ValidationRule[]
+  ): ValidationResult {
+    const validationRuleContext: ValidationRuleContext = {
+      targetConfigName,
+      targetConfig,
+      systemConfig,
+      userConfig,
+    };
 
-    const zodValidationResult = llmCopypasterConfigSchema.safeParse(targetConfig);
-
-    if (!zodValidationResult.success) {
-      validationIssues.push(
-        ...zodValidationResult.error.issues.map(zodIssue => {
-          const normalizedPath = zodIssue.path.length ? zodIssue.path.join('.') : 'root';
-
-          return {
-            targetConfigName,
-            violatedRuleName: 'Static Zod Config Schema Validation',
-            ruleRationale: 'Config must match the static runtime schema before business-rule validation can safely run',
-            violationDescription: `${normalizedPath}: ${zodIssue.message}`,
-            severity: ValidationIssueSeverity.Critical,
-          };
-        })
-      );
-    }
-
-    for (const validationRule of configValidationRules) {
-      const validationRuleContext: ValidationRuleContext = {
-        targetConfigName,
-        targetConfig: targetConfig,
-      };
-
-      const violationDescription = validationRule.getViolationDescription(validationRuleContext);
-      if (!violationDescription) continue;
-
-      validationIssues.push({
+    const validationIssues: ValidationIssue[] = validationRules.flatMap(validationRule =>
+      validationRule.getViolationDescriptions(validationRuleContext).map(violationDescription => ({
         targetConfigName,
         violatedRuleName: validationRule.name,
         ruleRationale: validationRule.rationale,
         violationDescription,
         severity: validationRule.severity,
-      });
-    }
+      }))
+    );
 
     return this._buildValidationResult(validationIssues, [targetConfigName]);
   }
