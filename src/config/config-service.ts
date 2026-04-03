@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { MergedConfigWithOverrideIdResult, OverrideOptionMetadata } from './contracts/other-contracts';
 import { LlmCopypasterConfig } from './contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from './contracts/user-config-contracts';
@@ -5,13 +6,19 @@ import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/conf
 import { mergeConfigs } from './helpers/config-mergers';
 import { ConfigRefVarsResolver } from './helpers/config-ref-vars-resolver';
 import { buildMergedConfigDebugData } from './reporters/reporting-helpers';
+import { ConfigValidator } from './validation/config-validator';
 
 export class ConfigService {
   private _systemConfig?: LlmCopypasterConfig;
   private _userConfig?: LlmCopypasterUserConfig | null;
   private _systemUserMergedConfig?: LlmCopypasterConfig;
   private _overrideOptions?: OverrideOptionMetadata[] | null;
+  private readonly _configValidator: ConfigValidator;
   private readonly _configRefVarsResolver = new ConfigRefVarsResolver();
+
+  public constructor(extensionContext: vscode.ExtensionContext) {
+    this._configValidator = new ConfigValidator(extensionContext);
+  }
 
   public get overrideOptions(): OverrideOptionMetadata[] | null {
     if (this._overrideOptions === null) return null;
@@ -22,9 +29,7 @@ export class ConfigService {
   }
 
   public async getSystemConfig(): Promise<LlmCopypasterConfig> {
-    if (this._systemConfig) return this._systemConfig;
-
-    this._systemConfig = await readSystemJsonConfigFile<LlmCopypasterConfig>();
+    this._systemConfig ??= await readSystemJsonConfigFile<LlmCopypasterConfig>();
 
     return this._systemConfig;
   }
@@ -38,9 +43,7 @@ export class ConfigService {
   }
 
   public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
-    if (this._systemUserMergedConfig) return this._systemUserMergedConfig;
-
-    this._systemUserMergedConfig = await this._buildSystemUserMergedConfig();
+    this._systemUserMergedConfig ??= await this._buildSystemUserMergedConfig();
 
     return this._systemUserMergedConfig;
   }
@@ -97,7 +100,16 @@ export class ConfigService {
         : null
     );
 
-    return this._configRefVarsResolver.resolve(mergedConfig);
+    const refVarResolvedConfig = this._configRefVarsResolver.resolve(mergedConfig);
+
+    const isConfigValid = await this._configValidator.checkIsConfigValid(
+      refVarResolvedConfig,
+      'System + User Merged Config'
+    );
+
+    if (!isConfigValid) throw new Error('System + User merged config validation failed');
+
+    return refVarResolvedConfig;
   }
 
   private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {

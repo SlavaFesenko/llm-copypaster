@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
-import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
 import { VarRefsExistRule } from './business-rules/var-refs-exists-rule';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
@@ -9,93 +8,76 @@ import {
   ValidationResult,
   ValidationRule,
   ValidationRuleContext,
-  ValidationSourceConfigId,
 } from './contracts';
 
 export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
-export interface ConfigValidatorAdditionalPayload {
-  systemConfig: LlmCopypasterConfig;
-  userConfig: LlmCopypasterUserConfig | null;
-  extensionContext: vscode.ExtensionContext; // for toasters/reports
-}
-
 export class ConfigValidator {
-  public async checkIsConfigValid(
-    targetConfig: LlmCopypasterConfig,
-    additionalPayload: ConfigValidatorAdditionalPayload
-  ): Promise<boolean> {
-    const zodValidationIssues = this._runStaticZodValidation(targetConfig);
+  public constructor(private readonly _extensionContext: vscode.ExtensionContext) {}
 
-    if (zodValidationIssues.length) {
-      const zodValidationResult = this._buildValidationResult(zodValidationIssues);
+  public async checkIsConfigValid(targetConfig: LlmCopypasterConfig, targetConfigName: string): Promise<boolean> {
+    const staticValidationResult = await this._runStaticValidationStep(targetConfig, targetConfigName);
+    if (staticValidationResult.criticalIssues.length) return false;
 
-      await this._showToastAndReportForValidationResult(zodValidationResult, additionalPayload.extensionContext);
+    const businessValidationResult = await this._runBusinessValidationStep(targetConfig, targetConfigName);
+    if (businessValidationResult.criticalIssues.length) return false;
 
-      return false;
-    }
-
-    const businessValidationIssues = this._runBusinessValidation(targetConfig, additionalPayload);
-
-    const deduplicatedValidationIssues = this._deduplicateValidationIssues(businessValidationIssues);
-
-    const validationResult = this._buildValidationResult(deduplicatedValidationIssues);
-
-    if (!validationResult.criticalIssues.length && !validationResult.warningIssues.length) return true;
-
-    await this._showToastAndReportForValidationResult(validationResult, additionalPayload.extensionContext);
-
-    return !validationResult.criticalIssues.length;
+    return true;
   }
 
-  private _runStaticZodValidation(targetConfig: LlmCopypasterConfig): ValidationIssue[] {
+  private async _runStaticValidationStep(
+    targetConfig: LlmCopypasterConfig,
+    targetConfigName: string
+  ): Promise<ValidationResult> {
     const zodValidationResult = llmCopypasterConfigSchema.safeParse(targetConfig);
-    if (zodValidationResult.success) return [];
 
-    return zodValidationResult.error.issues.map(zodIssue =>
-      this._buildZodValidationIssue('systemUserMerged', zodIssue.path, zodIssue.message)
-    );
+    const staticValidationIssues = zodValidationResult.success
+      ? []
+      : zodValidationResult.error.issues.map(zodIssue =>
+          this._buildZodValidationIssue(targetConfigName, zodIssue.path, zodIssue.message)
+        );
+
+    const staticValidationResult = this._buildValidationResult(staticValidationIssues);
+
+    if (staticValidationResult.criticalIssues.length || staticValidationResult.warningIssues.length)
+      await this._showToastAndReportForValidationResult(staticValidationResult);
+
+    return staticValidationResult;
   }
 
-  private _runBusinessValidation(
+  private async _runBusinessValidationStep(
     targetConfig: LlmCopypasterConfig,
-    additionalPayload: ConfigValidatorAdditionalPayload
-  ): ValidationIssue[] {
-    return configValidationRules.flatMap(validationRule =>
-      this._validateSingleRule(validationRule, targetConfig, additionalPayload)
-    );
-  }
+    targetConfigName: string
+  ): Promise<ValidationResult> {
+    const businessValidationIssues = configValidationRules.flatMap(validationRule => {
+      const validationRuleContext: ValidationRuleContext = {
+        targetConfigName,
+        targetConfig: targetConfig,
+      };
 
-  private _validateSingleRule(
-    validationRule: ValidationRule,
-    targetConfig: LlmCopypasterConfig,
-    additionalPayload: ConfigValidatorAdditionalPayload
-  ): ValidationIssue[] {
-    const validationRuleContext: ValidationRuleContext = {
-      sourceConfigId: 'systemUserMerged',
-      mergedConfig: targetConfig,
-      systemUserMergedConfig: targetConfig,
-      systemConfig: additionalPayload.systemConfig,
-      userConfig: additionalPayload.userConfig,
-      rawOverrideConfig: null,
-    };
+      const violationDescription = validationRule.getViolationDescription(validationRuleContext);
+      if (!violationDescription) return [];
 
-    const violationDescription = validationRule.getViolationDescription(validationRuleContext);
-    if (!violationDescription) return [];
+      return [this._buildValidationIssue(targetConfigName, validationRule, violationDescription)];
+    });
 
-    return [this._buildValidationIssue('systemUserMerged', validationRule, violationDescription)];
+    const businessValidationResult = this._buildValidationResult(businessValidationIssues);
+
+    if (businessValidationResult.criticalIssues.length || businessValidationResult.warningIssues.length)
+      await this._showToastAndReportForValidationResult(businessValidationResult);
+
+    return businessValidationResult;
   }
 
   private _buildZodValidationIssue(
-    sourceConfigId: ValidationSourceConfigId,
+    targetConfigName: string,
     zodIssuePath: (string | number)[],
     zodIssueMessage: string
   ): ValidationIssue {
     const normalizedPath = zodIssuePath.length ? zodIssuePath.join('.') : 'root';
 
     return {
-      sourceConfigId,
-      sources: [{ sourceConfigId }],
+      targetConfigName,
       violatedRuleName: 'Static Zod Config Schema Validation',
       ruleRationale: 'Config must match the static runtime schema before business-rule validation can safely run',
       violationDescription: `${normalizedPath}: ${zodIssueMessage}`,
@@ -104,41 +86,17 @@ export class ConfigValidator {
   }
 
   private _buildValidationIssue(
-    sourceConfigId: ValidationSourceConfigId,
+    targetConfigName: string,
     validationRule: ValidationRule,
     violationDescription: string
   ): ValidationIssue {
     return {
-      sourceConfigId,
-      sources: [{ sourceConfigId }],
+      targetConfigName,
       violatedRuleName: validationRule.name,
       ruleRationale: validationRule.rationale,
       violationDescription,
       severity: validationRule.severity,
     };
-  }
-
-  private _deduplicateValidationIssues(validationIssues: ValidationIssue[]): ValidationIssue[] {
-    const validationIssuesByDeduplicationKey = new Map<string, ValidationIssue>();
-
-    for (const validationIssue of validationIssues) {
-      const deduplicationKey = this._buildValidationIssueDeduplicationKey(validationIssue);
-      const existingValidationIssue = validationIssuesByDeduplicationKey.get(deduplicationKey);
-
-      if (!existingValidationIssue) {
-        validationIssuesByDeduplicationKey.set(deduplicationKey, validationIssue);
-
-        continue;
-      }
-
-      existingValidationIssue.sources.push(...validationIssue.sources);
-    }
-
-    return Array.from(validationIssuesByDeduplicationKey.values());
-  }
-
-  private _buildValidationIssueDeduplicationKey(validationIssue: ValidationIssue): string {
-    return `${validationIssue.violatedRuleName}::${validationIssue.violationDescription}`;
   }
 
   private _buildValidationResult(validationIssues: ValidationIssue[]): ValidationResult {
@@ -155,10 +113,7 @@ export class ConfigValidator {
     };
   }
 
-  private async _showToastAndReportForValidationResult(
-    validationResult: ValidationResult,
-    extensionContext: vscode.ExtensionContext
-  ): Promise<void> {
+  private async _showToastAndReportForValidationResult(validationResult: ValidationResult): Promise<void> {
     const toastActionOpenDetails = 'Open Details In Editor';
     const toastMessage = this._buildValidationToastMessage(validationResult);
 
@@ -170,7 +125,7 @@ export class ConfigValidator {
 
     if (clickedAction === toastActionOpenDetails) {
       await new ConfigValidationReporter({
-        extensionContext,
+        extensionContext: this._extensionContext,
         validationResult,
       }).displayValidationReport();
     }

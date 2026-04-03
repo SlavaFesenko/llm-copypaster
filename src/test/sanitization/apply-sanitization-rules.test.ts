@@ -1,5 +1,7 @@
 import get from 'lodash/get';
+import { suite, test } from 'mocha';
 import assert from 'node:assert/strict';
+import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
 import { LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config/contracts/system-config-contracts';
@@ -9,7 +11,7 @@ import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 suite('applySanitizationRules', () => {
   test('applies strip-codefence cases from current system config', async () => {
     const cases = [...buildStripCodefenceCases()];
-    const systemConfig = await new ConfigService().getSystemConfig();
+    const systemConfig = await new ConfigService({} as vscode.ExtensionContext).getSystemConfig();
 
     const stripCodefenceRule = get(systemConfig, 'coreSettings.llmToIdeSanitizationRulesById.strip-codefence') as
       | LlmToIdeSanitizationRuleConfig

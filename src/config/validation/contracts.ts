@@ -1,7 +1,4 @@
 import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
-import { LlmCopypasterUserConfig, OverrideUserConfig } from '../contracts/user-config-contracts';
-
-export type ValidationSourceConfigId = 'systemUserMerged' | string;
 
 export enum ValidationIssueSeverity {
   Critical = 'Critical',
@@ -15,13 +12,8 @@ export interface ValidationResult {
   recommendationIssues: ValidationIssue[];
 }
 
-export interface ValidationIssueSource {
-  sourceConfigId: ValidationSourceConfigId;
-}
-
 export interface ValidationIssue {
-  sourceConfigId: ValidationSourceConfigId;
-  sources: ValidationIssueSource[];
+  targetConfigName: string;
   violatedRuleName: string;
   ruleRationale: string;
   violationDescription: string;
@@ -29,12 +21,8 @@ export interface ValidationIssue {
 }
 
 export interface ValidationRuleContext {
-  sourceConfigId: ValidationSourceConfigId;
-  mergedConfig: LlmCopypasterConfig;
-  systemUserMergedConfig: LlmCopypasterConfig;
-  systemConfig: LlmCopypasterConfig;
-  userConfig: LlmCopypasterUserConfig | null;
-  rawOverrideConfig: OverrideUserConfig | null;
+  targetConfigName: string;
+  targetConfig: LlmCopypasterConfig;
 }
 
 export interface ValidationRule {

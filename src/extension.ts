@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from './config/config-service';
-import { LlmCopypasterConfig } from './config/contracts/system-config-contracts';
 import { ConfigReportFacade } from './config/reporters/config-report-facade';
-import { ConfigValidator } from './config/validation/config-validator';
 import { CopySelectedExplorerItemsArgs } from './modules/ide-to-llm/contracts';
 import { IdeToLlmFacade } from './modules/ide-to-llm/ide-to-llm-facade';
 import { LlmToIdeFacade } from './modules/llm-to-ide/llm-to-ide-facade';
@@ -13,96 +11,79 @@ import { OutputChannelLogger } from './utils/output-channel-logger';
 
 export async function activate(extensionContext: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
-  const configService = new ConfigService();
+  const configService = new ConfigService(extensionContext);
 
-  const config = await handleConfigStartup(extensionContext, configService);
-  if (!config) return;
-
-  const ideToLlmFacade = new IdeToLlmFacade(
-    extensionContext,
-    configService,
-    logger,
-    config.nonOverrideableSettings.allowOutsideWorkspaceRead
-  );
-
-  const llmToIdeFacade = new LlmToIdeFacade(configService, logger, extensionContext);
-
-  const quickInstructionFacade = new QuickInstructionFacade(extensionContext, configService);
-
-  extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('llm-copypaster.copyThisFileAsLlmContext', async () => {
-      await ideToLlmFacade.copyThisFileAsContext();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.copyThisTabGroupAsLlmContext', async () => {
-      await ideToLlmFacade.copyThisTabGroupAsContext();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.copyAllOpenFilesAsLlmContext', async () => {
-      await ideToLlmFacade.copyAllOpenFilesAsContext();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.copyAllPinnedFilesAsLlmContext', async () => {
-      await ideToLlmFacade.copyAllPinnedFilesAsContext();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.copyAllUnpinnedFilesAsLlmContext', async () => {
-      await ideToLlmFacade.copyAllUnpinnedFilesAsContext();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext', async () => {
-      await ideToLlmFacade.copyPinnedFilesInActiveTabGroupAsContext();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.copyUnpinnedFilesInActiveTabGroupAsLlmContext', async () => {
-      await ideToLlmFacade.copyUnpinnedFilesInActiveTabGroupAsContext();
-    }),
-    vscode.commands.registerCommand(
-      'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
-      async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
-        await ideToLlmFacade.copySelectedExplorerItemsAsContext({ selectedUris } as CopySelectedExplorerItemsArgs);
-      }
-    ),
-    vscode.commands.registerCommand('llm-copypaster.applyClipboardToFiles', async () => {
-      await llmToIdeFacade.applyClipboardToFiles();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.replaceClipboardByInstruction', async () => {
-      await quickInstructionFacade.replaceClipboardByInstruction();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.prependInstructionToClipboard', async () => {
-      await quickInstructionFacade.prependInstructionToClipboard();
-    }),
-    vscode.commands.registerCommand('llm-copypaster.clearOutsideWorkspaceCache', async () => {
-      await clearExtensionCache(extensionContext);
-
-      vscode.window.showInformationMessage('Cache cleared successfully!');
-    }),
-    vscode.commands.registerCommand('llm-copypaster.lsConfig', async () => {
-      await new ConfigReportFacade({
-        extensionContext: extensionContext,
-        configService,
-      }).displayLsConfigReport();
-    })
-  );
-
-  logger.info('Extension activated');
-}
-
-async function handleConfigStartup(
-  extensionContext: vscode.ExtensionContext,
-  configService: ConfigService
-): Promise<LlmCopypasterConfig | null> {
   try {
-    const systemUserMergedConfig = await configService.getSystemUserMergedConfig();
-    const systemConfig = await configService.getSystemConfig();
-    const userConfig = await configService.getUserConfig();
+    const config = await configService.getSystemUserMergedConfig();
 
-    const isConfigValid = await new ConfigValidator().checkIsConfigValid(systemUserMergedConfig, {
-      systemConfig,
-      userConfig,
+    const ideToLlmFacade = new IdeToLlmFacade(
       extensionContext,
-    });
+      configService,
+      logger,
+      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+    );
 
-    if (!isConfigValid) return null;
+    const llmToIdeFacade = new LlmToIdeFacade(configService, logger, extensionContext);
 
-    return systemUserMergedConfig;
+    const quickInstructionFacade = new QuickInstructionFacade(extensionContext, configService);
+
+    extensionContext.subscriptions.push(
+      vscode.commands.registerCommand('llm-copypaster.copyThisFileAsLlmContext', async () => {
+        await ideToLlmFacade.copyThisFileAsContext();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.copyThisTabGroupAsLlmContext', async () => {
+        await ideToLlmFacade.copyThisTabGroupAsContext();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.copyAllOpenFilesAsLlmContext', async () => {
+        await ideToLlmFacade.copyAllOpenFilesAsContext();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.copyAllPinnedFilesAsLlmContext', async () => {
+        await ideToLlmFacade.copyAllPinnedFilesAsContext();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.copyAllUnpinnedFilesAsLlmContext', async () => {
+        await ideToLlmFacade.copyAllUnpinnedFilesAsContext();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.copyPinnedFilesInActiveTabGroupAsLlmContext', async () => {
+        await ideToLlmFacade.copyPinnedFilesInActiveTabGroupAsContext();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.copyUnpinnedFilesInActiveTabGroupAsLlmContext', async () => {
+        await ideToLlmFacade.copyUnpinnedFilesInActiveTabGroupAsContext();
+      }),
+      vscode.commands.registerCommand(
+        'llm-copypaster.copySelectedExplorerItemsAsLlmContext',
+        async (_clickedUri?: vscode.Uri, selectedUris?: vscode.Uri[]) => {
+          await ideToLlmFacade.copySelectedExplorerItemsAsContext({ selectedUris } as CopySelectedExplorerItemsArgs);
+        }
+      ),
+      vscode.commands.registerCommand('llm-copypaster.applyClipboardToFiles', async () => {
+        await llmToIdeFacade.applyClipboardToFiles();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.replaceClipboardByInstruction', async () => {
+        await quickInstructionFacade.replaceClipboardByInstruction();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.prependInstructionToClipboard', async () => {
+        await quickInstructionFacade.prependInstructionToClipboard();
+      }),
+      vscode.commands.registerCommand('llm-copypaster.clearOutsideWorkspaceCache', async () => {
+        await clearExtensionCache(extensionContext);
+
+        vscode.window.showInformationMessage('Cache cleared successfully!');
+      }),
+      vscode.commands.registerCommand('llm-copypaster.lsConfig', async () => {
+        await new ConfigReportFacade({
+          extensionContext: extensionContext,
+          configService,
+        }).displayLsConfigReport();
+      })
+    );
+
+    logger.info('Extension activated');
   } catch (error) {
-    await vscode.window.showErrorMessage(error instanceof Error ? error.message : 'Unspecified error happened');
+    const errorMessage = error instanceof Error ? error.message : typeof error === 'string' ? error : null;
+    const toastMessage = errorMessage
+      ? `Extension was aborted: ${errorMessage}`
+      : 'Extension was aborted due to a critical error';
 
-    return null;
+    await vscode.window.showErrorMessage(toastMessage);
   }
 }

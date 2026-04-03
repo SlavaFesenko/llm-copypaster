@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../utils/editor-virtual-doc-helpers';
-import { ValidationIssue, ValidationIssueSource, ValidationResult } from './contracts';
+import { ValidationIssue, ValidationResult } from './contracts';
 
 export interface ConfigValidationReporterArgs {
   extensionContext: vscode.ExtensionContext;
@@ -49,9 +49,9 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
 
   for (const validationIssue of validationIssues) {
     sectionMarkdown += `${buildValidationIssueHeader(validationIssue)}\n\n`;
+    sectionMarkdown += `- Target config: ${validationIssue.targetConfigName}\n`;
     sectionMarkdown += `- Violation: ${validationIssue.violationDescription}\n`;
-    sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n`;
-    sectionMarkdown += `- Sources:\n${buildValidationIssueSourcesMarkdown(validationIssue.sources)}\n\n`;
+    sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n\n`;
   }
 
   return sectionMarkdown.trimEnd();
@@ -59,18 +59,4 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
 
 function buildValidationIssueHeader(validationIssue: ValidationIssue): string {
   return `### Violated Rule: ${validationIssue.violatedRuleName}`;
-}
-
-function buildValidationIssueSourcesMarkdown(validationIssueSources: ValidationIssueSource[]): string {
-  return validationIssueSources
-    .map(validationIssueSource => `  - ${buildValidationIssueSourceLabel(validationIssueSource)}`)
-    .join('\n');
-}
-
-function buildValidationIssueSourceLabel(validationIssueSource: ValidationIssueSource): string {
-  if (validationIssueSource.sourceConfigId === 'systemUserMerged') {
-    return 'System + User Merged Config';
-  }
-
-  return `OVERRIDE: ${validationIssueSource.sourceConfigId}`;
 }

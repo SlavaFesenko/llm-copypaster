@@ -16,7 +16,7 @@ export class VarRefsExistRule implements ValidationRule {
   }
 
   private _getInvalidConfigRefs(validationRuleContext: ValidationRuleContext): string[] {
-    const instructionsAndVariables = validationRuleContext.mergedConfig.coreSettings.instructionsAndVariables;
+    const instructionsAndVariables = validationRuleContext.targetConfig.coreSettings.instructionsAndVariables;
     const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
 
     return [...this._collectUnresolvedVariablesById(sharedReferenceVariablesById)];
