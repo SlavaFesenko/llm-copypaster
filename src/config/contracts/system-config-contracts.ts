@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   buildNullableVitalAnchorSchema,
   buildVitalAnchorSchema,
-} from '../validation/static-rules/vital-parsing-anchors-rules';
+} from '../validation/zod-common-rules/vital-parsing-anchors-rules';
 
 const nonEmptyStringSchema = z.string().trim().min(1);
 const nonNegativeIntegerSchema = z.number().int().nonnegative();

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
-import { VarRefsExistRule } from './business-rules/var-refs-exists-rule';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
   ValidationIssue,
@@ -10,6 +9,7 @@ import {
   ValidationRule,
   ValidationRuleContext,
 } from './contracts';
+import { VarRefsExistRule } from './system-config-rules/var-refs-exists-rule';
 
 export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
