@@ -18,22 +18,20 @@ import {
 export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
 export interface ConfigValidatorArgs {
-  extensionContext: vscode.ExtensionContext;
-  systemUserMergedConfig: LlmCopypasterConfig;
+  targetConfig: LlmCopypasterConfig;
   systemConfig: LlmCopypasterConfig;
   userConfig: LlmCopypasterUserConfig | null;
   overrideOptions: OverrideOptionMetadata[] | null;
+  extensionContext: vscode.ExtensionContext; // for toasters/reports
 }
 
 export class ConfigValidator {
-  public constructor(private readonly _args: ConfigValidatorArgs) {}
-
-  public async validate(): Promise<boolean> {
-    const validationTargets = this._buildValidationTargets();
+  public async validate(args: ConfigValidatorArgs): Promise<boolean> {
+    const validationTargets = this._buildValidationTargets(args);
 
     const zodValidationIssues = this._runStaticZodValidation(validationTargets);
 
-    const businessValidationIssues = this._runBusinessValidation(validationTargets);
+    const businessValidationIssues = this._runBusinessValidation(validationTargets, args);
 
     const deduplicatedValidationIssues = this._deduplicateValidationIssues([
       ...zodValidationIssues,
@@ -55,7 +53,7 @@ export class ConfigValidator {
 
     if (clickedAction === toastActionOpenDetails) {
       await new ConfigValidationReporter({
-        extensionContext: this._args.extensionContext,
+        extensionContext: args.extensionContext,
         validationResult,
       }).displayValidationReport();
     }
@@ -74,30 +72,30 @@ export class ConfigValidator {
     });
   }
 
-  private _runBusinessValidation(validationTargets: ValidationTargetConfig[]): ValidationIssue[] {
-    return validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget));
+  private _runBusinessValidation(validationTargets: ValidationTargetConfig[], args: ConfigValidatorArgs): ValidationIssue[] {
+    return validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget, args));
   }
 
-  private _buildValidationTargets(): ValidationTargetConfig[] {
+  private _buildValidationTargets(args: ConfigValidatorArgs): ValidationTargetConfig[] {
     const validationTargets: ValidationTargetConfig[] = [
       {
         sourceConfigId: 'systemUserMerged',
-        mergedConfig: this._args.systemUserMergedConfig,
+        mergedConfig: args.targetConfig,
         rawOverrideConfig: null,
       },
     ];
 
-    for (const overrideOption of this._args.overrideOptions ?? []) {
-      const rawOverrideConfig = this._args.userConfig?.overridesById?.[overrideOption.id] ?? null;
+    for (const overrideOption of args.overrideOptions ?? []) {
+      const rawOverrideConfig = args.userConfig?.overridesById?.[overrideOption.id] ?? null;
       const overrideCoreSettings = rawOverrideConfig?.coreSettings;
 
       validationTargets.push({
         sourceConfigId: overrideOption.id,
         mergedConfig: overrideCoreSettings
-          ? mergeConfigs(this._args.systemUserMergedConfig, {
+          ? mergeConfigs(args.targetConfig, {
               coreSettings: overrideCoreSettings,
             })
-          : this._args.systemUserMergedConfig,
+          : args.targetConfig,
         rawOverrideConfig,
       });
     }
@@ -105,7 +103,7 @@ export class ConfigValidator {
     return validationTargets;
   }
 
-  private _validateSingleTarget(validationTarget: ValidationTargetConfig): ValidationIssue[] {
+  private _validateSingleTarget(validationTarget: ValidationTargetConfig, args: ConfigValidatorArgs): ValidationIssue[] {
     const applicableValidationRules = configValidationRules.filter(validationRule => {
       if (!validationTarget.rawOverrideConfig) return true;
 
@@ -116,9 +114,9 @@ export class ConfigValidator {
       const validationRuleContext: ValidationRuleContext = {
         sourceConfigId: validationTarget.sourceConfigId,
         mergedConfig: validationTarget.mergedConfig,
-        systemUserMergedConfig: this._args.systemUserMergedConfig,
-        systemConfig: this._args.systemConfig,
-        userConfig: this._args.userConfig,
+        systemUserMergedConfig: args.targetConfig,
+        systemConfig: args.systemConfig,
+        userConfig: args.userConfig,
         rawOverrideConfig: validationTarget.rawOverrideConfig,
       };
 
