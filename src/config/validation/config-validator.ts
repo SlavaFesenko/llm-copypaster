@@ -9,8 +9,8 @@ import {
   ValidationRule,
   ValidationRuleContext,
 } from './contracts';
-import { VarRefsExistRule } from './system-config-rules/var-refs-exists-rule';
 import { UserConfigValidator } from './user-config-validator';
+import { VarRefsExistRule } from './validation-rules/var-refs-exists-rule';
 
 export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
