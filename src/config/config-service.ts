@@ -49,9 +49,10 @@ export class ConfigService {
   }
 
   public async getSystemUserMergedConfigByOverrideIds(overrideIds: string[]): Promise<MergedConfigWithOverrideIdResult> {
-    const systemUserMergedConfig = await this.getSystemUserMergedConfig();
     const userConfig = await this.getUserConfig();
     const systemConfig = await this.getSystemConfig();
+
+    const systemUserMergedConfig = await this.getSystemUserMergedConfig(); // this guy has to be already validated by extension.ts call
 
     let multiOverrideConfig: LlmCopypasterConfig = {
       nonOverrideableSettings: systemUserMergedConfig.nonOverrideableSettings,
@@ -70,7 +71,10 @@ export class ConfigService {
 
     const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
 
-    // TODO: add validation call here, т.к. мы не можем прверять все варианты оверрайдов на этапе инит как для mergedConfig
+    await this._configValidator.checkIsConfigValid(
+      refVarResolvedMultiOverrideConfig,
+      `System-User Merged Config + Overrides: ${overrideIds.join(', ')}`
+    );
 
     return {
       mergedConfig: refVarResolvedMultiOverrideConfig,
@@ -93,10 +97,7 @@ export class ConfigService {
 
     const refVarResolvedConfig = this._configRefVarsResolver.resolve(mergedConfig);
 
-    const isConfigValid = await this._configValidator.checkIsConfigValid(
-      refVarResolvedConfig,
-      'System + User Merged Config'
-    );
+    const isConfigValid = await this._configValidator.checkIsConfigValid(refVarResolvedConfig, 'System-User Merged Config');
 
     if (!isConfigValid) throw new Error('System + User merged config validation failed');
 
