@@ -11,25 +11,25 @@ import { QuickInstructionFacade } from './modules/quick-instruction/quick-instru
 import { clearExtensionCache } from './utils/extension-cache-service';
 import { OutputChannelLogger } from './utils/output-channel-logger';
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(extensionContext: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger('LLM Copypaster');
   const configService = new ConfigService();
 
-  const config = await handleConfigStartup(context, configService);
+  const config = await handleConfigStartup(extensionContext, configService);
   if (!config) return;
 
   const ideToLlmFacade = new IdeToLlmFacade(
-    context,
+    extensionContext,
     configService,
     logger,
     config.nonOverrideableSettings.allowOutsideWorkspaceRead
   );
 
-  const llmToIdeFacade = new LlmToIdeFacade(configService, logger, context);
+  const llmToIdeFacade = new LlmToIdeFacade(configService, logger, extensionContext);
 
-  const quickInstructionFacade = new QuickInstructionFacade(context, configService);
+  const quickInstructionFacade = new QuickInstructionFacade(extensionContext, configService);
 
-  context.subscriptions.push(
+  extensionContext.subscriptions.push(
     vscode.commands.registerCommand('llm-copypaster.copyThisFileAsLlmContext', async () => {
       await ideToLlmFacade.copyThisFileAsContext();
     }),
@@ -67,13 +67,13 @@ export async function activate(context: vscode.ExtensionContext) {
       await quickInstructionFacade.prependInstructionToClipboard();
     }),
     vscode.commands.registerCommand('llm-copypaster.clearOutsideWorkspaceCache', async () => {
-      await clearExtensionCache(context);
+      await clearExtensionCache(extensionContext);
 
       vscode.window.showInformationMessage('Cache cleared successfully!');
     }),
     vscode.commands.registerCommand('llm-copypaster.lsConfig', async () => {
       await new ConfigReportFacade({
-        extensionContext: context,
+        extensionContext: extensionContext,
         configService,
       }).displayLsConfigReport();
     })
@@ -83,7 +83,7 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 async function handleConfigStartup(
-  context: vscode.ExtensionContext,
+  extensionContext: vscode.ExtensionContext,
   configService: ConfigService
 ): Promise<LlmCopypasterConfig | null> {
   try {
@@ -92,9 +92,9 @@ async function handleConfigStartup(
     const userConfig = await configService.getUserConfig();
 
     const isConfigValid = await new ConfigValidator().checkIsConfigValid(systemUserMergedConfig, {
-      extensionContext: context,
       systemConfig,
       userConfig,
+      extensionContext,
     });
 
     if (!isConfigValid) return null;
