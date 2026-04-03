@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MergedConfigWithOverrideIdResult, OverrideOptionMetadata } from './contracts/other-contracts';
+import { LlmCopypasterConfigWithDebugData, OverrideOptionMetadata } from './contracts/other-contracts';
 import { LlmCopypasterConfig } from './contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from './contracts/user-config-contracts';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
@@ -48,11 +48,17 @@ export class ConfigService {
     return this._systemUserMergedConfig;
   }
 
-  public async getSystemUserMergedConfigByOverrideIds(overrideIds: string[]): Promise<MergedConfigWithOverrideIdResult> {
+  public async getSystemUserMergedConfigByOverrideIds(overrideIds?: string[]): Promise<LlmCopypasterConfigWithDebugData> {
+    const systemUserMergedConfig = await this.getSystemUserMergedConfig(); // this guy has to be already validated by extension.ts call
+
+    if (!overrideIds?.length) {
+      return {
+        mergedConfig: systemUserMergedConfig,
+      } as LlmCopypasterConfigWithDebugData;
+    }
+
     const userConfig = await this.getUserConfig();
     const systemConfig = await this.getSystemConfig();
-
-    const systemUserMergedConfig = await this.getSystemUserMergedConfig(); // this guy has to be already validated by extension.ts call
 
     let multiOverrideConfig: LlmCopypasterConfig = {
       nonOverrideableSettings: systemUserMergedConfig.nonOverrideableSettings,
@@ -63,12 +69,19 @@ export class ConfigService {
       const overrideCoreSettings = userConfig?.overridesById?.[overrideId]?.coreSettings;
       if (!overrideCoreSettings) continue;
 
-      // every new iteration modifies already modified value preparing multi-override config
+      // each iteration modifies already modified value preparing multi-override config
       multiOverrideConfig = mergeConfigs(multiOverrideConfig, {
         coreSettings: overrideCoreSettings,
       });
     }
 
+    // TODO: тут бага, т.к. выше переменные уже резолваются в systemUserMergedConfig, то новая попытка их зарезолвать фейлится,
+    // так как уже нет путей-ссылок, а вместо них значения. Скорее всего, правильное решение - если переменную удалось зарезолвать -
+    // тогда ее переносить в sharedVariablesById, а если не удалось - тогда оставлять ее как есть в sharedReferenceVariablesById,
+    // и для валидатора это будет тригером, что если в sharedReferenceVariablesById есть переменные - надо выдать ишшью
+    // а билдер вообще ничего про sharedReferenceVariablesById знать не должен (в т.ч. валидировать в репорт), а только sharedVariablesById
+    // таким образом мы сможем повторно запускать _configRefVarsResolver на одном и том же конфиге не боясь, что он споткнется
+    // соотвественно, в _configRefVarsResolver можно избавиться от цирка с обьектом ошибки, т.к. ссылка останется без изменений
     const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
 
     await this._configValidator.validateConfig(

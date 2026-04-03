@@ -1,8 +1,8 @@
 import { CoreSettingsConfig, LlmCopypasterConfig } from './system-config-contracts';
 
-export interface MergedConfigWithOverrideIdResult {
+export interface LlmCopypasterConfigWithDebugData {
   mergedConfig: LlmCopypasterConfig;
-  debugData: MergedConfigDebugData;
+  debugData?: MergedConfigDebugData;
 }
 
 export interface OverrideOptionMetadata {

@@ -110,7 +110,7 @@ export class CopiedNotificator {
 
         await vscode.env.clipboard.writeText(currentPromptText);
 
-        if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor) {
+        if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor && nextMergedConfigResult.debugData) {
           await new ConfigReportFacade({
             extensionContext: this._deps.extensionContext,
             configService: this._deps.configService,
