@@ -7,6 +7,7 @@ export enum ValidationIssueSeverity {
 }
 
 export interface ValidationResult {
+  validatedConfigNames: string[];
   criticalIssues: ValidationIssue[];
   warningIssues: ValidationIssue[];
   recommendationIssues: ValidationIssue[];

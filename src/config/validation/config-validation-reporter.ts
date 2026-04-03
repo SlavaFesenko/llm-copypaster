@@ -29,27 +29,52 @@ export function buildConfigValidationReportText(validationResult: ValidationResu
   reportText += `- Warning issues: ${validationResult.warningIssues.length}\n`;
   reportText += `- Recommendations: ${validationResult.recommendationIssues.length}\n\n`;
 
-  reportText += buildValidationIssuesSectionMarkdown('Critical Issues', validationResult.criticalIssues);
-  reportText += '\n\n';
-  reportText += buildValidationIssuesSectionMarkdown('Warning Issues', validationResult.warningIssues);
-  reportText += '\n\n';
-  reportText += buildValidationIssuesSectionMarkdown('Recommendations', validationResult.recommendationIssues);
+  reportText += buildValidatedConfigsSectionsMarkdown(validationResult);
 
   return reportText.trimEnd();
 }
 
-function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIssues: ValidationIssue[]): string {
-  let sectionMarkdown = `## ${sectionTitle}\n\n`;
+function buildValidatedConfigsSectionsMarkdown(validationResult: ValidationResult): string {
+  let sectionsMarkdown = '';
 
-  if (!validationIssues.length) {
-    sectionMarkdown += '_No issues found_';
+  for (const validatedConfigName of validationResult.validatedConfigNames) {
+    const criticalIssues = validationResult.criticalIssues.filter(
+      validationIssue => validationIssue.targetConfigName === validatedConfigName
+    );
+    const warningIssues = validationResult.warningIssues.filter(
+      validationIssue => validationIssue.targetConfigName === validatedConfigName
+    );
+    const recommendationIssues = validationResult.recommendationIssues.filter(
+      validationIssue => validationIssue.targetConfigName === validatedConfigName
+    );
 
-    return sectionMarkdown;
+    if (!criticalIssues.length && !warningIssues.length && !recommendationIssues.length) continue;
+
+    sectionsMarkdown += `## ${validatedConfigName}\n\n`;
+
+    const criticalIssuesSectionMarkdown = buildValidationIssuesSectionMarkdown('Critical Issues', criticalIssues);
+    if (criticalIssuesSectionMarkdown) sectionsMarkdown += `${criticalIssuesSectionMarkdown}\n\n`;
+
+    const warningIssuesSectionMarkdown = buildValidationIssuesSectionMarkdown('Warning Issues', warningIssues);
+    if (warningIssuesSectionMarkdown) sectionsMarkdown += `${warningIssuesSectionMarkdown}\n\n`;
+
+    const recommendationIssuesSectionMarkdown = buildValidationIssuesSectionMarkdown(
+      'Recommendations',
+      recommendationIssues
+    );
+    if (recommendationIssuesSectionMarkdown) sectionsMarkdown += `${recommendationIssuesSectionMarkdown}\n\n`;
   }
+
+  return sectionsMarkdown.trimEnd();
+}
+
+function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIssues: ValidationIssue[]): string {
+  if (!validationIssues.length) return '';
+
+  let sectionMarkdown = `### ${sectionTitle}\n\n`;
 
   for (const validationIssue of validationIssues) {
     sectionMarkdown += `${buildValidationIssueHeader(validationIssue)}\n\n`;
-    sectionMarkdown += `- Target config: ${validationIssue.targetConfigName}\n`;
     sectionMarkdown += `- Violation: ${validationIssue.violationDescription}\n`;
     sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n\n`;
   }
@@ -58,5 +83,5 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
 }
 
 function buildValidationIssueHeader(validationIssue: ValidationIssue): string {
-  return `### Violated Rule: ${validationIssue.violatedRuleName}`;
+  return `#### Violated Rule: ${validationIssue.violatedRuleName}`;
 }

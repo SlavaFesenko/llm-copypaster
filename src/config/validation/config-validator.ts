@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
+import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
 import { VarRefsExistRule } from './business-rules/var-refs-exists-rule';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
@@ -15,92 +16,93 @@ export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 export class ConfigValidator {
   public constructor(private readonly _extensionContext: vscode.ExtensionContext) {}
 
-  public async checkIsConfigValid(targetConfig: LlmCopypasterConfig, targetConfigName: string): Promise<boolean> {
-    const staticValidationResult = await this._runStaticValidationStep(targetConfig, targetConfigName);
-    if (staticValidationResult.criticalIssues.length) return false;
+  public async validateConfig(
+    targetConfig: LlmCopypasterConfig,
+    targetConfigName: string,
+    systemConfig: LlmCopypasterConfig,
+    userConfig: LlmCopypasterUserConfig | null
+  ): Promise<boolean> {
+    const validationResults: ValidationResult[] = [await this._validateSystemTypeConfig(systemConfig, 'System Config')];
 
-    const businessValidationResult = await this._runBusinessValidationStep(targetConfig, targetConfigName);
-    if (businessValidationResult.criticalIssues.length) return false;
+    if (userConfig !== null) {
+      validationResults.push(
+        await this._validateUserTypeConfig(userConfig),
+        await this._validateSystemTypeConfig(targetConfig, targetConfigName)
+      );
+    }
 
-    return true;
+    const aggregatedValidationResult: ValidationResult = {
+      validatedConfigNames: Array.from(
+        new Set(validationResults.flatMap(validationResult => validationResult.validatedConfigNames))
+      ),
+      criticalIssues: validationResults.flatMap(validationResult => validationResult.criticalIssues),
+      warningIssues: validationResults.flatMap(validationResult => validationResult.warningIssues),
+      recommendationIssues: validationResults.flatMap(validationResult => validationResult.recommendationIssues),
+    };
+
+    if (aggregatedValidationResult.criticalIssues.length || aggregatedValidationResult.warningIssues.length)
+      await this._showToastAndReportForValidationResult(aggregatedValidationResult);
+
+    return !aggregatedValidationResult.criticalIssues.length;
   }
 
-  private async _runStaticValidationStep(
+  private async _validateUserTypeConfig(userConfig: LlmCopypasterUserConfig | null): Promise<ValidationResult> {
+    void userConfig;
+
+    return this._buildValidationResult([], ['User Config']);
+  }
+
+  private async _validateSystemTypeConfig(
     targetConfig: LlmCopypasterConfig,
     targetConfigName: string
   ): Promise<ValidationResult> {
+    const validationIssues: ValidationIssue[] = [];
+
     const zodValidationResult = llmCopypasterConfigSchema.safeParse(targetConfig);
 
-    const staticValidationIssues = zodValidationResult.success
-      ? []
-      : zodValidationResult.error.issues.map(zodIssue =>
-          this._buildZodValidationIssue(targetConfigName, zodIssue.path, zodIssue.message)
-        );
+    if (!zodValidationResult.success) {
+      validationIssues.push(
+        ...zodValidationResult.error.issues.map(zodIssue => {
+          const normalizedPath = zodIssue.path.length ? zodIssue.path.join('.') : 'root';
 
-    const staticValidationResult = this._buildValidationResult(staticValidationIssues);
+          return {
+            targetConfigName,
+            violatedRuleName: 'Static Zod Config Schema Validation',
+            ruleRationale: 'Config must match the static runtime schema before business-rule validation can safely run',
+            violationDescription: `${normalizedPath}: ${zodIssue.message}`,
+            severity: ValidationIssueSeverity.Critical,
+          };
+        })
+      );
+    }
 
-    if (staticValidationResult.criticalIssues.length || staticValidationResult.warningIssues.length)
-      await this._showToastAndReportForValidationResult(staticValidationResult);
-
-    return staticValidationResult;
-  }
-
-  private async _runBusinessValidationStep(
-    targetConfig: LlmCopypasterConfig,
-    targetConfigName: string
-  ): Promise<ValidationResult> {
-    const businessValidationIssues = configValidationRules.flatMap(validationRule => {
+    for (const validationRule of configValidationRules) {
       const validationRuleContext: ValidationRuleContext = {
         targetConfigName,
         targetConfig: targetConfig,
       };
 
       const violationDescription = validationRule.getViolationDescription(validationRuleContext);
-      if (!violationDescription) return [];
+      if (!violationDescription) continue;
 
-      return [this._buildValidationIssue(targetConfigName, validationRule, violationDescription)];
-    });
+      validationIssues.push({
+        targetConfigName,
+        violatedRuleName: validationRule.name,
+        ruleRationale: validationRule.rationale,
+        violationDescription,
+        severity: validationRule.severity,
+      });
+    }
 
-    const businessValidationResult = this._buildValidationResult(businessValidationIssues);
-
-    if (businessValidationResult.criticalIssues.length || businessValidationResult.warningIssues.length)
-      await this._showToastAndReportForValidationResult(businessValidationResult);
-
-    return businessValidationResult;
+    return this._buildValidationResult(validationIssues, [targetConfigName]);
   }
 
-  private _buildZodValidationIssue(
-    targetConfigName: string,
-    zodIssuePath: (string | number)[],
-    zodIssueMessage: string
-  ): ValidationIssue {
-    const normalizedPath = zodIssuePath.length ? zodIssuePath.join('.') : 'root';
-
+  private _buildValidationResult(
+    validationIssues: ValidationIssue[],
+    validatedConfigNames: string[] = []
+  ): ValidationResult {
     return {
-      targetConfigName,
-      violatedRuleName: 'Static Zod Config Schema Validation',
-      ruleRationale: 'Config must match the static runtime schema before business-rule validation can safely run',
-      violationDescription: `${normalizedPath}: ${zodIssueMessage}`,
-      severity: ValidationIssueSeverity.Critical,
-    };
-  }
-
-  private _buildValidationIssue(
-    targetConfigName: string,
-    validationRule: ValidationRule,
-    violationDescription: string
-  ): ValidationIssue {
-    return {
-      targetConfigName,
-      violatedRuleName: validationRule.name,
-      ruleRationale: validationRule.rationale,
-      violationDescription,
-      severity: validationRule.severity,
-    };
-  }
-
-  private _buildValidationResult(validationIssues: ValidationIssue[]): ValidationResult {
-    return {
+      validatedConfigNames,
       criticalIssues: validationIssues.filter(
         validationIssue => validationIssue.severity === ValidationIssueSeverity.Critical
       ),
@@ -117,8 +119,6 @@ export class ConfigValidator {
     const toastActionOpenDetails = 'Open Details In Editor';
     const toastMessage = this._buildValidationToastMessage(validationResult);
 
-    // if any critical issues show Error Toast, otherwise Warning Toast (no-issues case handled above).
-    // Recommendations do not trigger Toast do not spam
     const clickedAction = validationResult.criticalIssues.length
       ? await vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails)
       : await vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);

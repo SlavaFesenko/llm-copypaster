@@ -71,9 +71,11 @@ export class ConfigService {
 
     const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
 
-    await this._configValidator.checkIsConfigValid(
+    await this._configValidator.validateConfig(
       refVarResolvedMultiOverrideConfig,
-      `System-User Merged Config + Overrides: ${overrideIds.join(', ')}`
+      `System-User Merged Config + Overrides: ${overrideIds.join(', ')}`,
+      systemConfig,
+      userConfig
     );
 
     return {
@@ -97,7 +99,12 @@ export class ConfigService {
 
     const refVarResolvedConfig = this._configRefVarsResolver.resolve(mergedConfig);
 
-    const isConfigValid = await this._configValidator.checkIsConfigValid(refVarResolvedConfig, 'System-User Merged Config');
+    const isConfigValid = await this._configValidator.validateConfig(
+      refVarResolvedConfig,
+      'System-User Merged Config',
+      systemConfig,
+      userConfig
+    );
 
     if (!isConfigValid) throw new Error('System + User merged config validation failed');
 
