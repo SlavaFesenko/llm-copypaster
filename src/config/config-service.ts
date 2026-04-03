@@ -89,16 +89,7 @@ export class ConfigService {
     const systemConfig = await this.getSystemConfig();
     const userConfig = await this.getUserConfig();
 
-    const mergedConfig = mergeConfigs(
-      systemConfig,
-      userConfig
-        ? {
-            nonOverrideableSettings: userConfig.nonOverrideableSettings,
-            coreSettings: userConfig.coreSettings,
-            overridesById: undefined, // overridesById should not be exposed
-          }
-        : null
-    );
+    const mergedConfig = mergeConfigs(systemConfig, userConfig);
 
     const refVarResolvedConfig = this._configRefVarsResolver.resolve(mergedConfig);
 
