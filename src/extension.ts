@@ -91,12 +91,10 @@ async function handleConfigStartup(
     const systemConfig = await configService.getSystemConfig();
     const userConfig = await configService.getUserConfig();
 
-    const isConfigValid = await new ConfigValidator().validate({
+    const isConfigValid = await new ConfigValidator().checkIsConfigValid(systemUserMergedConfig, {
       extensionContext: context,
-      targetConfig: systemUserMergedConfig,
       systemConfig,
       userConfig,
-      overrideOptions: configService.overrideOptions,
     });
 
     if (!isConfigValid) return null;

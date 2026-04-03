@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
-import { OverrideOptionMetadata } from '../contracts/other-contracts';
 import { LlmCopypasterConfig, llmCopypasterConfigSchema } from '../contracts/system-config-contracts';
 import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
-import { mergeConfigs } from '../helpers/config-mergers';
 import { VarRefsExistRule } from './business-rules/var-refs-exists-rule';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
@@ -12,119 +10,80 @@ import {
   ValidationRule,
   ValidationRuleContext,
   ValidationSourceConfigId,
-  ValidationTargetConfig,
 } from './contracts';
 
 export const configValidationRules: ValidationRule[] = [new VarRefsExistRule()];
 
-export interface ConfigValidatorArgs {
-  targetConfig: LlmCopypasterConfig;
+export interface ConfigValidatorAdditionalPayload {
   systemConfig: LlmCopypasterConfig;
   userConfig: LlmCopypasterUserConfig | null;
-  overrideOptions: OverrideOptionMetadata[] | null;
   extensionContext: vscode.ExtensionContext; // for toasters/reports
 }
 
 export class ConfigValidator {
-  public async validate(args: ConfigValidatorArgs): Promise<boolean> {
-    const validationTargets = this._buildValidationTargets(args);
+  public async checkIsConfigValid(
+    targetConfig: LlmCopypasterConfig,
+    additionalPayload: ConfigValidatorAdditionalPayload
+  ): Promise<boolean> {
+    const zodValidationIssues = this._runStaticZodValidation(targetConfig);
 
-    const zodValidationIssues = this._runStaticZodValidation(validationTargets);
+    if (zodValidationIssues.length) {
+      const zodValidationResult = this._buildValidationResult(zodValidationIssues);
 
-    const businessValidationIssues = this._runBusinessValidation(validationTargets, args);
+      await this._showToastAndReportForValidationResult(zodValidationResult, additionalPayload.extensionContext);
 
-    const deduplicatedValidationIssues = this._deduplicateValidationIssues([
-      ...zodValidationIssues,
-      ...businessValidationIssues,
-    ]);
-
-    const validationResult = new ValidationResult(deduplicatedValidationIssues);
-
-    if (validationResult.isValid) return true;
-
-    const toastActionOpenDetails = 'Open Details In Editor';
-    const toastMessage = this._buildValidationToastMessage(validationResult);
-
-    // if any critical issues show Error Toast, otherwise Warning Toast (no-issues case handled above).
-    // Recommendations do not trigger Toast do not spam
-    const clickedAction = validationResult.criticalIssues.length
-      ? await vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails)
-      : await vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);
-
-    if (clickedAction === toastActionOpenDetails) {
-      await new ConfigValidationReporter({
-        extensionContext: args.extensionContext,
-        validationResult,
-      }).displayValidationReport();
+      return false;
     }
+
+    const businessValidationIssues = this._runBusinessValidation(targetConfig, additionalPayload);
+
+    const deduplicatedValidationIssues = this._deduplicateValidationIssues(businessValidationIssues);
+
+    const validationResult = this._buildValidationResult(deduplicatedValidationIssues);
+
+    if (!validationResult.criticalIssues.length && !validationResult.warningIssues.length) return true;
+
+    await this._showToastAndReportForValidationResult(validationResult, additionalPayload.extensionContext);
 
     return !validationResult.criticalIssues.length;
   }
 
-  private _runStaticZodValidation(validationTargets: ValidationTargetConfig[]): ValidationIssue[] {
-    return validationTargets.flatMap(validationTarget => {
-      const zodValidationResult = llmCopypasterConfigSchema.safeParse(validationTarget.mergedConfig);
-      if (zodValidationResult.success) return [];
+  private _runStaticZodValidation(targetConfig: LlmCopypasterConfig): ValidationIssue[] {
+    const zodValidationResult = llmCopypasterConfigSchema.safeParse(targetConfig);
+    if (zodValidationResult.success) return [];
 
-      return zodValidationResult.error.issues.map(zodIssue =>
-        this._buildZodValidationIssue(validationTarget.sourceConfigId, zodIssue.path, zodIssue.message)
-      );
-    });
+    return zodValidationResult.error.issues.map(zodIssue =>
+      this._buildZodValidationIssue('systemUserMerged', zodIssue.path, zodIssue.message)
+    );
   }
 
-  private _runBusinessValidation(validationTargets: ValidationTargetConfig[], args: ConfigValidatorArgs): ValidationIssue[] {
-    return validationTargets.flatMap(validationTarget => this._validateSingleTarget(validationTarget, args));
+  private _runBusinessValidation(
+    targetConfig: LlmCopypasterConfig,
+    additionalPayload: ConfigValidatorAdditionalPayload
+  ): ValidationIssue[] {
+    return configValidationRules.flatMap(validationRule =>
+      this._validateSingleRule(validationRule, targetConfig, additionalPayload)
+    );
   }
 
-  private _buildValidationTargets(args: ConfigValidatorArgs): ValidationTargetConfig[] {
-    const validationTargets: ValidationTargetConfig[] = [
-      {
-        sourceConfigId: 'systemUserMerged',
-        mergedConfig: args.targetConfig,
-        rawOverrideConfig: null,
-      },
-    ];
+  private _validateSingleRule(
+    validationRule: ValidationRule,
+    targetConfig: LlmCopypasterConfig,
+    additionalPayload: ConfigValidatorAdditionalPayload
+  ): ValidationIssue[] {
+    const validationRuleContext: ValidationRuleContext = {
+      sourceConfigId: 'systemUserMerged',
+      mergedConfig: targetConfig,
+      systemUserMergedConfig: targetConfig,
+      systemConfig: additionalPayload.systemConfig,
+      userConfig: additionalPayload.userConfig,
+      rawOverrideConfig: null,
+    };
 
-    for (const overrideOption of args.overrideOptions ?? []) {
-      const rawOverrideConfig = args.userConfig?.overridesById?.[overrideOption.id] ?? null;
-      const overrideCoreSettings = rawOverrideConfig?.coreSettings;
+    const violationDescription = validationRule.getViolationDescription(validationRuleContext);
+    if (!violationDescription) return [];
 
-      validationTargets.push({
-        sourceConfigId: overrideOption.id,
-        mergedConfig: overrideCoreSettings
-          ? mergeConfigs(args.targetConfig, {
-              coreSettings: overrideCoreSettings,
-            })
-          : args.targetConfig,
-        rawOverrideConfig,
-      });
-    }
-
-    return validationTargets;
-  }
-
-  private _validateSingleTarget(validationTarget: ValidationTargetConfig, args: ConfigValidatorArgs): ValidationIssue[] {
-    const applicableValidationRules = configValidationRules.filter(validationRule => {
-      if (!validationTarget.rawOverrideConfig) return true;
-
-      return !validationRule.skipForOverrides;
-    });
-
-    return applicableValidationRules.flatMap(validationRule => {
-      const validationRuleContext: ValidationRuleContext = {
-        sourceConfigId: validationTarget.sourceConfigId,
-        mergedConfig: validationTarget.mergedConfig,
-        systemUserMergedConfig: args.targetConfig,
-        systemConfig: args.systemConfig,
-        userConfig: args.userConfig,
-        rawOverrideConfig: validationTarget.rawOverrideConfig,
-      };
-
-      const violationDescription = validationRule.getViolationDescription(validationRuleContext);
-      if (!violationDescription) return [];
-
-      return [this._buildValidationIssue(validationTarget.sourceConfigId, validationRule, violationDescription)];
-    });
+    return [this._buildValidationIssue('systemUserMerged', validationRule, violationDescription)];
   }
 
   private _buildZodValidationIssue(
@@ -180,6 +139,41 @@ export class ConfigValidator {
 
   private _buildValidationIssueDeduplicationKey(validationIssue: ValidationIssue): string {
     return `${validationIssue.violatedRuleName}::${validationIssue.violationDescription}`;
+  }
+
+  private _buildValidationResult(validationIssues: ValidationIssue[]): ValidationResult {
+    return {
+      criticalIssues: validationIssues.filter(
+        validationIssue => validationIssue.severity === ValidationIssueSeverity.Critical
+      ),
+      warningIssues: validationIssues.filter(
+        validationIssue => validationIssue.severity === ValidationIssueSeverity.Warning
+      ),
+      recommendationIssues: validationIssues.filter(
+        validationIssue => validationIssue.severity === ValidationIssueSeverity.Recommendation
+      ),
+    };
+  }
+
+  private async _showToastAndReportForValidationResult(
+    validationResult: ValidationResult,
+    extensionContext: vscode.ExtensionContext
+  ): Promise<void> {
+    const toastActionOpenDetails = 'Open Details In Editor';
+    const toastMessage = this._buildValidationToastMessage(validationResult);
+
+    // if any critical issues show Error Toast, otherwise Warning Toast (no-issues case handled above).
+    // Recommendations do not trigger Toast do not spam
+    const clickedAction = validationResult.criticalIssues.length
+      ? await vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails)
+      : await vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);
+
+    if (clickedAction === toastActionOpenDetails) {
+      await new ConfigValidationReporter({
+        extensionContext,
+        validationResult,
+      }).displayValidationReport();
+    }
   }
 
   private _buildValidationToastMessage(validationResult: ValidationResult): string {

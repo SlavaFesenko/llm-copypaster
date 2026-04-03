@@ -25,16 +25,15 @@ export function buildConfigValidationReportText(validationResult: ValidationResu
   let reportText = '';
 
   reportText += '# Config Validation Report\n\n';
-  reportText += `- Is valid: ${validationResult.isValid}\n`;
   reportText += `- Critical issues: ${validationResult.criticalIssues.length}\n`;
   reportText += `- Warning issues: ${validationResult.warningIssues.length}\n`;
-  reportText += `- Recommendations: ${validationResult.recommendations.length}\n\n`;
+  reportText += `- Recommendations: ${validationResult.recommendationIssues.length}\n\n`;
 
   reportText += buildValidationIssuesSectionMarkdown('Critical Issues', validationResult.criticalIssues);
   reportText += '\n\n';
   reportText += buildValidationIssuesSectionMarkdown('Warning Issues', validationResult.warningIssues);
   reportText += '\n\n';
-  reportText += buildValidationIssuesSectionMarkdown('Recommendations', validationResult.recommendations);
+  reportText += buildValidationIssuesSectionMarkdown('Recommendations', validationResult.recommendationIssues);
 
   return reportText.trimEnd();
 }

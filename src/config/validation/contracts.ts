@@ -9,24 +9,10 @@ export enum ValidationIssueSeverity {
   Recommendation = 'Recommendation',
 }
 
-export class ValidationResult {
-  public constructor(public readonly issues: ValidationIssue[]) {}
-
-  public get isValid(): boolean {
-    return !this.criticalIssues.length && !this.warningIssues.length;
-  }
-
-  public get criticalIssues(): ValidationIssue[] {
-    return this.issues.filter(validationIssue => validationIssue.severity === ValidationIssueSeverity.Critical);
-  }
-
-  public get warningIssues(): ValidationIssue[] {
-    return this.issues.filter(validationIssue => validationIssue.severity === ValidationIssueSeverity.Warning);
-  }
-
-  public get recommendations(): ValidationIssue[] {
-    return this.issues.filter(validationIssue => validationIssue.severity === ValidationIssueSeverity.Recommendation);
-  }
+export interface ValidationResult {
+  criticalIssues: ValidationIssue[];
+  warningIssues: ValidationIssue[];
+  recommendationIssues: ValidationIssue[];
 }
 
 export interface ValidationIssueSource {
@@ -40,12 +26,6 @@ export interface ValidationIssue {
   ruleRationale: string;
   violationDescription: string;
   severity: ValidationIssueSeverity;
-}
-
-export interface ValidationTargetConfig {
-  sourceConfigId: ValidationSourceConfigId;
-  mergedConfig: LlmCopypasterConfig;
-  rawOverrideConfig: OverrideUserConfig | null;
 }
 
 export interface ValidationRuleContext {
