@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+// TODO: сделай фабрику для TS-типов + zod-config если можно, задача - сделать схему всех полей в одном месте проекта
+// чтобы поддерживать как минмум переименование в одном месте фабрики, а не разбросанным в куче мест.
+
 // !!! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
 
 // #region Shared Zod-Helpers (has to be declared before use)
