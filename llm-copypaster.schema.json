@@ -1,0 +1,259 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "llm-copypaster.schema.json",
+  "title": "LLM Copypaster Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["configVersion"],
+  "properties": {
+    "configVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema/config contract version. Must match the extension schema version"
+    },
+    "nonOverrideableSettings": {
+      "$ref": "#/definitions/nonOverrideableSettingsUserConfig"
+    },
+    "coreSettings": {
+      "$ref": "#/definitions/coreSettingsUserConfig"
+    },
+    "overridesById": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/overrideUserConfig"
+      }
+    }
+  },
+  "definitions": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "positiveFiniteNumber": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "anyJsonValue": {
+      "type": ["string", "number", "integer", "boolean", "object", "array", "null"]
+    },
+    "vitalAnchorString": {
+      "$ref": "#/definitions/nonEmptyString"
+    },
+    "vitalParsingAnchorsUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "PROMPT_DELIMITER_ANCHOR": {
+          "$ref": "#/definitions/vitalAnchorString"
+        },
+        "CODE_LISTING_HEADER_ANCHOR": {
+          "$ref": "#/definitions/vitalAnchorString"
+        },
+        "FILE_STATUS_ANCHOR": {
+          "$ref": "#/definitions/vitalAnchorString"
+        },
+        "FILE_EDITED_FULL_ANCHOR": {
+          "$ref": "#/definitions/vitalAnchorString"
+        },
+        "FILE_CREATED_ANCHOR": {
+          "$ref": "#/definitions/vitalAnchorString"
+        },
+        "FILE_DELETED_ANCHOR": {
+          "$ref": "#/definitions/vitalAnchorString"
+        },
+        "END_OF_OUTPUT_ANCHOR": {
+          "type": ["string", "null"],
+          "minLength": 1,
+          "pattern": ".*\\S.*"
+        }
+      }
+    },
+    "nonOverrideableSettingsUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allowOutsideWorkspaceRead": {
+          "type": "boolean"
+        },
+        "allowOutsideWorkspaceWrite": {
+          "type": "boolean"
+        },
+        "vitalParsingAnchors": {
+          "$ref": "#/definitions/vitalParsingAnchorsUserConfig"
+        }
+      }
+    },
+    "promptLimitsUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "skipPromptSizeStatsInCopyNotification": {
+          "type": "boolean"
+        },
+        "charsPerToken": {
+          "$ref": "#/definitions/positiveFiniteNumber"
+        },
+        "linesMaxToShowWarning": {
+          "$ref": "#/definitions/nonNegativeInteger"
+        },
+        "tokensMaxToShowWarning": {
+          "$ref": "#/definitions/nonNegativeInteger"
+        }
+      }
+    },
+    "postFilePatchActionsUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enableSaveAfterFilePatch": {
+          "type": "boolean"
+        },
+        "enableLintingAfterFilePatch": {
+          "type": "boolean"
+        },
+        "enableOpeningPatchedFilesInEditor": {
+          "type": "boolean"
+        }
+      }
+    },
+    "instructionUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "skip": {
+          "type": "boolean"
+        },
+        "showInOverrideMode": {
+          "type": "boolean"
+        },
+        "showInQuickInstructionMode": {
+          "type": "boolean"
+        }
+      }
+    },
+    "llmToIdeSanitizationRuleUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "regexPattern": {
+          "$ref": "#/definitions/nonEmptyString"
+        },
+        "replaceWith": {
+          "type": "string"
+        },
+        "skipForLanguages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nonEmptyString"
+          }
+        },
+        "skipForPaths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/nonEmptyString"
+          }
+        }
+      }
+    },
+    "instructionsAndVariablesUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "instructionsById": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/instructionUserConfig"
+          }
+        },
+        "sharedVariablesById": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/anyJsonValue"
+          }
+        },
+        "sharedReferenceVariablesById": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "coreSettingsUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "skipInstructions": {
+          "type": "boolean"
+        },
+        "skipCodeListings": {
+          "type": "boolean"
+        },
+        "ideToLlm": {
+          "$ref": "#/definitions/promptLimitsUserConfig"
+        },
+        "llmToIde": {
+          "$ref": "#/definitions/promptLimitsUserConfig"
+        },
+        "postFilePatchActions": {
+          "$ref": "#/definitions/postFilePatchActionsUserConfig"
+        },
+        "instructionsAndVariables": {
+          "$ref": "#/definitions/instructionsAndVariablesUserConfig"
+        },
+        "llmToIdeSanitizationRulesById": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/llmToIdeSanitizationRuleUserConfig"
+          }
+        }
+      }
+    },
+    "overrideUserConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "shouldBeSkipped": {
+          "type": "boolean"
+        },
+        "coreSettings": {
+          "$ref": "#/definitions/coreSettingsUserConfig"
+        }
+      }
+    }
+  }
+}

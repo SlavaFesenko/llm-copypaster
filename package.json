@@ -185,6 +185,15 @@
         "key": "ctrl+alt+v",
         "when": "editorTextFocus"
       }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "llm-copypaster.jsonc",
+          "sys-config.jsonc"
+        ],
+        "url": "./llm-copypaster.schema.json"
+      }
     ]
   },
   "scripts": {

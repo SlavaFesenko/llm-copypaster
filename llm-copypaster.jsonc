@@ -2,6 +2,7 @@
 // NOTE: if you don’t want to “show” the file in git, add `/llm-copypaster.jsonc` to `.git/info/exclude`
 // todo: show warning if config can't be parsed, let's say when required param (profile version) was not defined or so
 {
+  "configVersion": "0.0.1",
   "coreSettings": {
     "instructionsAndVariables": {
       "instructionsById": {
