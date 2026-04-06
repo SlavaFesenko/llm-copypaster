@@ -1,12 +1,20 @@
 import { z } from 'zod';
-import {
-  buildNullableVitalAnchorSchema,
-  buildVitalAnchorSchema,
-} from '../validation/zod-common-rules/vital-parsing-anchors-rules';
+
+// #region Shared Zod-Helpers (has to be declared before use)
 
 const nonEmptyStringSchema = z.string().trim().min(1);
 const nonNegativeIntegerSchema = z.number().int().nonnegative();
 const positiveFiniteNumberSchema = z.number().finite().positive();
+
+function buildVitalAnchorSchema() {
+  const vitalAnchorMinLength = 3;
+
+  return z.string().refine(anchorValue => anchorValue.trim().length >= vitalAnchorMinLength, {
+    message: `Anchor must be at least ${vitalAnchorMinLength} chars after trim to make parsing more fragile`,
+  });
+}
+
+// #endregion
 
 export interface LlmCopypasterConfig {
   nonOverrideableSettings: NonOverrideableSettingsConfig;
@@ -47,7 +55,7 @@ export const vitalParsingAnchorsConfigSchema = z.object({
   FILE_EDITED_FULL_ANCHOR: buildVitalAnchorSchema(),
   FILE_CREATED_ANCHOR: buildVitalAnchorSchema(),
   FILE_DELETED_ANCHOR: buildVitalAnchorSchema(),
-  END_OF_OUTPUT_ANCHOR: buildNullableVitalAnchorSchema(),
+  END_OF_OUTPUT_ANCHOR: buildVitalAnchorSchema().nullable(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
 
 export interface CoreSettingsConfig {
