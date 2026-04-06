@@ -2,37 +2,25 @@ import get from 'lodash/get';
 
 import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
 
-export interface UnresolvedConfigVarRefValuePayload {
-  unresolvedReason: string;
-  configReferenceValuePath: string;
-  fullVariablePath: string;
-}
-
 export class ConfigRefVarsResolver {
-  public static tryParseUnresolvedConfigVarRefValue(variableValue: unknown): UnresolvedConfigVarRefValuePayload | null {
-    if (typeof variableValue !== 'string') return null; // unresolved var may be only in string format
-
-    try {
-      return JSON.parse(variableValue) as UnresolvedConfigVarRefValuePayload;
-    } catch {
-      return null;
-    }
-  }
-
   public resolve(config: LlmCopypasterConfig): LlmCopypasterConfig {
     const instructionsAndVariables = config.coreSettings.instructionsAndVariables;
+    const sharedVariablesById = instructionsAndVariables.sharedVariablesById;
     const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
+    const nextSharedVariablesById = { ...sharedVariablesById };
+    const nextSharedReferenceVariablesById: Record<string, unknown> = {};
 
-    const resolvedSharedReferenceVariablesById = Object.fromEntries(
-      Object.entries(sharedReferenceVariablesById).map(([sharedRefVariableId, configRefPath]) => [
-        sharedRefVariableId,
-        this._resolveConfigVarRefValue(
-          config,
-          configRefPath,
-          `coreSettings.instructionsAndVariables.sharedReferenceVariablesById.${sharedRefVariableId}`
-        ),
-      ])
-    );
+    for (const [sharedRefVariableId, configRefPath] of Object.entries(sharedReferenceVariablesById)) {
+      const resolveConfigVarRefValueResult = this._resolveConfigVarRefValue(config, configRefPath);
+
+      if (resolveConfigVarRefValueResult.isResolved) {
+        nextSharedVariablesById[sharedRefVariableId] = resolveConfigVarRefValueResult.resolvedValue;
+
+        continue;
+      }
+
+      nextSharedReferenceVariablesById[sharedRefVariableId] = configRefPath;
+    }
 
     return {
       ...config,
@@ -40,56 +28,32 @@ export class ConfigRefVarsResolver {
         ...config.coreSettings,
         instructionsAndVariables: {
           ...instructionsAndVariables,
-          sharedReferenceVariablesById: resolvedSharedReferenceVariablesById,
+          sharedVariablesById: nextSharedVariablesById,
+          sharedReferenceVariablesById: nextSharedReferenceVariablesById,
         },
       },
     };
   }
 
-  private _resolveConfigVarRefValue(
-    config: LlmCopypasterConfig,
-    configRefPath: unknown,
-    fullConfigVariablePath: string
-  ): unknown {
-    if (typeof configRefPath !== 'string')
-      return this._buildUnresolvedConfigVarRefValue(
-        'Initial reference value type is not string',
-        'no-path-was-obtained',
-        fullConfigVariablePath
-      );
+  private _resolveConfigVarRefValue(config: LlmCopypasterConfig, configRefPath: unknown): ResolveConfigVarRefValueResult {
+    if (typeof configRefPath !== 'string') return { isResolved: false, resolvedValue: configRefPath };
 
     const normalizedConfigRefPath = configRefPath.trim();
 
-    if (!normalizedConfigRefPath)
-      return this._buildUnresolvedConfigVarRefValue(
-        'Initial reference value is empty string',
-        configRefPath,
-        fullConfigVariablePath
-      );
+    if (!normalizedConfigRefPath) return { isResolved: false, resolvedValue: configRefPath };
 
     const resolvedValue = get(config, normalizedConfigRefPath);
 
-    if (resolvedValue === undefined)
-      return this._buildUnresolvedConfigVarRefValue(
-        'Referenced config value was not found',
-        configRefPath,
-        fullConfigVariablePath
-      );
+    if (resolvedValue === undefined) return { isResolved: false, resolvedValue: configRefPath };
 
-    return resolvedValue;
-  }
-
-  private _buildUnresolvedConfigVarRefValue(
-    unresolvedReason: string,
-    initialConfigReferenceValue: string,
-    fullConfigVariablePath: string
-  ): string {
-    const unresolvedConfigVarRefValuePayload: UnresolvedConfigVarRefValuePayload = {
-      unresolvedReason,
-      configReferenceValuePath: initialConfigReferenceValue,
-      fullVariablePath: fullConfigVariablePath,
+    return {
+      isResolved: true,
+      resolvedValue,
     };
-
-    return JSON.stringify(unresolvedConfigVarRefValuePayload);
   }
+}
+
+interface ResolveConfigVarRefValueResult {
+  isResolved: boolean;
+  resolvedValue: unknown;
 }

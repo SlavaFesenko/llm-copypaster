@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { OverrideOptionMetadata } from '../../../config/contracts/other-contracts';
+import { LlmCopypasterConfigWithDebugData, OverrideOptionMetadata } from '../../../config/contracts/other-contracts';
 import { LlmCopypasterConfig } from '../../../config/contracts/system-config-contracts';
 import { ConfigReportFacade } from '../../../config/reporters/config-report-facade';
 import { CollectedFileItem } from '../../../contracts/file-contracts';
@@ -25,10 +25,11 @@ export class CopiedNotificator {
     let selectedProfileIds: string[] = [];
     let currentPromptText = args.promptText;
     let isTechPromptErased = false;
+    let currentMergedConfigResult: LlmCopypasterConfigWithDebugData =
+      await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
 
     while (true) {
-      const mergedConfigResult = await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
-      const effectiveConfig = mergedConfigResult.mergedConfig;
+      const effectiveConfig = currentMergedConfigResult.mergedConfig;
 
       const promptStatsResult = buildTextSizeStats({
         promptText: currentPromptText,
@@ -97,12 +98,11 @@ export class CopiedNotificator {
         if (!nextPickResult) return;
 
         selectedProfileIds = nextPickResult.profileIds;
-
-        const nextMergedConfigResult =
+        currentMergedConfigResult =
           await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
 
         currentPromptText = await this._buildLlmPromptText({
-          effectiveConfig: nextMergedConfigResult.mergedConfig,
+          effectiveConfig: currentMergedConfigResult.mergedConfig,
           includeTechPromptFromCommand: args.includeTechPrompt,
           fileItems: args.fileItems,
           forceSkipTechPrompt: isTechPromptErased,
@@ -110,15 +110,13 @@ export class CopiedNotificator {
 
         await vscode.env.clipboard.writeText(currentPromptText);
 
-        if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor && nextMergedConfigResult.debugData) {
+        if (nextPickResult.shouldAdditionallyOpenMergedConfigInEditor && currentMergedConfigResult.debugData) {
           await new ConfigReportFacade({
             extensionContext: this._deps.extensionContext,
             configService: this._deps.configService,
             activeOverrideIds: selectedProfileIds,
-          }).displayOverridesAppliedReportFromData(nextMergedConfigResult.debugData);
+          }).displayOverridesAppliedReportFromData(currentMergedConfigResult.debugData);
         }
-
-        continue;
       }
     }
   }

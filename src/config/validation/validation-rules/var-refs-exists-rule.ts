@@ -1,4 +1,3 @@
-import { ConfigRefVarsResolver, UnresolvedConfigVarRefValuePayload } from '../../helpers/config-ref-vars-resolver';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class VarRefsExistRule implements ValidationRule {
@@ -19,16 +18,13 @@ export class VarRefsExistRule implements ValidationRule {
     const instructionsAndVariables = validationRuleContext.targetConfig.coreSettings.instructionsAndVariables;
     const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
 
-    return [...this._collectUnresolvedVariablesById(sharedReferenceVariablesById)];
-  }
+    return Object.entries(sharedReferenceVariablesById).map(([sharedVariableId, variableValue]) => {
+      // TODO: если нельзя избежать хардкодных ссылок, нужно обеспечить струкутуру, обеспечивающую автопереименование по
+      // всему проекту, например, названия конфига хранить в обьекте, или все-таки задуматься о c#-аналоге nameof
+      const fullVariablePath = `coreSettings.instructionsAndVariables.sharedReferenceVariablesById.${sharedVariableId}`;
+      const configReferenceValuePath = typeof variableValue === 'string' ? variableValue : JSON.stringify(variableValue);
 
-  private _collectUnresolvedVariablesById(variablesById: Record<string, unknown>): string[] {
-    return Object.entries(variablesById)
-      .map(([, variableValue]) => ConfigRefVarsResolver.tryParseUnresolvedConfigVarRefValue(variableValue))
-      .filter((unresolvedPayload): unresolvedPayload is UnresolvedConfigVarRefValuePayload => !!unresolvedPayload)
-      .map(
-        unresolvedPayload =>
-          `"${unresolvedPayload.fullVariablePath}": "${unresolvedPayload.configReferenceValuePath}": ${unresolvedPayload.unresolvedReason}`
-      );
+      return `"${fullVariablePath}": "${configReferenceValuePath}"`;
+    });
   }
 }

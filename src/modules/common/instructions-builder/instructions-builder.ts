@@ -7,7 +7,6 @@ import {
   InstructionsAndVariablesConfig,
   LlmCopypasterConfig,
 } from '../../../config/contracts/system-config-contracts';
-import { ConfigRefVarsResolver } from '../../../config/helpers/config-ref-vars-resolver';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
 import { collapseEmptyLines } from './helpers';
 import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './report-helpers';
@@ -55,7 +54,7 @@ export class InstructionsBuilder {
       liquidJsIssues: [],
     };
 
-    const resolvedTemplateVariablesById = this._resolveTemplateVariablesById(resolveIssuesBag);
+    const resolvedTemplateVariablesById = this._resolveTemplateVariablesById();
 
     const finalInstructionsText: string[] = [];
 
@@ -165,44 +164,12 @@ export class InstructionsBuilder {
     return normalizedRenderedText;
   }
 
-  private _resolveTemplateVariablesById(resolveIssues: InstructionsResolveIssuesBag): Record<string, unknown> {
+  private _resolveTemplateVariablesById(): Record<string, unknown> {
     const instructionsAndVariables = this._config.coreSettings.instructionsAndVariables;
-    const sharedVariablesById = instructionsAndVariables.sharedVariablesById ?? {};
-    const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById ?? {};
-
-    this._appendUnresolvedConfigVariablesIssues({
-      variablesById: sharedVariablesById,
-      resolveIssues,
-    });
-    this._appendUnresolvedConfigVariablesIssues({
-      variablesById: sharedReferenceVariablesById,
-      resolveIssues,
-    });
 
     return {
-      ...sharedVariablesById,
-      ...sharedReferenceVariablesById,
+      ...instructionsAndVariables.sharedVariablesById,
     };
-  }
-
-  private _appendUnresolvedConfigVariablesIssues(args: {
-    variablesById: Record<string, unknown>;
-    resolveIssues: InstructionsResolveIssuesBag;
-  }): void {
-    for (const sharedVariableId of Object.keys(args.variablesById)) {
-      const resolvedSharedVariableValue = args.variablesById[sharedVariableId];
-      const unresolvedConfigVarRefValue =
-        ConfigRefVarsResolver.tryParseUnresolvedConfigVarRefValue(resolvedSharedVariableValue);
-
-      if (!unresolvedConfigVarRefValue) continue;
-
-      args.resolveIssues.configVariablesIssues.push({
-        sharedVariableId,
-        rawTemplate: unresolvedConfigVarRefValue.fullVariablePath,
-        configVariablePath: unresolvedConfigVarRefValue.configReferenceValuePath,
-        errorText: unresolvedConfigVarRefValue.unresolvedReason,
-      });
-    }
   }
 
   private async _readInstructionText(

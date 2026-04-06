@@ -75,13 +75,7 @@ export class ConfigService {
       });
     }
 
-    // TODO: тут бага, т.к. выше переменные уже резолваются в systemUserMergedConfig, то новая попытка их зарезолвать фейлится,
-    // так как уже нет путей-ссылок, а вместо них значения. Скорее всего, правильное решение - если переменную удалось зарезолвать -
-    // тогда ее переносить в sharedVariablesById, а если не удалось - тогда оставлять ее как есть в sharedReferenceVariablesById,
-    // и для валидатора это будет тригером, что если в sharedReferenceVariablesById есть переменные - надо выдать ишшью
-    // а билдер вообще ничего про sharedReferenceVariablesById знать не должен (в т.ч. валидировать в репорт), а только sharedVariablesById
-    // таким образом мы сможем повторно запускать _configRefVarsResolver на одном и том же конфиге не боясь, что он споткнется
-    // соотвественно, в _configRefVarsResolver можно избавиться от цирка с обьектом ошибки, т.к. ссылка останется без изменений
+    // resolved ref-vars are moved to sharedVariablesById, unresolved refs stay in sharedReferenceVariablesById
     const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
 
     await this._configValidator.validateConfig(
