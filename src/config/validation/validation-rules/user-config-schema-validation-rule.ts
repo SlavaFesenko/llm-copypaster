@@ -7,6 +7,12 @@ import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '
 
 const validateUserConfigByJsonSchema = buildUserConfigJsonSchemaValidator();
 
+// We validate user-config with Ajv against the generated JSON Schema because this config is built from raw JSON
+// and is expected to be partial from the user point of view.
+// Unlike the zod-based validation we use for fully constructed system-config-based objects, JSON Schema validation
+// is lighter here and does not require the user to provide every field.
+// This matches the business logic: user-config may override only a subset of settings, but its structure still
+// must follow the allowed schema.
 export class UserConfigSchemaValidationRule implements ValidationRule {
   public readonly name = 'Generated JSON Schema User Config Validation';
   public readonly rationale = 'User config JSON must not contain unknown or misplaced properties';

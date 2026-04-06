@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+// !!! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
+
 // #region Shared Zod-Helpers (has to be declared before use)
 
 const nonEmptyStringSchema = z.string().trim().min(1);
@@ -21,6 +23,7 @@ export interface LlmCopypasterConfig {
   coreSettings: CoreSettingsConfig;
 }
 
+// ! this llmCopypasterConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
 export const llmCopypasterConfigSchema = z.object({
   nonOverrideableSettings: z.lazy(() => nonOverrideableSettingsConfigSchema),
   coreSettings: z.lazy(() => coreSettingsConfigSchema),
