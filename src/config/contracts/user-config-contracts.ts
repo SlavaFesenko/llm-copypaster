@@ -12,13 +12,13 @@ import {
 // Isolation is simpler to maintain, and it also leaves room for user-config field names/types to diverge from system-config in the future
 // Plus user-config has additional presets section, which system-config doesn't have
 
-// ! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
-
 export interface UserConfig {
   presetIndependentSettings?: PresetIndependentSettingsUserConfig;
   presetDependentSettings?: PresetDependentSettingsUserConfig;
   presetsById?: Record<string, PresetUserConfig>;
 }
+
+// ! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
 
 // ! this userConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
 export const userConfigSchema = z.object({
