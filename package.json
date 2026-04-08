@@ -207,7 +207,6 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "ajv": "^8.17.1",
     "json-diff-ts": "^4.9.1",
     "jsonc-parser": "^3.3.1",
     "liquidjs": "^10.24.0",
