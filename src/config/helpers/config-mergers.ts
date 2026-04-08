@@ -1,4 +1,14 @@
 import {
+  coreSettingsConfigDescriptor,
+  instructionsAndVariablesConfigDescriptor,
+  llmCopypasterConfigDescriptor,
+  llmToIdeSanitizationRulesByIdConfigDescriptor,
+  nonOverrideableSettingsConfigDescriptor,
+  postFilePatchActionsConfigDescriptor,
+  promptLimitsConfigDescriptor,
+  vitalParsingAnchorsConfigDescriptor,
+} from '../contracts/config-descriptors';
+import {
   CoreSettingsConfig,
   IdeToLlmConfig,
   InstructionConfig,
@@ -13,8 +23,8 @@ import {
 import {
   CoreSettingsUserConfig,
   IdeToLlmUserConfig,
-  InstructionUserConfig,
   InstructionsAndVariablesUserConfig,
+  InstructionUserConfig,
   LlmCopypasterUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
   LlmToIdeUserConfig,
@@ -22,6 +32,7 @@ import {
   PostFilePatchActionsUserConfig,
   VitalParsingAnchorsUserConfig,
 } from '../contracts/user-config-contracts';
+import { mergeByDescriptor, mergeRecordDescriptorValues } from './dynamic-config-builders';
 
 export function mergeConfigs(
   systemConfig: LlmCopypasterConfig,
@@ -36,54 +47,25 @@ export function applyUserConfig(
   systemConfig: LlmCopypasterConfig,
   userConfig: LlmCopypasterUserConfig
 ): LlmCopypasterConfig {
-  const nextConfig: LlmCopypasterConfig = {
-    nonOverrideableSettings: mergeNonOverrideableSettingsConfig(
-      systemConfig.nonOverrideableSettings,
-      userConfig.nonOverrideableSettings
-    ),
-    coreSettings: mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings),
-  };
-
-  return nextConfig;
+  // Only the schema-backed system fields participate in the main merge flow
+  return mergeObjectDescriptorFields(llmCopypasterConfigDescriptor, systemConfig, {
+    nonOverrideableSettings: userConfig.nonOverrideableSettings,
+    coreSettings: userConfig.coreSettings,
+  });
 }
 
 export function mergeNonOverrideableSettingsConfig(
   baseSettings: NonOverrideableSettingsConfig,
   userSettings?: NonOverrideableSettingsUserConfig
 ): NonOverrideableSettingsConfig {
-  if (!userSettings) return baseSettings;
-
-  return {
-    allowOutsideWorkspaceRead: mergeOptionalValue(
-      baseSettings.allowOutsideWorkspaceRead,
-      userSettings.allowOutsideWorkspaceRead
-    ),
-    allowOutsideWorkspaceWrite: mergeOptionalValue(
-      baseSettings.allowOutsideWorkspaceWrite,
-      userSettings.allowOutsideWorkspaceWrite
-    ),
-    vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseSettings.vitalParsingAnchors, userSettings.vitalParsingAnchors),
-  };
+  return mergeObjectDescriptorFields(nonOverrideableSettingsConfigDescriptor, baseSettings, userSettings);
 }
 
 export function mergeLlmToIdeParsingAnchors(
   baseAnchors: VitalParsingAnchorsConfig,
   userAnchors?: VitalParsingAnchorsUserConfig
 ): VitalParsingAnchorsConfig {
-  if (!userAnchors) return baseAnchors;
-
-  return {
-    PROMPT_DELIMITER_ANCHOR: mergeOptionalValue(baseAnchors.PROMPT_DELIMITER_ANCHOR, userAnchors.PROMPT_DELIMITER_ANCHOR),
-    CODE_LISTING_HEADER_ANCHOR: mergeOptionalValue(
-      baseAnchors.CODE_LISTING_HEADER_ANCHOR,
-      userAnchors.CODE_LISTING_HEADER_ANCHOR
-    ),
-    FILE_STATUS_ANCHOR: mergeOptionalValue(baseAnchors.FILE_STATUS_ANCHOR, userAnchors.FILE_STATUS_ANCHOR),
-    FILE_EDITED_FULL_ANCHOR: mergeOptionalValue(baseAnchors.FILE_EDITED_FULL_ANCHOR, userAnchors.FILE_EDITED_FULL_ANCHOR),
-    FILE_CREATED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_CREATED_ANCHOR, userAnchors.FILE_CREATED_ANCHOR),
-    FILE_DELETED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_DELETED_ANCHOR, userAnchors.FILE_DELETED_ANCHOR),
-    END_OF_OUTPUT_ANCHOR: mergeNullableAnchor(baseAnchors.END_OF_OUTPUT_ANCHOR, userAnchors.END_OF_OUTPUT_ANCHOR),
-  };
+  return mergeObjectDescriptorFields(vitalParsingAnchorsConfigDescriptor, baseAnchors, userAnchors);
 }
 
 export function mergeNullableAnchor(
@@ -99,151 +81,46 @@ export function mergeCoreSettingsConfig(
   baseSettings: CoreSettingsConfig,
   userSettings: CoreSettingsUserConfig | undefined
 ): CoreSettingsConfig {
-  if (!userSettings) return baseSettings;
-
-  return {
-    skipInstructions: mergeOptionalValue(baseSettings.skipInstructions, userSettings.skipInstructions),
-    skipCodeListings: mergeOptionalValue(baseSettings.skipCodeListings, userSettings.skipCodeListings),
-    ideToLlm: mergeIdeToLlmContextConfig(baseSettings.ideToLlm, userSettings.ideToLlm),
-    llmToIde: mergeLlmToIdeContextConfig(baseSettings.llmToIde, userSettings.llmToIde),
-    postFilePatchActions: mergePostFilePatchActionsConfig(
-      baseSettings.postFilePatchActions,
-      userSettings.postFilePatchActions
-    ),
-    instructionsAndVariables: mergeInstructionsAndVariablesConfig(
-      baseSettings.instructionsAndVariables,
-      userSettings.instructionsAndVariables
-    ),
-    llmToIdeSanitizationRulesById: mergeLlmToIdeSanitizationRulesById(
-      baseSettings.llmToIdeSanitizationRulesById,
-      userSettings
-    ),
-  };
+  return mergeObjectDescriptorFields(coreSettingsConfigDescriptor, baseSettings, userSettings);
 }
 
 export function mergeIdeToLlmContextConfig(
   baseConfig: IdeToLlmConfig,
   userConfig: IdeToLlmUserConfig | undefined
 ): IdeToLlmConfig {
-  if (!userConfig) return baseConfig;
-
-  return {
-    skipPromptSizeStatsInCopyNotification: mergeOptionalValue(
-      baseConfig.skipPromptSizeStatsInCopyNotification,
-      userConfig.skipPromptSizeStatsInCopyNotification
-    ),
-    charsPerToken: mergeOptionalValue(baseConfig.charsPerToken, userConfig.charsPerToken),
-    linesMaxToShowWarning: mergeOptionalValue(baseConfig.linesMaxToShowWarning, userConfig.linesMaxToShowWarning),
-    tokensMaxToShowWarning: mergeOptionalValue(baseConfig.tokensMaxToShowWarning, userConfig.tokensMaxToShowWarning),
-  };
+  return mergeObjectDescriptorFields(promptLimitsConfigDescriptor, baseConfig, userConfig);
 }
 
 export function mergeLlmToIdeContextConfig(
   baseConfig: LlmToIdeConfig,
   userConfig: LlmToIdeUserConfig | undefined
 ): LlmToIdeConfig {
-  if (!userConfig) return baseConfig;
-
-  return {
-    skipPromptSizeStatsInCopyNotification: mergeOptionalValue(
-      baseConfig.skipPromptSizeStatsInCopyNotification,
-      userConfig.skipPromptSizeStatsInCopyNotification
-    ),
-    charsPerToken: mergeOptionalValue(baseConfig.charsPerToken, userConfig.charsPerToken),
-    linesMaxToShowWarning: mergeOptionalValue(baseConfig.linesMaxToShowWarning, userConfig.linesMaxToShowWarning),
-    tokensMaxToShowWarning: mergeOptionalValue(baseConfig.tokensMaxToShowWarning, userConfig.tokensMaxToShowWarning),
-  };
+  return mergeObjectDescriptorFields(promptLimitsConfigDescriptor, baseConfig, userConfig);
 }
 
 export function mergePostFilePatchActionsConfig(
   baseConfig: PostFilePatchActionsConfig,
   userConfig: PostFilePatchActionsUserConfig | undefined
 ): PostFilePatchActionsConfig {
-  if (!userConfig) return baseConfig;
-
-  return {
-    enableSaveAfterFilePatch: mergeOptionalValue(baseConfig.enableSaveAfterFilePatch, userConfig.enableSaveAfterFilePatch),
-    enableLintingAfterFilePatch: mergeOptionalValue(
-      baseConfig.enableLintingAfterFilePatch,
-      userConfig.enableLintingAfterFilePatch
-    ),
-    enableOpeningPatchedFilesInEditor: mergeOptionalValue(
-      baseConfig.enableOpeningPatchedFilesInEditor,
-      userConfig.enableOpeningPatchedFilesInEditor
-    ),
-  };
+  return mergeObjectDescriptorFields(postFilePatchActionsConfigDescriptor, baseConfig, userConfig);
 }
 
 export function mergeInstructionsAndVariablesConfig(
   baseConfig: InstructionsAndVariablesConfig,
   userConfig: InstructionsAndVariablesUserConfig | undefined
 ): InstructionsAndVariablesConfig {
-  if (!userConfig) return baseConfig;
-
-  const baseSharedVariablesById = baseConfig.sharedVariablesById;
-  const baseSharedReferenceVariablesById = baseConfig.sharedReferenceVariablesById;
-  const baseInstructionsById = baseConfig.instructionsById;
-
-  const nextSharedVariablesById = { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
-  const nextSharedReferenceVariablesById = {
-    ...baseSharedReferenceVariablesById,
-    ...(userConfig.sharedReferenceVariablesById ?? {}),
-  };
-  const nextInstructionsById = mapInstructionsById(baseInstructionsById, userConfig.instructionsById ?? {});
-
-  return {
-    sharedVariablesById: nextSharedVariablesById,
-    sharedReferenceVariablesById: nextSharedReferenceVariablesById,
-    instructionsById: nextInstructionsById,
-  };
+  return mergeObjectDescriptorFields(instructionsAndVariablesConfigDescriptor, baseConfig, userConfig);
 }
 
 export function mapInstructionsById(
   baseInstructionsById: Record<string, InstructionConfig>,
   userInstructionsById: Record<string, InstructionUserConfig>
 ): Record<string, InstructionConfig> {
-  // Start from the base dictionary and override only instruction ids provided by the user
-  const nextInstructionsById: Record<string, InstructionConfig> = { ...baseInstructionsById };
-
-  // Process only user-defined instruction ids, because untouched base instructions are already copied above
-  for (const instructionId of Object.keys(userInstructionsById)) {
-    const baseInstruction = baseInstructionsById[instructionId];
-    const userInstruction = userInstructionsById[instructionId];
-
-    // This branch handles a brand new instruction that does not exist in the base config yet
-    if (!baseInstruction) {
-      // A new instruction is valid only when its required fields are provided explicitly
-      if (userInstruction.path === undefined || userInstruction.skip === undefined) continue;
-
-      nextInstructionsById[instructionId] = {
-        path: userInstruction.path,
-        skip: userInstruction.skip,
-        // Optional visibility flags default to false for newly created instructions
-        showInOverrideMode: !!userInstruction.showInOverrideMode,
-        showInQuickInstructionMode: !!userInstruction.showInQuickInstructionMode,
-      };
-
-      continue;
-    }
-
-    // This branch merges a user override into an existing base instruction
-    nextInstructionsById[instructionId] = {
-      path: mergeOptionalValue(baseInstruction.path, userInstruction.path),
-      skip: mergeOptionalValue(baseInstruction.skip, userInstruction.skip),
-      // Preserve the base flag when the user did not specify an override explicitly
-      showInOverrideMode:
-        userInstruction.showInOverrideMode === undefined
-          ? baseInstruction.showInOverrideMode
-          : userInstruction.showInOverrideMode,
-      // Preserve the base flag when the user did not specify an override explicitly
-      showInQuickInstructionMode:
-        userInstruction.showInQuickInstructionMode === undefined
-          ? baseInstruction.showInQuickInstructionMode
-          : userInstruction.showInQuickInstructionMode,
-    };
-  }
-
-  return nextInstructionsById;
+  return mergeRecordDescriptorValues(
+    instructionsAndVariablesConfigDescriptor.fields.instructionsById,
+    baseInstructionsById,
+    userInstructionsById
+  );
 }
 
 export function mergeLlmToIdeSanitizationRulesById(
@@ -260,44 +137,61 @@ export function mapLlmToIdeSanitizationRulesById(
   baseRulesById: Record<string, LlmToIdeSanitizationRuleConfig>,
   userRulesById: Record<string, LlmToIdeSanitizationRuleUserConfig>
 ): Record<string, LlmToIdeSanitizationRuleConfig> {
-  const nextRulesById: Record<string, LlmToIdeSanitizationRuleConfig> = { ...baseRulesById };
-
-  for (const ruleId of Object.keys(userRulesById)) {
-    const baseRule = baseRulesById[ruleId];
-    const userRule = userRulesById[ruleId];
-
-    if (!baseRule) {
-      if (
-        userRule.regexPattern === undefined ||
-        userRule.replaceWith === undefined ||
-        userRule.skipForLanguages === undefined ||
-        userRule.skipForPaths === undefined
-      )
-        continue;
-
-      nextRulesById[ruleId] = {
-        regexPattern: userRule.regexPattern,
-        replaceWith: userRule.replaceWith,
-        skipForLanguages: userRule.skipForLanguages,
-        skipForPaths: userRule.skipForPaths,
-      };
-
-      continue;
-    }
-
-    nextRulesById[ruleId] = {
-      regexPattern: mergeOptionalValue(baseRule.regexPattern, userRule.regexPattern),
-      replaceWith: mergeOptionalValue(baseRule.replaceWith, userRule.replaceWith),
-      skipForLanguages: mergeOptionalValue(baseRule.skipForLanguages, userRule.skipForLanguages),
-      skipForPaths: mergeOptionalValue(baseRule.skipForPaths, userRule.skipForPaths),
-    };
-  }
-
-  return nextRulesById;
+  return mergeRecordDescriptorValues(llmToIdeSanitizationRulesByIdConfigDescriptor, baseRulesById, userRulesById);
 }
 
 export function mergeOptionalValue<T>(baseValue: T, userValue: T | undefined): T {
   if (userValue === undefined) return baseValue;
 
   return userValue;
+}
+
+function mergeObjectDescriptorFields<TDescriptor extends typeof llmCopypasterConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: LlmCopypasterConfig,
+  userValue: LlmCopypasterUserConfig | undefined
+): LlmCopypasterConfig;
+function mergeObjectDescriptorFields<TDescriptor extends typeof nonOverrideableSettingsConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: NonOverrideableSettingsConfig,
+  userValue: NonOverrideableSettingsUserConfig | undefined
+): NonOverrideableSettingsConfig;
+function mergeObjectDescriptorFields<TDescriptor extends typeof vitalParsingAnchorsConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: VitalParsingAnchorsConfig,
+  userValue: VitalParsingAnchorsUserConfig | undefined
+): VitalParsingAnchorsConfig;
+function mergeObjectDescriptorFields<TDescriptor extends typeof coreSettingsConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: CoreSettingsConfig,
+  userValue: CoreSettingsUserConfig | undefined
+): CoreSettingsConfig;
+function mergeObjectDescriptorFields<TDescriptor extends typeof promptLimitsConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: IdeToLlmConfig | LlmToIdeConfig,
+  userValue: IdeToLlmUserConfig | LlmToIdeUserConfig | undefined
+): IdeToLlmConfig | LlmToIdeConfig;
+function mergeObjectDescriptorFields<TDescriptor extends typeof postFilePatchActionsConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: PostFilePatchActionsConfig,
+  userValue: PostFilePatchActionsUserConfig | undefined
+): PostFilePatchActionsConfig;
+function mergeObjectDescriptorFields<TDescriptor extends typeof instructionsAndVariablesConfigDescriptor>(
+  descriptor: TDescriptor,
+  baseValue: InstructionsAndVariablesConfig,
+  userValue: InstructionsAndVariablesUserConfig | undefined
+): InstructionsAndVariablesConfig;
+function mergeObjectDescriptorFields(
+  descriptor:
+    | typeof llmCopypasterConfigDescriptor
+    | typeof nonOverrideableSettingsConfigDescriptor
+    | typeof vitalParsingAnchorsConfigDescriptor
+    | typeof coreSettingsConfigDescriptor
+    | typeof promptLimitsConfigDescriptor
+    | typeof postFilePatchActionsConfigDescriptor
+    | typeof instructionsAndVariablesConfigDescriptor,
+  baseValue: unknown,
+  userValue: unknown
+): unknown {
+  return mergeByDescriptor(descriptor, baseValue as never, userValue as never);
 }
