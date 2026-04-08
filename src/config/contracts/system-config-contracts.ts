@@ -1,30 +1,17 @@
 import { z } from 'zod';
+import {
+  buildVitalAnchorSchema,
+  nonEmptyStringSchema,
+  nonNegativeIntegerSchema,
+  positiveFiniteNumberSchema,
+} from '../helpers/zod-shared-schemas';
 import { systemConfigFieldPathMap } from './system-config-map';
-
-// !!! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
-
-// #region Shared Zod-Helpers (has to be declared before use)
-
-const nonEmptyStringSchema = z.string().trim().min(1);
-const nonNegativeIntegerSchema = z.number().int().nonnegative();
-const positiveFiniteNumberSchema = z.number().finite().positive();
-
-function buildVitalAnchorSchema() {
-  const vitalAnchorMinLength = 3;
-
-  return z.string().refine(anchorValue => anchorValue.trim().length >= vitalAnchorMinLength, {
-    message: `Anchor must be at least ${vitalAnchorMinLength} chars after trim to make parsing more fragile`,
-  });
-}
-
-// #endregion
 
 export interface LlmCopypasterConfig {
   [systemConfigFieldPathMap.nonOverrideableSettings.name]: NonOverrideableSettingsConfig;
   [systemConfigFieldPathMap.coreSettings.name]: CoreSettingsConfig;
 }
 
-// ! this llmCopypasterConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
 export const llmCopypasterConfigSchema = z.object({
   [systemConfigFieldPathMap.nonOverrideableSettings.name]: z.lazy(() => nonOverrideableSettingsConfigSchema),
   [systemConfigFieldPathMap.coreSettings.name]: z.lazy(() => coreSettingsConfigSchema),

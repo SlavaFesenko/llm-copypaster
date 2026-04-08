@@ -1,14 +1,48 @@
+import { z } from 'zod';
+import {
+  buildVitalAnchorSchema,
+  nonEmptyStringSchema,
+  nonNegativeIntegerSchema,
+  positiveFiniteNumberSchema,
+} from '../helpers/zod-shared-schemas';
+
+// This file intentionally keeps user-config Zod schema isolated from system-config Zod schema
+// User config has patch semantics, so every field here must stay explicitly `.optional()`
+// Building user schema by traversing system schema and making everything optional is possible, but too clever and brittle
+// Isolation is simpler to maintain, and it also leaves room for user-config field names/types to diverge from system-config in the future
+// Plus user-config has additional overrides section, which user-config doesn't have
+
+// ! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
+
 export interface LlmCopypasterUserConfig {
   nonOverrideableSettings?: NonOverrideableSettingsUserConfig;
   coreSettings?: CoreSettingsUserConfig;
   overridesById?: Record<string, OverrideUserConfig>;
 }
 
+// ! this llmCopypasterConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
+export const llmCopypasterUserConfigSchema = z.object({
+  nonOverrideableSettings: z.lazy(() => nonOverrideableSettingsUserConfigSchema).optional(),
+  coreSettings: z.lazy(() => coreSettingsUserConfigSchema).optional(),
+  overridesById: z
+    .record(
+      z.string(),
+      z.lazy(() => overrideUserConfigSchema)
+    )
+    .optional(),
+}) satisfies z.ZodType<LlmCopypasterUserConfig>;
+
 export interface NonOverrideableSettingsUserConfig {
   allowOutsideWorkspaceRead?: boolean;
   allowOutsideWorkspaceWrite?: boolean;
   vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
 }
+
+export const nonOverrideableSettingsUserConfigSchema = z.object({
+  allowOutsideWorkspaceRead: z.boolean().optional(),
+  allowOutsideWorkspaceWrite: z.boolean().optional(),
+  vitalParsingAnchors: z.lazy(() => vitalParsingAnchorsUserConfigSchema).optional(),
+}) satisfies z.ZodType<NonOverrideableSettingsUserConfig>;
 
 export interface VitalParsingAnchorsUserConfig {
   PROMPT_DELIMITER_ANCHOR?: string;
@@ -20,6 +54,16 @@ export interface VitalParsingAnchorsUserConfig {
   END_OF_OUTPUT_ANCHOR?: string | null;
 }
 
+export const vitalParsingAnchorsUserConfigSchema = z.object({
+  PROMPT_DELIMITER_ANCHOR: buildVitalAnchorSchema().optional(),
+  CODE_LISTING_HEADER_ANCHOR: buildVitalAnchorSchema().optional(),
+  FILE_STATUS_ANCHOR: buildVitalAnchorSchema().optional(),
+  FILE_EDITED_FULL_ANCHOR: buildVitalAnchorSchema().optional(),
+  FILE_CREATED_ANCHOR: buildVitalAnchorSchema().optional(),
+  FILE_DELETED_ANCHOR: buildVitalAnchorSchema().optional(),
+  END_OF_OUTPUT_ANCHOR: buildVitalAnchorSchema().nullable().optional(),
+}) satisfies z.ZodType<VitalParsingAnchorsUserConfig>;
+
 export interface CoreSettingsUserConfig {
   skipInstructions?: boolean;
   skipCodeListings?: boolean;
@@ -30,6 +74,21 @@ export interface CoreSettingsUserConfig {
   llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
+export const coreSettingsUserConfigSchema = z.object({
+  skipInstructions: z.boolean().optional(),
+  skipCodeListings: z.boolean().optional(),
+  ideToLlm: z.lazy(() => ideToLlmUserConfigSchema).optional(),
+  llmToIde: z.lazy(() => llmToIdeUserConfigSchema).optional(),
+  postFilePatchActions: z.lazy(() => postFilePatchActionsUserConfigSchema).optional(),
+  instructionsAndVariables: z.lazy(() => instructionsAndVariablesUserConfigSchema).optional(),
+  llmToIdeSanitizationRulesById: z
+    .record(
+      z.string(),
+      z.lazy(() => llmToIdeSanitizationRuleUserConfigSchema)
+    )
+    .optional(),
+}) satisfies z.ZodType<CoreSettingsUserConfig>;
+
 export interface PromptLimitsUserConfig {
   skipPromptSizeStatsInCopyNotification?: boolean;
   charsPerToken?: number;
@@ -37,9 +96,20 @@ export interface PromptLimitsUserConfig {
   tokensMaxToShowWarning?: number;
 }
 
+export const promptLimitsUserConfigSchema = z.object({
+  skipPromptSizeStatsInCopyNotification: z.boolean().optional(),
+  charsPerToken: positiveFiniteNumberSchema.optional(),
+  linesMaxToShowWarning: nonNegativeIntegerSchema.optional(),
+  tokensMaxToShowWarning: nonNegativeIntegerSchema.optional(),
+}) satisfies z.ZodType<PromptLimitsUserConfig>;
+
 export interface IdeToLlmUserConfig extends PromptLimitsUserConfig {}
 
+export const ideToLlmUserConfigSchema = promptLimitsUserConfigSchema satisfies z.ZodType<IdeToLlmUserConfig>;
+
 export interface LlmToIdeUserConfig extends PromptLimitsUserConfig {}
+
+export const llmToIdeUserConfigSchema = promptLimitsUserConfigSchema satisfies z.ZodType<LlmToIdeUserConfig>;
 
 export interface PostFilePatchActionsUserConfig {
   enableSaveAfterFilePatch?: boolean;
@@ -47,11 +117,28 @@ export interface PostFilePatchActionsUserConfig {
   enableOpeningPatchedFilesInEditor?: boolean;
 }
 
+export const postFilePatchActionsUserConfigSchema = z.object({
+  enableSaveAfterFilePatch: z.boolean().optional(),
+  enableLintingAfterFilePatch: z.boolean().optional(),
+  enableOpeningPatchedFilesInEditor: z.boolean().optional(),
+}) satisfies z.ZodType<PostFilePatchActionsUserConfig>;
+
 export interface InstructionsAndVariablesUserConfig {
   instructionsById?: Record<string, InstructionUserConfig>;
   sharedVariablesById?: Record<string, unknown>;
   sharedReferenceVariablesById?: Record<string, string>;
 }
+
+export const instructionsAndVariablesUserConfigSchema = z.object({
+  instructionsById: z
+    .record(
+      z.string(),
+      z.lazy(() => instructionUserConfigSchema)
+    )
+    .optional(),
+  sharedVariablesById: z.record(z.string(), z.unknown()).optional(),
+  sharedReferenceVariablesById: z.record(z.string(), z.string()).optional(),
+}) satisfies z.ZodType<InstructionsAndVariablesUserConfig>;
 
 export interface InstructionUserConfig {
   path?: string;
@@ -60,6 +147,13 @@ export interface InstructionUserConfig {
   showInQuickInstructionMode?: boolean;
 }
 
+export const instructionUserConfigSchema = z.object({
+  path: nonEmptyStringSchema.optional(),
+  skip: z.boolean().optional(),
+  showInOverrideMode: z.boolean().optional(),
+  showInQuickInstructionMode: z.boolean().optional(),
+}) satisfies z.ZodType<InstructionUserConfig>;
+
 export interface LlmToIdeSanitizationRuleUserConfig {
   regexPattern?: string;
   replaceWith?: string;
@@ -67,9 +161,23 @@ export interface LlmToIdeSanitizationRuleUserConfig {
   skipForPaths?: string[];
 }
 
+export const llmToIdeSanitizationRuleUserConfigSchema = z.object({
+  regexPattern: nonEmptyStringSchema.optional(),
+  replaceWith: z.string().optional(),
+  skipForLanguages: z.array(nonEmptyStringSchema).optional(),
+  skipForPaths: z.array(nonEmptyStringSchema).optional(),
+}) satisfies z.ZodType<LlmToIdeSanitizationRuleUserConfig>;
+
 export interface OverrideUserConfig {
   description?: string;
   version?: string;
   shouldBeSkipped?: boolean;
   coreSettings?: CoreSettingsUserConfig;
 }
+
+export const overrideUserConfigSchema = z.object({
+  description: z.string().optional(),
+  version: z.string().optional(),
+  shouldBeSkipped: z.boolean().optional(),
+  coreSettings: z.lazy(() => coreSettingsUserConfigSchema).optional(),
+}) satisfies z.ZodType<OverrideUserConfig>;
