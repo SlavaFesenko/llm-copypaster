@@ -60,12 +60,7 @@ export class ConfigService {
     const userConfig = await this.getUserConfig();
     const systemConfig = await this.getSystemConfig();
 
-    // TODO: проверить, зачем был сделан закомменченый код ниже, и если есть такая эквивалентная замена - сделать ее
     let multiOverrideConfig = systemUserMergedConfig;
-    // let multiOverrideConfig: LlmCopypasterConfig = {
-    //   nonOverrideableSettings: systemUserMergedConfig.nonOverrideableSettings,
-    //   coreSettings: systemUserMergedConfig.coreSettings,
-    // };
 
     for (const overrideId of overrideIds) {
       const overrideCoreSettings = userConfig?.overridesById?.[overrideId]?.coreSettings;
