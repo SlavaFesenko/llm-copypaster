@@ -36,12 +36,14 @@ export interface NonOverrideableSettingsUserConfig {
   allowOutsideWorkspaceRead?: boolean;
   allowOutsideWorkspaceWrite?: boolean;
   vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
+  notificationSettings?: NotificationSettingsUserConfig;
 }
 
 export const nonOverrideableSettingsUserConfigSchema = z.object({
   allowOutsideWorkspaceRead: z.boolean().optional(),
   allowOutsideWorkspaceWrite: z.boolean().optional(),
   vitalParsingAnchors: z.lazy(() => vitalParsingAnchorsUserConfigSchema).optional(),
+  notificationSettings: z.lazy(() => notificationSettingsUserConfigSchema).optional(),
 }) satisfies z.ZodType<NonOverrideableSettingsUserConfig>;
 
 export interface VitalParsingAnchorsUserConfig {
@@ -63,6 +65,26 @@ export const vitalParsingAnchorsUserConfigSchema = z.object({
   FILE_DELETED_ANCHOR: buildVitalAnchorSchema().optional(),
   END_OF_OUTPUT_ANCHOR: buildVitalAnchorSchema().nullable().optional(),
 }) satisfies z.ZodType<VitalParsingAnchorsUserConfig>;
+
+export interface NotificationSettingsUserConfig {
+  configValidation?: ConfigValidationNotificationSettingsUserConfig;
+}
+
+export const notificationSettingsUserConfigSchema = z.object({
+  configValidation: z.lazy(() => configValidationNotificationSettingsUserConfigSchema).optional(),
+}) satisfies z.ZodType<NotificationSettingsUserConfig>;
+
+export interface ConfigValidationNotificationSettingsUserConfig {
+  suppressWarningIssuesToast?: boolean;
+  suppressRecommendationIssuesToast?: boolean;
+  suppressNoIssuesToast?: boolean;
+}
+
+export const configValidationNotificationSettingsUserConfigSchema = z.object({
+  suppressWarningIssuesToast: z.boolean().optional(),
+  suppressRecommendationIssuesToast: z.boolean().optional(),
+  suppressNoIssuesToast: z.boolean().optional(),
+}) satisfies z.ZodType<ConfigValidationNotificationSettingsUserConfig>;
 
 export interface CoreSettingsUserConfig {
   skipInstructions?: boolean;

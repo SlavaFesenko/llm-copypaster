@@ -1,4 +1,5 @@
 import {
+  ConfigValidationNotificationSettingsConfig,
   CoreSettingsConfig,
   IdeToLlmConfig,
   InstructionConfig,
@@ -7,10 +8,12 @@ import {
   LlmToIdeConfig,
   LlmToIdeSanitizationRuleConfig,
   NonOverrideableSettingsConfig,
+  NotificationSettingsConfig,
   PostFilePatchActionsConfig,
   VitalParsingAnchorsConfig,
 } from '../contracts/system-config-contracts';
 import {
+  ConfigValidationNotificationSettingsUserConfig,
   CoreSettingsUserConfig,
   IdeToLlmUserConfig,
   InstructionUserConfig,
@@ -19,6 +22,7 @@ import {
   LlmToIdeSanitizationRuleUserConfig,
   LlmToIdeUserConfig,
   NonOverrideableSettingsUserConfig,
+  NotificationSettingsUserConfig,
   PostFilePatchActionsUserConfig,
   VitalParsingAnchorsUserConfig,
 } from '../contracts/user-config-contracts';
@@ -63,6 +67,10 @@ export function mergeNonOverrideableSettingsConfig(
       userSettings.allowOutsideWorkspaceWrite
     ),
     vitalParsingAnchors: mergeLlmToIdeParsingAnchors(baseSettings.vitalParsingAnchors, userSettings.vitalParsingAnchors),
+    notificationSettings: mergeNotificationSettingsConfig(
+      baseSettings.notificationSettings,
+      userSettings.notificationSettings
+    ),
   };
 }
 
@@ -83,6 +91,39 @@ export function mergeLlmToIdeParsingAnchors(
     FILE_CREATED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_CREATED_ANCHOR, userAnchors.FILE_CREATED_ANCHOR),
     FILE_DELETED_ANCHOR: mergeOptionalValue(baseAnchors.FILE_DELETED_ANCHOR, userAnchors.FILE_DELETED_ANCHOR),
     END_OF_OUTPUT_ANCHOR: mergeNullableAnchor(baseAnchors.END_OF_OUTPUT_ANCHOR, userAnchors.END_OF_OUTPUT_ANCHOR),
+  };
+}
+
+export function mergeNotificationSettingsConfig(
+  baseSettings: NotificationSettingsConfig,
+  userSettings?: NotificationSettingsUserConfig
+): NotificationSettingsConfig {
+  if (!userSettings) return baseSettings;
+
+  return {
+    configValidation: mergeConfigValidationNotificationSettingsConfig(
+      baseSettings.configValidation,
+      userSettings.configValidation
+    ),
+  };
+}
+
+export function mergeConfigValidationNotificationSettingsConfig(
+  baseSettings: ConfigValidationNotificationSettingsConfig,
+  userSettings?: ConfigValidationNotificationSettingsUserConfig
+): ConfigValidationNotificationSettingsConfig {
+  if (!userSettings) return baseSettings;
+
+  return {
+    suppressWarningIssuesToast: mergeOptionalValue(
+      baseSettings.suppressWarningIssuesToast,
+      userSettings.suppressWarningIssuesToast
+    ),
+    suppressRecommendationIssuesToast: mergeOptionalValue(
+      baseSettings.suppressRecommendationIssuesToast,
+      userSettings.suppressRecommendationIssuesToast
+    ),
+    suppressNoIssuesToast: mergeOptionalValue(baseSettings.suppressNoIssuesToast, userSettings.suppressNoIssuesToast),
   };
 }
 

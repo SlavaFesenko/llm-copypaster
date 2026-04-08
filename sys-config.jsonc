@@ -12,6 +12,13 @@
       "FILE_DELETED_ANCHOR": "DELETED",
       "END_OF_OUTPUT_ANCHOR": "## LLM-CPP-EOF-OUTPUT",
     },
+    "notificationSettings": {
+      "configValidation": {
+        "suppressWarningIssuesToast": false,
+        "suppressRecommendationIssuesToast": false,
+        "suppressNoIssuesToast": false,
+      },
+    },
   },
   "coreSettings": {
     "skipInstructions": false,

@@ -21,12 +21,16 @@ export interface NonOverrideableSettingsConfig {
   [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceRead.name]: boolean;
   [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceWrite.name]: boolean;
   [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.name]: VitalParsingAnchorsConfig;
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.name]: NotificationSettingsConfig;
 }
 
 export const nonOverrideableSettingsConfigSchema = z.object({
   [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceRead.name]: z.boolean(),
   [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceWrite.name]: z.boolean(),
   [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.name]: z.lazy(() => vitalParsingAnchorsConfigSchema),
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.name]: z.lazy(
+    () => notificationSettingsConfigSchema
+  ),
 }) satisfies z.ZodType<NonOverrideableSettingsConfig>;
 
 export interface VitalParsingAnchorsConfig {
@@ -52,6 +56,35 @@ export const vitalParsingAnchorsConfigSchema = z.object({
   [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]:
     buildVitalAnchorSchema().nullable(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
+
+export interface NotificationSettingsConfig {
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation
+    .name]: ConfigValidationNotificationSettingsConfig;
+}
+
+export const notificationSettingsConfigSchema = z.object({
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.name]: z.lazy(
+    () => configValidationNotificationSettingsConfigSchema
+  ),
+}) satisfies z.ZodType<NotificationSettingsConfig>;
+
+export interface ConfigValidationNotificationSettingsConfig {
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressWarningIssuesToast
+    .name]: boolean;
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
+    .name]: boolean;
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressNoIssuesToast
+    .name]: boolean;
+}
+
+export const configValidationNotificationSettingsConfigSchema = z.object({
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressWarningIssuesToast.name]:
+    z.boolean(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
+    .name]: z.boolean(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressNoIssuesToast.name]:
+    z.boolean(),
+}) satisfies z.ZodType<ConfigValidationNotificationSettingsConfig>;
 
 export interface CoreSettingsConfig {
   [systemConfigFieldPathMap.coreSettings.skipInstructions.name]: boolean;

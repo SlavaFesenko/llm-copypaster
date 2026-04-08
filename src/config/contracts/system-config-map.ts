@@ -72,6 +72,26 @@ const endOfOutputAnchorConfigPathNode = buildConfigFieldPathNode(
   'END_OF_OUTPUT_ANCHOR',
   vitalParsingAnchorsConfigPathNode.pathAndName
 );
+const notificationSettingsConfigPathNode = buildConfigFieldPathNode(
+  'notificationSettings',
+  nonOverrideableSettingsConfigPathNode.pathAndName
+);
+const configValidationNotificationSettingsConfigPathNode = buildConfigFieldPathNode(
+  'configValidation',
+  notificationSettingsConfigPathNode.pathAndName
+);
+const suppressWarningIssuesToastConfigPathNode = buildConfigFieldPathNode(
+  'suppressWarningIssuesToast',
+  configValidationNotificationSettingsConfigPathNode.pathAndName
+);
+const suppressRecommendationIssuesToastConfigPathNode = buildConfigFieldPathNode(
+  'suppressRecommendationIssuesToast',
+  configValidationNotificationSettingsConfigPathNode.pathAndName
+);
+const suppressNoIssuesToastConfigPathNode = buildConfigFieldPathNode(
+  'suppressNoIssuesToast',
+  configValidationNotificationSettingsConfigPathNode.pathAndName
+);
 
 const coreSettingsConfigPathNode = buildConfigFieldPathNode('coreSettings');
 const skipInstructionsConfigPathNode = buildConfigFieldPathNode('skipInstructions', coreSettingsConfigPathNode.pathAndName);
@@ -183,6 +203,15 @@ export const systemConfigFieldPathMap = {
       FILE_CREATED_ANCHOR: fileCreatedAnchorConfigPathNode,
       FILE_DELETED_ANCHOR: fileDeletedAnchorConfigPathNode,
       END_OF_OUTPUT_ANCHOR: endOfOutputAnchorConfigPathNode,
+    },
+    notificationSettings: {
+      ...notificationSettingsConfigPathNode,
+      configValidation: {
+        ...configValidationNotificationSettingsConfigPathNode,
+        suppressWarningIssuesToast: suppressWarningIssuesToastConfigPathNode,
+        suppressRecommendationIssuesToast: suppressRecommendationIssuesToastConfigPathNode,
+        suppressNoIssuesToast: suppressNoIssuesToastConfigPathNode,
+      },
     },
   },
   coreSettings: {
