@@ -194,7 +194,7 @@ const llmToIdeSanitizationRuleReplaceWithConfigPathNode = buildConfigFieldPathNo
 const llmToIdeSanitizationRuleSkipForLanguagesConfigPathNode = buildConfigFieldPathNode('skipForLanguages');
 const llmToIdeSanitizationRuleSkipForPathsConfigPathNode = buildConfigFieldPathNode('skipForPaths');
 
-export const systemConfigFieldPathMap = {
+export const systemConfigPropsMap = {
   llmCopypasterConfig: systemConfigPathNode,
   presetIndependentSettings: {
     ...presetIndependentSettingsConfigPathNode,

@@ -5,133 +5,118 @@ import {
   nonNegativeIntegerSchema,
   positiveFiniteNumberSchema,
 } from '../helpers/zod-shared-schemas';
-import { systemConfigFieldPathMap } from './system-config-map';
+import { systemConfigPropsMap } from './system-config-map';
 
 export interface SystemConfig {
-  [systemConfigFieldPathMap.presetIndependentSettings.name]: PresetIndependentSettingsConfig;
-  [systemConfigFieldPathMap.presetDependentSettings.name]: PresetDependentSettingsConfig;
+  presetIndependentSettings: PresetIndependentSettingsConfig;
+  presetDependentSettings: PresetDependentSettingsConfig;
 }
 
 export const llmCopypasterConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetIndependentSettings.name]: z.lazy(() => presetIndependentSettingsConfigSchema),
-  [systemConfigFieldPathMap.presetDependentSettings.name]: z.lazy(() => presetDependentSettingsConfigSchema),
+  [systemConfigPropsMap.presetIndependentSettings.name]: z.lazy(() => presetIndependentSettingsConfigSchema),
+  [systemConfigPropsMap.presetDependentSettings.name]: z.lazy(() => presetDependentSettingsConfigSchema),
 }) satisfies z.ZodType<SystemConfig>;
 
 export interface PresetIndependentSettingsConfig {
-  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceRead.name]: boolean;
-  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceWrite.name]: boolean;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.name]: VitalParsingAnchorsConfig;
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.name]: NotificationSettingsConfig;
+  allowOutsideWorkspaceRead: boolean;
+  allowOutsideWorkspaceWrite: boolean;
+  vitalParsingAnchors: VitalParsingAnchorsConfig;
+  notificationSettings: NotificationSettingsConfig;
 }
 
 export const presetIndependentSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceRead.name]: z.boolean(),
-  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceWrite.name]: z.boolean(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.name]: z.lazy(
-    () => vitalParsingAnchorsConfigSchema
-  ),
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.name]: z.lazy(
-    () => notificationSettingsConfigSchema
-  ),
+  [systemConfigPropsMap.presetIndependentSettings.allowOutsideWorkspaceRead.name]: z.boolean(),
+  [systemConfigPropsMap.presetIndependentSettings.allowOutsideWorkspaceWrite.name]: z.boolean(),
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.name]: z.lazy(() => vitalParsingAnchorsConfigSchema),
+  [systemConfigPropsMap.presetIndependentSettings.notificationSettings.name]: z.lazy(() => notificationSettingsConfigSchema),
 }) satisfies z.ZodType<PresetIndependentSettingsConfig>;
 
 export interface VitalParsingAnchorsConfig {
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]: string | null;
+  PROMPT_DELIMITER_ANCHOR: string;
+  CODE_LISTING_HEADER_ANCHOR: string;
+  FILE_STATUS_ANCHOR: string;
+  FILE_EDITED_FULL_ANCHOR: string;
+  FILE_CREATED_ANCHOR: string;
+  FILE_DELETED_ANCHOR: string;
+  END_OF_OUTPUT_ANCHOR: string | null;
 }
 
 export const vitalParsingAnchorsConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]:
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]:
     buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]:
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]:
     buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]:
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]:
     buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]:
-    buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]:
-    buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]:
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigPropsMap.presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]:
     buildVitalAnchorSchema().nullable(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
 
 export interface NotificationSettingsConfig {
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation
-    .name]: ConfigValidationNotificationSettingsConfig;
+  configValidation: ConfigValidationNotificationSettingsConfig;
 }
 
 export const notificationSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.name]: z.lazy(
+  [systemConfigPropsMap.presetIndependentSettings.notificationSettings.configValidation.name]: z.lazy(
     () => configValidationNotificationSettingsConfigSchema
   ),
 }) satisfies z.ZodType<NotificationSettingsConfig>;
 
 export interface ConfigValidationNotificationSettingsConfig {
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast
-    .name]: boolean;
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
-    .name]: boolean;
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast
-    .name]: boolean;
+  suppressWarningIssuesToast: boolean;
+  suppressRecommendationIssuesToast: boolean;
+  suppressNoIssuesToast: boolean;
 }
 
 export const configValidationNotificationSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast.name]:
+  [systemConfigPropsMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast.name]:
     z.boolean(),
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
+  [systemConfigPropsMap.presetIndependentSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
     .name]: z.boolean(),
-  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast.name]:
+  [systemConfigPropsMap.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast.name]:
     z.boolean(),
 }) satisfies z.ZodType<ConfigValidationNotificationSettingsConfig>;
 
 export interface PresetDependentSettingsConfig {
-  [systemConfigFieldPathMap.presetDependentSettings.skipInstructions.name]: boolean;
-  [systemConfigFieldPathMap.presetDependentSettings.skipCodeListings.name]: boolean;
-  [systemConfigFieldPathMap.presetDependentSettings.ideToLlm.name]: IdeToLlmConfig;
-  [systemConfigFieldPathMap.presetDependentSettings.llmToIde.name]: LlmToIdeConfig;
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.name]: PostFilePatchActionsConfig;
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.name]: InstructionsAndVariablesConfig;
-  [systemConfigFieldPathMap.presetDependentSettings.llmToIdeSanitizationRulesById.name]: Record<
-    string,
-    LlmToIdeSanitizationRuleConfig
-  >;
+  skipInstructions: boolean;
+  skipCodeListings: boolean;
+  ideToLlm: IdeToLlmConfig;
+  llmToIde: LlmToIdeConfig;
+  postFilePatchActions: PostFilePatchActionsConfig;
+  instructionsAndVariables: InstructionsAndVariablesConfig;
+  llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
 export const presetDependentSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetDependentSettings.skipInstructions.name]: z.boolean(),
-  [systemConfigFieldPathMap.presetDependentSettings.skipCodeListings.name]: z.boolean(),
-  [systemConfigFieldPathMap.presetDependentSettings.ideToLlm.name]: z.lazy(() => ideToLlmConfigSchema),
-  [systemConfigFieldPathMap.presetDependentSettings.llmToIde.name]: z.lazy(() => llmToIdeConfigSchema),
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.name]: z.lazy(
-    () => postFilePatchActionsConfigSchema
-  ),
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.name]: z.lazy(
+  [systemConfigPropsMap.presetDependentSettings.skipInstructions.name]: z.boolean(),
+  [systemConfigPropsMap.presetDependentSettings.skipCodeListings.name]: z.boolean(),
+  [systemConfigPropsMap.presetDependentSettings.ideToLlm.name]: z.lazy(() => ideToLlmConfigSchema),
+  [systemConfigPropsMap.presetDependentSettings.llmToIde.name]: z.lazy(() => llmToIdeConfigSchema),
+  [systemConfigPropsMap.presetDependentSettings.postFilePatchActions.name]: z.lazy(() => postFilePatchActionsConfigSchema),
+  [systemConfigPropsMap.presetDependentSettings.instructionsAndVariables.name]: z.lazy(
     () => instructionsAndVariablesConfigSchema
   ),
-  [systemConfigFieldPathMap.presetDependentSettings.llmToIdeSanitizationRulesById.name]: z.record(
+  [systemConfigPropsMap.presetDependentSettings.llmToIdeSanitizationRulesById.name]: z.record(
     z.string(),
     z.lazy(() => llmToIdeSanitizationRuleConfigSchema)
   ),
 }) satisfies z.ZodType<PresetDependentSettingsConfig>;
 
 export interface PromptLimitsConfig {
-  [systemConfigFieldPathMap.promptLimits.skipPromptSizeStatsInCopyNotification.name]: boolean;
-  [systemConfigFieldPathMap.promptLimits.charsPerToken.name]: number;
-  [systemConfigFieldPathMap.promptLimits.linesMaxToShowWarning.name]: number;
-  [systemConfigFieldPathMap.promptLimits.tokensMaxToShowWarning.name]: number;
+  skipPromptSizeStatsInCopyNotification: boolean;
+  charsPerToken: number;
+  linesMaxToShowWarning: number;
+  tokensMaxToShowWarning: number;
 }
 
 export const promptLimitsConfigSchema = z.object({
-  [systemConfigFieldPathMap.promptLimits.skipPromptSizeStatsInCopyNotification.name]: z.boolean(),
-  [systemConfigFieldPathMap.promptLimits.charsPerToken.name]: positiveFiniteNumberSchema,
-  [systemConfigFieldPathMap.promptLimits.linesMaxToShowWarning.name]: nonNegativeIntegerSchema,
-  [systemConfigFieldPathMap.promptLimits.tokensMaxToShowWarning.name]: nonNegativeIntegerSchema,
+  [systemConfigPropsMap.promptLimits.skipPromptSizeStatsInCopyNotification.name]: z.boolean(),
+  [systemConfigPropsMap.promptLimits.charsPerToken.name]: positiveFiniteNumberSchema,
+  [systemConfigPropsMap.promptLimits.linesMaxToShowWarning.name]: nonNegativeIntegerSchema,
+  [systemConfigPropsMap.promptLimits.tokensMaxToShowWarning.name]: nonNegativeIntegerSchema,
 }) satisfies z.ZodType<PromptLimitsConfig>;
 
 export interface IdeToLlmConfig extends PromptLimitsConfig {}
@@ -143,72 +128,62 @@ export interface LlmToIdeConfig extends PromptLimitsConfig {}
 export const llmToIdeConfigSchema = promptLimitsConfigSchema satisfies z.ZodType<LlmToIdeConfig>;
 
 export interface PostFilePatchActionsConfig {
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: boolean;
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: boolean;
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: boolean;
+  enableSaveAfterFilePatch: boolean;
+  enableLintingAfterFilePatch: boolean;
+  enableOpeningPatchedFilesInEditor: boolean;
 }
 
 export const postFilePatchActionsConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: z.boolean(),
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: z.boolean(),
-  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]:
-    z.boolean(),
+  [systemConfigPropsMap.presetDependentSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: z.boolean(),
+  [systemConfigPropsMap.presetDependentSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: z.boolean(),
+  [systemConfigPropsMap.presetDependentSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: z.boolean(),
 }) satisfies z.ZodType<PostFilePatchActionsConfig>;
 
 export interface InstructionsAndVariablesConfig {
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.instructionsById.name]: Record<
-    string,
-    InstructionConfig
-  >;
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedVariablesById.name]: Record<
-    string,
-    unknown
-  >;
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: Record<
-    string,
-    unknown
-  >;
+  instructionsById: Record<string, InstructionConfig>;
+  sharedVariablesById: Record<string, unknown>;
+  sharedReferenceVariablesById: Record<string, unknown>;
 }
 
 export const instructionsAndVariablesConfigSchema = z.object({
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.instructionsById.name]: z.record(
+  [systemConfigPropsMap.presetDependentSettings.instructionsAndVariables.instructionsById.name]: z.record(
     z.string(),
     z.lazy(() => instructionConfigSchema)
   ),
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedVariablesById.name]: z.record(
+  [systemConfigPropsMap.presetDependentSettings.instructionsAndVariables.sharedVariablesById.name]: z.record(
     z.string(),
     z.unknown()
   ),
-  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: z.record(
+  [systemConfigPropsMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: z.record(
     z.string(),
     z.unknown()
   ),
 }) satisfies z.ZodType<InstructionsAndVariablesConfig>;
 
 export interface InstructionConfig {
-  [systemConfigFieldPathMap.instruction.path.name]: string;
-  [systemConfigFieldPathMap.instruction.skip.name]: boolean;
-  [systemConfigFieldPathMap.instruction.showInPresetsMode.name]: boolean;
-  [systemConfigFieldPathMap.instruction.showInQuickInstructionMode.name]: boolean;
+  path: string;
+  skip: boolean;
+  showInPresetsMode: boolean;
+  showInQuickInstructionMode: boolean;
 }
 
 export const instructionConfigSchema = z.object({
-  [systemConfigFieldPathMap.instruction.path.name]: nonEmptyStringSchema,
-  [systemConfigFieldPathMap.instruction.skip.name]: z.boolean(),
-  [systemConfigFieldPathMap.instruction.showInPresetsMode.name]: z.boolean(),
-  [systemConfigFieldPathMap.instruction.showInQuickInstructionMode.name]: z.boolean(),
+  [systemConfigPropsMap.instruction.path.name]: nonEmptyStringSchema,
+  [systemConfigPropsMap.instruction.skip.name]: z.boolean(),
+  [systemConfigPropsMap.instruction.showInPresetsMode.name]: z.boolean(),
+  [systemConfigPropsMap.instruction.showInQuickInstructionMode.name]: z.boolean(),
 }) satisfies z.ZodType<InstructionConfig>;
 
 export interface LlmToIdeSanitizationRuleConfig {
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.regexPattern.name]: string;
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.replaceWith.name]: string;
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForLanguages.name]: string[];
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForPaths.name]: string[];
+  regexPattern: string;
+  replaceWith: string;
+  skipForLanguages: string[];
+  skipForPaths: string[];
 }
 
 export const llmToIdeSanitizationRuleConfigSchema = z.object({
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.regexPattern.name]: nonEmptyStringSchema,
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.replaceWith.name]: z.string(),
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForLanguages.name]: z.array(nonEmptyStringSchema),
-  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForPaths.name]: z.array(nonEmptyStringSchema),
+  [systemConfigPropsMap.llmToIdeSanitizationRule.regexPattern.name]: nonEmptyStringSchema,
+  [systemConfigPropsMap.llmToIdeSanitizationRule.replaceWith.name]: z.string(),
+  [systemConfigPropsMap.llmToIdeSanitizationRule.skipForLanguages.name]: z.array(nonEmptyStringSchema),
+  [systemConfigPropsMap.llmToIdeSanitizationRule.skipForPaths.name]: z.array(nonEmptyStringSchema),
 }) satisfies z.ZodType<LlmToIdeSanitizationRuleConfig>;

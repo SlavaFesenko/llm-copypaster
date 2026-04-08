@@ -1,4 +1,4 @@
-import { systemConfigFieldPathMap } from '../../contracts/system-config-map';
+import { systemConfigPropsMap } from '../../contracts/system-config-map';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class VarRefsExistRule implements ValidationRule {
@@ -20,7 +20,7 @@ export class VarRefsExistRule implements ValidationRule {
     const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
 
     return Object.entries(sharedReferenceVariablesById).map(([sharedVariableId, variableValue]) => {
-      const fullVariablePath = `${systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.pathAndName}.${sharedVariableId}`;
+      const fullVariablePath = `${systemConfigPropsMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.pathAndName}.${sharedVariableId}`;
       const configReferenceValuePath = typeof variableValue === 'string' ? variableValue : JSON.stringify(variableValue);
 
       return `"${fullVariablePath}": "${configReferenceValuePath}"`;
