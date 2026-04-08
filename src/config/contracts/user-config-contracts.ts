@@ -21,7 +21,7 @@ export interface UserConfig {
 // ! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
 
 // ! this userConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
-export const userConfigSchema = z.object({
+export const userConfigSchema = z.strictObject({
   presetIndependentSettings: z.lazy(() => presetIndependentSettingsUserConfigSchema).optional(),
   presetDependentSettings: z.lazy(() => presetDependentSettingsUserConfigSchema).optional(),
   presetsById: z
@@ -39,7 +39,7 @@ export interface PresetIndependentSettingsUserConfig {
   notificationSettings?: NotificationSettingsUserConfig;
 }
 
-export const presetIndependentSettingsUserConfigSchema = z.object({
+export const presetIndependentSettingsUserConfigSchema = z.strictObject({
   allowOutsideWorkspaceRead: z.boolean().optional(),
   allowOutsideWorkspaceWrite: z.boolean().optional(),
   vitalParsingAnchors: z.lazy(() => vitalParsingAnchorsUserConfigSchema).optional(),
@@ -56,7 +56,7 @@ export interface VitalParsingAnchorsUserConfig {
   END_OF_OUTPUT_ANCHOR?: string | null;
 }
 
-export const vitalParsingAnchorsUserConfigSchema = z.object({
+export const vitalParsingAnchorsUserConfigSchema = z.strictObject({
   PROMPT_DELIMITER_ANCHOR: buildVitalAnchorSchema().optional(),
   CODE_LISTING_HEADER_ANCHOR: buildVitalAnchorSchema().optional(),
   FILE_STATUS_ANCHOR: buildVitalAnchorSchema().optional(),
@@ -70,7 +70,7 @@ export interface NotificationSettingsUserConfig {
   configValidation?: ConfigValidationNotificationSettingsUserConfig;
 }
 
-export const notificationSettingsUserConfigSchema = z.object({
+export const notificationSettingsUserConfigSchema = z.strictObject({
   configValidation: z.lazy(() => configValidationNotificationSettingsUserConfigSchema).optional(),
 }) satisfies z.ZodType<NotificationSettingsUserConfig>;
 
@@ -80,7 +80,7 @@ export interface ConfigValidationNotificationSettingsUserConfig {
   suppressNoIssuesToast?: boolean;
 }
 
-export const configValidationNotificationSettingsUserConfigSchema = z.object({
+export const configValidationNotificationSettingsUserConfigSchema = z.strictObject({
   suppressWarningIssuesToast: z.boolean().optional(),
   suppressRecommendationIssuesToast: z.boolean().optional(),
   suppressNoIssuesToast: z.boolean().optional(),
@@ -96,7 +96,7 @@ export interface PresetDependentSettingsUserConfig {
   llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
-export const presetDependentSettingsUserConfigSchema = z.object({
+export const presetDependentSettingsUserConfigSchema = z.strictObject({
   skipInstructions: z.boolean().optional(),
   skipCodeListings: z.boolean().optional(),
   ideToLlm: z.lazy(() => ideToLlmUserConfigSchema).optional(),
@@ -118,7 +118,7 @@ export interface PromptLimitsUserConfig {
   tokensMaxToShowWarning?: number;
 }
 
-export const promptLimitsUserConfigSchema = z.object({
+export const promptLimitsUserConfigSchema = z.strictObject({
   skipPromptSizeStatsInCopyNotification: z.boolean().optional(),
   charsPerToken: positiveFiniteNumberSchema.optional(),
   linesMaxToShowWarning: nonNegativeIntegerSchema.optional(),
@@ -139,7 +139,7 @@ export interface PostFilePatchActionsUserConfig {
   enableOpeningPatchedFilesInEditor?: boolean;
 }
 
-export const postFilePatchActionsUserConfigSchema = z.object({
+export const postFilePatchActionsUserConfigSchema = z.strictObject({
   enableSaveAfterFilePatch: z.boolean().optional(),
   enableLintingAfterFilePatch: z.boolean().optional(),
   enableOpeningPatchedFilesInEditor: z.boolean().optional(),
@@ -151,7 +151,7 @@ export interface InstructionsAndVariablesUserConfig {
   sharedReferenceVariablesById?: Record<string, string>;
 }
 
-export const instructionsAndVariablesUserConfigSchema = z.object({
+export const instructionsAndVariablesUserConfigSchema = z.strictObject({
   instructionsById: z
     .record(
       z.string(),
@@ -169,7 +169,7 @@ export interface InstructionUserConfig {
   showInQuickInstructionMode?: boolean;
 }
 
-export const instructionUserConfigSchema = z.object({
+export const instructionUserConfigSchema = z.strictObject({
   path: nonEmptyStringSchema.optional(),
   skip: z.boolean().optional(),
   showInPresetsMode: z.boolean().optional(),
@@ -183,7 +183,7 @@ export interface LlmToIdeSanitizationRuleUserConfig {
   skipForPaths?: string[];
 }
 
-export const llmToIdeSanitizationRuleUserConfigSchema = z.object({
+export const llmToIdeSanitizationRuleUserConfigSchema = z.strictObject({
   regexPattern: nonEmptyStringSchema.optional(),
   replaceWith: z.string().optional(),
   skipForLanguages: z.array(nonEmptyStringSchema).optional(),
@@ -197,7 +197,7 @@ export interface PresetUserConfig {
   presetDependentSettings?: PresetDependentSettingsUserConfig;
 }
 
-export const presetUserConfigSchema = z.object({
+export const presetUserConfigSchema = z.strictObject({
   description: z.string().optional(),
   version: z.string().optional(),
   shouldBeSkipped: z.boolean().optional(),
