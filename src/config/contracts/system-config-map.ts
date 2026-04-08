@@ -1,21 +1,15 @@
 // This map has two goals.
 //
 // 1) It is the single source of truth for system contract field names.
-// TS interfaces, Zod schemas, and path metadata should read field names from here,
-// so contract rename happens in one place and stays consistent.
+// Zod schema, and path metadata should read field names from here, so contract rename happens in one place and stays consistent.
 //
 // 2) It provides a convenient helper for string property paths.
-// TypeScript has no reflection for property access chains,
-// so code like x.y.z cannot be converted into "x.y.z" automatically.
+// TypeScript has no reflection for property access chains, so code like x.y.z cannot be converted into "x.y.z" automatically.
 //
-// This map is metadata for field names and paths, not for runtime config values.
+// This map is metadata for field names and paths, NOT for compile-time/runtime config values.
 //
-// This map is intentionally NOT used by regular TS-interface clients
-// such as config readers/mergers at runtime.
-// Those clients should keep normal dot access for readability.
-// Rename safety there is already provided by contract-driven compile-time errors,
-// and fixing them after a rename is cheaper than permanently polluting consumer code
-// with map-based property access.
+// This map is intentionally NOT used by regular TS-interface clients such as config readers/mergers at runtime.
+// Those clients should keep normal dot access to maintain IDE-renaming easy.
 //
 // This is also the best price/performance trade-off found for this project.
 // A Zod-first / z.infer-based approach was tried before,
