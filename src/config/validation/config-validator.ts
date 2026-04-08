@@ -9,7 +9,6 @@ import {
   ValidationRule,
   ValidationRuleContext,
 } from './contracts';
-import { OverridesValidationPlaceholderRule } from './validation-rules/overrides-validation-placeholder-rule';
 import { SystemConfigSchemaValidationRule } from './validation-rules/system-config-schema-validation-rule';
 import { UserConfigSchemaValidationRule } from './validation-rules/user-config-schema-validation-rule';
 import { VarRefsExistRule } from './validation-rules/var-refs-exists-rule';
@@ -19,10 +18,7 @@ export const systemConfigValidationRules: ValidationRule[] = [
   new VarRefsExistRule(),
 ];
 
-export const userConfigValidationRules: ValidationRule[] = [
-  new UserConfigSchemaValidationRule(),
-  new OverridesValidationPlaceholderRule(),
-];
+export const userConfigValidationRules: ValidationRule[] = [new UserConfigSchemaValidationRule()];
 
 export class ConfigValidator {
   public constructor(private readonly _extensionContext: vscode.ExtensionContext) {}
