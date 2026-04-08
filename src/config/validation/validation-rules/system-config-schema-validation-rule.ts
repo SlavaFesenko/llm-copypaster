@@ -1,4 +1,4 @@
-import { llmCopypasterConfigSchema } from '../../contracts/system-config-contracts';
+import { systemConfigSchema } from '../../contracts/system-config-contracts';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class SystemConfigSchemaValidationRule implements ValidationRule {
@@ -7,7 +7,7 @@ export class SystemConfigSchemaValidationRule implements ValidationRule {
   public readonly severity = ValidationIssueSeverity.Critical;
 
   public getViolationDescriptions(validationRuleContext: ValidationRuleContext): string[] {
-    const zodValidationResult = llmCopypasterConfigSchema.safeParse(validationRuleContext.targetConfig);
+    const zodValidationResult = systemConfigSchema.safeParse(validationRuleContext.targetConfig);
 
     if (zodValidationResult.success) return [];
 

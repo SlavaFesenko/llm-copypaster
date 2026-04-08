@@ -12,7 +12,7 @@ export interface SystemConfig {
   presetDependentSettings: PresetDependentSettingsConfig;
 }
 
-export const llmCopypasterConfigSchema = z.object({
+export const systemConfigSchema = z.object({
   [systemConfigPropsMap.presetIndependentSettings.name]: z.lazy(() => presetIndependentSettingsConfigSchema),
   [systemConfigPropsMap.presetDependentSettings.name]: z.lazy(() => presetDependentSettingsConfigSchema),
 }) satisfies z.ZodType<SystemConfig>;

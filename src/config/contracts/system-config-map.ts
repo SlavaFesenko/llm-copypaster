@@ -6,6 +6,8 @@
 // 2) It provides a convenient helper for string property paths.
 // TypeScript has no reflection for property access chains, so code like x.y.z cannot be converted into "x.y.z" automatically.
 //
+// System-Zod-config intentionally uses this map do not forget update the map in case of field renaming.
+//
 // This map is metadata for field names and paths, NOT for compile-time/runtime config values.
 //
 // This map is intentionally NOT used by regular TS-interface clients such as config readers/mergers at runtime.
