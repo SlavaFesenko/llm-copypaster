@@ -15,7 +15,7 @@ export async function buildOverridesAppliedReportText(debugData: MergedConfigDeb
 
   const normalizedOverrideDiffChangeset = await buildJsonDiffChangeset(
     debugData.systemUserMergedConfig,
-    debugData.mergedCoreSettingsConfig
+    debugData.mergedDependentSettingsConfig
   );
 
   const normalizedOverrideDiffHumanReadable = buildHumanReadableJsonDiffChangeset(
@@ -30,8 +30,8 @@ export async function buildOverridesAppliedReportText(debugData: MergedConfigDeb
 
   reportText += buildStatusOverviewMarkdown({
     hasUserConfig: debugData.hasUserConfig,
-    overrideOptions: debugData.overrideOptions ?? [],
-    activeOverrideIds: debugData.activeOverrideIds,
+    overrideOptions: debugData.presetOptions ?? [],
+    activeOverrideIds: debugData.activePresetsIds,
     shouldAlwaysMarkCurrentSourceAsApplied: true,
     shouldOmitOverrideNamesInCurrentSourceLine: true,
   });
@@ -42,7 +42,7 @@ export async function buildOverridesAppliedReportText(debugData: MergedConfigDeb
   reportText += buildJsonCodeBlock(normalizedOverrideDiffHumanReadable);
 
   reportText += `## ${NORMALIZED_CONFIG_STATUS} Overrides Config (after raw-overrides one-by-one apply to Base Config)\n\n`;
-  reportText += buildJsonCodeBlock(debugData.mergedCoreSettingsConfig);
+  reportText += buildJsonCodeBlock(debugData.mergedDependentSettingsConfig);
 
   reportText += `## ${NORMALIZED_CONFIG_STATUS} Base Config (before overrides)\n\n`;
   reportText += buildJsonCodeBlock(debugData.systemUserMergedConfig);

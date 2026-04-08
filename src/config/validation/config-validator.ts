@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
-import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
+import { SystemConfig } from '../contracts/system-config-contracts';
+import { UserConfig } from '../contracts/user-config-contracts';
 import { ConfigValidationReporter } from './config-validation-reporter';
 import {
   ValidationIssue,
@@ -28,10 +28,10 @@ export class ConfigValidator {
   public constructor(private readonly _extensionContext: vscode.ExtensionContext) {}
 
   public async validateConfig(
-    targetConfig: LlmCopypasterConfig,
+    targetConfig: SystemConfig,
     targetConfigName: string,
-    systemConfig: LlmCopypasterConfig,
-    userConfig: LlmCopypasterUserConfig | null
+    systemConfig: SystemConfig,
+    userConfig: UserConfig | null
   ): Promise<boolean> {
     const validationResults: ValidationResult[] = [
       this._validateWithRules(targetConfig, targetConfigName, systemConfig, userConfig, systemConfigValidationRules),
@@ -59,10 +59,10 @@ export class ConfigValidator {
   }
 
   private _validateWithRules(
-    targetConfig: LlmCopypasterConfig,
+    targetConfig: SystemConfig,
     targetConfigName: string,
-    systemConfig: LlmCopypasterConfig,
-    userConfig: LlmCopypasterUserConfig | null,
+    systemConfig: SystemConfig,
+    userConfig: UserConfig | null,
     validationRules: ValidationRule[]
   ): ValidationResult {
     const validationRuleContext: ValidationRuleContext = {

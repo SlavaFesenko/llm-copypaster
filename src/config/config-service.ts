@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { LlmCopypasterConfigWithDebugData, OverrideOptionMetadata } from './contracts/other-contracts';
-import { LlmCopypasterConfig } from './contracts/system-config-contracts';
-import { LlmCopypasterUserConfig } from './contracts/user-config-contracts';
+import { LlmCopypasterConfigWithDebugData, PresetOptionMetadata } from './contracts/other-contracts';
+import { SystemConfig } from './contracts/system-config-contracts';
+import { UserConfig } from './contracts/user-config-contracts';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
 import { mergeConfigs } from './helpers/config-mergers';
 import { ConfigRefVarsResolver } from './helpers/config-ref-vars-resolver';
@@ -9,10 +9,10 @@ import { buildMergedConfigDebugData } from './reporters/reporting-helpers';
 import { ConfigValidator } from './validation/config-validator';
 
 export class ConfigService {
-  private _systemConfig?: LlmCopypasterConfig;
-  private _userConfig?: LlmCopypasterUserConfig | null;
-  private _systemUserMergedConfig?: LlmCopypasterConfig;
-  private _overrideOptions?: OverrideOptionMetadata[] | null;
+  private _systemConfig?: SystemConfig;
+  private _userConfig?: UserConfig | null;
+  private _systemUserMergedConfig?: SystemConfig;
+  private _overrideOptions?: PresetOptionMetadata[] | null;
   private readonly _configValidator: ConfigValidator;
   private readonly _configRefVarsResolver = new ConfigRefVarsResolver();
 
@@ -20,7 +20,7 @@ export class ConfigService {
     this._configValidator = new ConfigValidator(extensionContext);
   }
 
-  public get overrideOptions(): OverrideOptionMetadata[] | null {
+  public get overrideOptions(): PresetOptionMetadata[] | null {
     if (this._overrideOptions === null) return null;
 
     this._overrideOptions ??= this._setOverrideOptions(this._userConfig ?? null);
@@ -28,21 +28,21 @@ export class ConfigService {
     return this._overrideOptions;
   }
 
-  public async getSystemConfig(): Promise<LlmCopypasterConfig> {
-    this._systemConfig ??= await readSystemJsonConfigFile<LlmCopypasterConfig>();
+  public async getSystemConfig(): Promise<SystemConfig> {
+    this._systemConfig ??= await readSystemJsonConfigFile<SystemConfig>();
 
     return this._systemConfig;
   }
 
-  public async getUserConfig(): Promise<LlmCopypasterUserConfig | null> {
+  public async getUserConfig(): Promise<UserConfig | null> {
     if (this._userConfig !== undefined) return this._userConfig;
 
-    this._userConfig = await readUserJsonConfigFile<LlmCopypasterUserConfig>();
+    this._userConfig = await readUserJsonConfigFile<UserConfig>();
 
     return this._userConfig;
   }
 
-  public async getSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
+  public async getSystemUserMergedConfig(): Promise<SystemConfig> {
     this._systemUserMergedConfig ??= await this._buildSystemUserMergedConfig();
 
     return this._systemUserMergedConfig;
@@ -63,12 +63,12 @@ export class ConfigService {
     let multiOverrideConfig = systemUserMergedConfig;
 
     for (const overrideId of overrideIds) {
-      const overrideCoreSettings = userConfig?.overridesById?.[overrideId]?.coreSettings;
+      const overrideCoreSettings = userConfig?.presetsById?.[overrideId]?.presetDependentSettings;
       if (!overrideCoreSettings) continue;
 
       // each iteration modifies already modified value preparing multi-override config
       multiOverrideConfig = mergeConfigs(multiOverrideConfig, {
-        coreSettings: overrideCoreSettings,
+        presetDependentSettings: overrideCoreSettings,
       });
     }
 
@@ -85,7 +85,7 @@ export class ConfigService {
     return {
       mergedConfig: refVarResolvedMultiOverrideConfig,
       debugData: buildMergedConfigDebugData({
-        overrideOptions: this.overrideOptions,
+        presetOptions: this.overrideOptions,
         activeOverrideIds: overrideIds,
         systemConfig,
         userConfig,
@@ -95,7 +95,7 @@ export class ConfigService {
     };
   }
 
-  private async _buildSystemUserMergedConfig(): Promise<LlmCopypasterConfig> {
+  private async _buildSystemUserMergedConfig(): Promise<SystemConfig> {
     const systemConfig = await this.getSystemConfig();
     const userConfig = await this.getUserConfig();
 
@@ -115,21 +115,21 @@ export class ConfigService {
     return refVarResolvedConfig;
   }
 
-  private _setOverrideOptions(userConfig: LlmCopypasterUserConfig | null): OverrideOptionMetadata[] | null {
+  private _setOverrideOptions(userConfig: UserConfig | null): PresetOptionMetadata[] | null {
     if (!userConfig) return null;
 
-    const overrideOptions: OverrideOptionMetadata[] = [];
-    const overridesById = userConfig.overridesById ?? {};
+    const overrideOptions: PresetOptionMetadata[] = [];
+    const presetsById = userConfig.presetsById ?? {};
 
-    for (const overrideId of Object.keys(overridesById)) {
-      const overrideConfig = overridesById[overrideId];
+    for (const presetById of Object.keys(presetsById)) {
+      const presetConfig = presetsById[presetById];
 
-      if (overrideConfig.shouldBeSkipped) continue;
+      if (presetConfig.shouldBeSkipped) continue;
 
       overrideOptions.push({
-        id: overrideId,
-        description: overrideConfig.description,
-        version: overrideConfig.version,
+        id: presetById,
+        description: presetConfig.description,
+        version: presetConfig.version,
       });
     }
 

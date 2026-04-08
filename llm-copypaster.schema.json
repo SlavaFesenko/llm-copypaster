@@ -4,7 +4,7 @@
   "title": "LLM Copypaster User Config",
   "type": "object",
   "properties": {
-    "nonOverrideableSettings": {
+    "presetIndependentSettings": {
       "type": "object",
       "properties": {
         "allowOutsideWorkspaceRead": {
@@ -46,11 +46,32 @@
             }
           },
           "additionalProperties": false
+        },
+        "notificationSettings": {
+          "type": "object",
+          "properties": {
+            "configValidation": {
+              "type": "object",
+              "properties": {
+                "suppressWarningIssuesToast": {
+                  "type": "boolean"
+                },
+                "suppressRecommendationIssuesToast": {
+                  "type": "boolean"
+                },
+                "suppressNoIssuesToast": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
     },
-    "coreSettings": {
+    "presetDependentSettings": {
       "type": "object",
       "properties": {
         "skipInstructions": {
@@ -138,7 +159,7 @@
                   "skip": {
                     "type": "boolean"
                   },
-                  "showInOverrideMode": {
+                  "showInPresetsMode": {
                     "type": "boolean"
                   },
                   "showInQuickInstructionMode": {
@@ -203,7 +224,7 @@
       },
       "additionalProperties": false
     },
-    "overridesById": {
+    "presetsById": {
       "type": "object",
       "propertyNames": {
         "type": "string"
@@ -220,7 +241,7 @@
           "shouldBeSkipped": {
             "type": "boolean"
           },
-          "coreSettings": {
+          "presetDependentSettings": {
             "type": "object",
             "properties": {
               "skipInstructions": {
@@ -308,7 +329,7 @@
                         "skip": {
                           "type": "boolean"
                         },
-                        "showInOverrideMode": {
+                        "showInPresetsMode": {
                           "type": "boolean"
                         },
                         "showInQuickInstructionMode": {

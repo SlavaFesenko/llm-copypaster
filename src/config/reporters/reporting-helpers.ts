@@ -1,38 +1,39 @@
-import { MergedConfigDebugData, OverrideOptionMetadata } from '../contracts/other-contracts';
-import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
-import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
+import { MergedConfigDebugData, PresetOptionMetadata, PresetReportEntryData } from '../contracts/other-contracts';
+import { SystemConfig } from '../contracts/system-config-contracts';
+import { UserConfig } from '../contracts/user-config-contracts';
 import { mergeConfigs } from '../helpers/config-mergers';
 
 export function buildMergedConfigDebugData(args: {
-  overrideOptions: OverrideOptionMetadata[] | null;
+  presetOptions: PresetOptionMetadata[] | null;
   activeOverrideIds: string[];
-  systemConfig: LlmCopypasterConfig;
-  userConfig: LlmCopypasterUserConfig | null;
-  systemUserMergedConfig: LlmCopypasterConfig;
-  mergedConfig: LlmCopypasterConfig;
+  systemConfig: SystemConfig;
+  userConfig: UserConfig | null;
+  systemUserMergedConfig: SystemConfig;
+  mergedConfig: SystemConfig;
 }): MergedConfigDebugData {
-  const overrideReportEntries = (args.overrideOptions ?? []).map(overrideOption => {
-    const overrideCoreSettings = args.userConfig?.overridesById?.[overrideOption.id]?.coreSettings;
+  const presetReportEntries = (args.presetOptions ?? []).map(presetOption => {
+    const presetDependentSettings = args.userConfig?.presetsById?.[presetOption.id]?.presetDependentSettings;
 
-    const normalizedOverrideCoreSettingsConfig = overrideCoreSettings
-      ? mergeConfigs(args.systemUserMergedConfig, { coreSettings: overrideCoreSettings }).coreSettings
-      : args.systemUserMergedConfig.coreSettings;
+    const normalizedPresetDependentSettingsConfig = presetDependentSettings
+      ? mergeConfigs(args.systemUserMergedConfig, { presetDependentSettings: presetDependentSettings })
+          .presetDependentSettings
+      : args.systemUserMergedConfig.presetDependentSettings;
 
     return {
-      overrideOption,
-      rawOverrideCoreSettingsConfig: args.userConfig?.overridesById?.[overrideOption.id]?.coreSettings ?? null,
-      normalizedOverrideCoreSettingsConfig,
-    };
+      presetOptionMetadata: presetOption,
+      rawPresetDependentSettingsConfig: args.userConfig?.presetsById?.[presetOption.id]?.presetDependentSettings ?? null,
+      normalizedPresetDependentSettingsConfig,
+    } as PresetReportEntryData;
   });
 
   return {
     hasUserConfig: !!args.userConfig,
-    overrideOptions: args.overrideOptions,
-    activeOverrideIds: args.activeOverrideIds,
-    systemUserMergedConfig: args.systemUserMergedConfig.coreSettings,
-    mergedCoreSettingsConfig: args.mergedConfig.coreSettings,
-    rawUserCoreSettingsConfig: args.userConfig?.coreSettings ?? null,
-    rawSystemCoreSettingsConfig: args.systemConfig.coreSettings,
-    overrideReportEntries,
+    presetOptions: args.presetOptions,
+    activePresetsIds: args.activeOverrideIds,
+    systemUserMergedConfig: args.systemUserMergedConfig.presetDependentSettings,
+    mergedDependentSettingsConfig: args.mergedConfig.presetDependentSettings,
+    rawUserPresetDependentSettingsConfig: args.userConfig?.presetDependentSettings ?? null,
+    rawSystemPresetDependentSettingsConfig: args.systemConfig.presetDependentSettings,
+    presetReportEntries: presetReportEntries,
   };
 }

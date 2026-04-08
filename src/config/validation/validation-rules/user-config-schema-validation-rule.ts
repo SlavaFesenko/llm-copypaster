@@ -1,4 +1,4 @@
-import { llmCopypasterUserConfigSchema } from '../../contracts/user-config-contracts';
+import { userConfigSchema } from '../../contracts/user-config-contracts';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class UserConfigSchemaValidationRule implements ValidationRule {
@@ -12,7 +12,7 @@ export class UserConfigSchemaValidationRule implements ValidationRule {
 
     if (!userConfig) return [];
 
-    const zodValidationResult = llmCopypasterUserConfigSchema.safeParse(userConfig);
+    const zodValidationResult = userConfigSchema.safeParse(userConfig);
 
     if (zodValidationResult.success) return [];
 

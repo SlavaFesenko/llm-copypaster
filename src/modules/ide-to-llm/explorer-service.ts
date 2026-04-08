@@ -53,7 +53,7 @@ export class ExplorerService {
 
       const textSizeStats = buildTextSizeStats({
         promptText: contextText,
-        contextConfig: config.coreSettings.ideToLlm,
+        contextConfig: config.presetDependentSettings.ideToLlm,
       });
 
       await vscode.env.clipboard.writeText(contextText);

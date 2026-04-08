@@ -30,19 +30,19 @@ export interface ConfigFieldPathNode<TName extends string = string, TPath extend
   pathAndName: TPath extends '' ? TName : `${TPath}.${TName}`;
 }
 
-const llmCopypasterConfigPathNode = buildConfigFieldPathNode('llmCopypasterConfig');
-const nonOverrideableSettingsConfigPathNode = buildConfigFieldPathNode('nonOverrideableSettings');
+const systemConfigPathNode = buildConfigFieldPathNode('systemConfig');
+const presetIndependentSettingsConfigPathNode = buildConfigFieldPathNode('presetIndependentSettings');
 const allowOutsideWorkspaceReadConfigPathNode = buildConfigFieldPathNode(
   'allowOutsideWorkspaceRead',
-  nonOverrideableSettingsConfigPathNode.pathAndName
+  presetIndependentSettingsConfigPathNode.pathAndName
 );
 const allowOutsideWorkspaceWriteConfigPathNode = buildConfigFieldPathNode(
   'allowOutsideWorkspaceWrite',
-  nonOverrideableSettingsConfigPathNode.pathAndName
+  presetIndependentSettingsConfigPathNode.pathAndName
 );
 const vitalParsingAnchorsConfigPathNode = buildConfigFieldPathNode(
   'vitalParsingAnchors',
-  nonOverrideableSettingsConfigPathNode.pathAndName
+  presetIndependentSettingsConfigPathNode.pathAndName
 );
 const promptDelimiterAnchorConfigPathNode = buildConfigFieldPathNode(
   'PROMPT_DELIMITER_ANCHOR',
@@ -74,7 +74,7 @@ const endOfOutputAnchorConfigPathNode = buildConfigFieldPathNode(
 );
 const notificationSettingsConfigPathNode = buildConfigFieldPathNode(
   'notificationSettings',
-  nonOverrideableSettingsConfigPathNode.pathAndName
+  presetIndependentSettingsConfigPathNode.pathAndName
 );
 const configValidationNotificationSettingsConfigPathNode = buildConfigFieldPathNode(
   'configValidation',
@@ -93,22 +93,28 @@ const suppressNoIssuesToastConfigPathNode = buildConfigFieldPathNode(
   configValidationNotificationSettingsConfigPathNode.pathAndName
 );
 
-const coreSettingsConfigPathNode = buildConfigFieldPathNode('coreSettings');
-const skipInstructionsConfigPathNode = buildConfigFieldPathNode('skipInstructions', coreSettingsConfigPathNode.pathAndName);
-const skipCodeListingsConfigPathNode = buildConfigFieldPathNode('skipCodeListings', coreSettingsConfigPathNode.pathAndName);
-const ideToLlmConfigPathNode = buildConfigFieldPathNode('ideToLlm', coreSettingsConfigPathNode.pathAndName);
-const llmToIdeConfigPathNode = buildConfigFieldPathNode('llmToIde', coreSettingsConfigPathNode.pathAndName);
+const presetDependentSettingsConfigPathNode = buildConfigFieldPathNode('presetDependentSettings');
+const skipInstructionsConfigPathNode = buildConfigFieldPathNode(
+  'skipInstructions',
+  presetDependentSettingsConfigPathNode.pathAndName
+);
+const skipCodeListingsConfigPathNode = buildConfigFieldPathNode(
+  'skipCodeListings',
+  presetDependentSettingsConfigPathNode.pathAndName
+);
+const ideToLlmConfigPathNode = buildConfigFieldPathNode('ideToLlm', presetDependentSettingsConfigPathNode.pathAndName);
+const llmToIdeConfigPathNode = buildConfigFieldPathNode('llmToIde', presetDependentSettingsConfigPathNode.pathAndName);
 const postFilePatchActionsConfigPathNode = buildConfigFieldPathNode(
   'postFilePatchActions',
-  coreSettingsConfigPathNode.pathAndName
+  presetDependentSettingsConfigPathNode.pathAndName
 );
 const instructionsAndVariablesConfigPathNode = buildConfigFieldPathNode(
   'instructionsAndVariables',
-  coreSettingsConfigPathNode.pathAndName
+  presetDependentSettingsConfigPathNode.pathAndName
 );
 const llmToIdeSanitizationRulesByIdConfigPathNode = buildConfigFieldPathNode(
   'llmToIdeSanitizationRulesById',
-  coreSettingsConfigPathNode.pathAndName
+  presetDependentSettingsConfigPathNode.pathAndName
 );
 
 const skipPromptSizeStatsInCopyNotificationPromptLimitsPathNode = buildConfigFieldPathNode(
@@ -180,7 +186,7 @@ const sharedReferenceVariablesByIdConfigPathNode = buildConfigFieldPathNode(
 
 const instructionPathConfigPathNode = buildConfigFieldPathNode('path');
 const instructionSkipConfigPathNode = buildConfigFieldPathNode('skip');
-const instructionShowInOverrideModeConfigPathNode = buildConfigFieldPathNode('showInOverrideMode');
+const instructionShowInPresetsModeConfigPathNode = buildConfigFieldPathNode('showInPresetsMode');
 const instructionShowInQuickInstructionModeConfigPathNode = buildConfigFieldPathNode('showInQuickInstructionMode');
 
 const llmToIdeSanitizationRuleRegexPatternConfigPathNode = buildConfigFieldPathNode('regexPattern');
@@ -189,9 +195,9 @@ const llmToIdeSanitizationRuleSkipForLanguagesConfigPathNode = buildConfigFieldP
 const llmToIdeSanitizationRuleSkipForPathsConfigPathNode = buildConfigFieldPathNode('skipForPaths');
 
 export const systemConfigFieldPathMap = {
-  llmCopypasterConfig: llmCopypasterConfigPathNode,
-  nonOverrideableSettings: {
-    ...nonOverrideableSettingsConfigPathNode,
+  llmCopypasterConfig: systemConfigPathNode,
+  presetIndependentSettings: {
+    ...presetIndependentSettingsConfigPathNode,
     allowOutsideWorkspaceRead: allowOutsideWorkspaceReadConfigPathNode,
     allowOutsideWorkspaceWrite: allowOutsideWorkspaceWriteConfigPathNode,
     vitalParsingAnchors: {
@@ -214,8 +220,8 @@ export const systemConfigFieldPathMap = {
       },
     },
   },
-  coreSettings: {
-    ...coreSettingsConfigPathNode,
+  presetDependentSettings: {
+    ...presetDependentSettingsConfigPathNode,
     skipInstructions: skipInstructionsConfigPathNode,
     skipCodeListings: skipCodeListingsConfigPathNode,
     ideToLlm: {
@@ -255,7 +261,7 @@ export const systemConfigFieldPathMap = {
   instruction: {
     path: instructionPathConfigPathNode,
     skip: instructionSkipConfigPathNode,
-    showInOverrideMode: instructionShowInOverrideModeConfigPathNode,
+    showInPresetsMode: instructionShowInPresetsModeConfigPathNode,
     showInQuickInstructionMode: instructionShowInQuickInstructionModeConfigPathNode,
   },
   llmToIdeSanitizationRule: {

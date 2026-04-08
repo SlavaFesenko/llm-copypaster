@@ -7,107 +7,118 @@ import {
 } from '../helpers/zod-shared-schemas';
 import { systemConfigFieldPathMap } from './system-config-map';
 
-export interface LlmCopypasterConfig {
-  [systemConfigFieldPathMap.nonOverrideableSettings.name]: NonOverrideableSettingsConfig;
-  [systemConfigFieldPathMap.coreSettings.name]: CoreSettingsConfig;
+export interface SystemConfig {
+  [systemConfigFieldPathMap.presetIndependentSettings.name]: PresetIndependentSettingsConfig;
+  [systemConfigFieldPathMap.presetDependentSettings.name]: PresetDependentSettingsConfig;
 }
 
 export const llmCopypasterConfigSchema = z.object({
-  [systemConfigFieldPathMap.nonOverrideableSettings.name]: z.lazy(() => nonOverrideableSettingsConfigSchema),
-  [systemConfigFieldPathMap.coreSettings.name]: z.lazy(() => coreSettingsConfigSchema),
-}) satisfies z.ZodType<LlmCopypasterConfig>;
+  [systemConfigFieldPathMap.presetIndependentSettings.name]: z.lazy(() => presetIndependentSettingsConfigSchema),
+  [systemConfigFieldPathMap.presetDependentSettings.name]: z.lazy(() => presetDependentSettingsConfigSchema),
+}) satisfies z.ZodType<SystemConfig>;
 
-export interface NonOverrideableSettingsConfig {
-  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceRead.name]: boolean;
-  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceWrite.name]: boolean;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.name]: VitalParsingAnchorsConfig;
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.name]: NotificationSettingsConfig;
+export interface PresetIndependentSettingsConfig {
+  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceRead.name]: boolean;
+  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceWrite.name]: boolean;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.name]: VitalParsingAnchorsConfig;
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.name]: NotificationSettingsConfig;
 }
 
-export const nonOverrideableSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceRead.name]: z.boolean(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceWrite.name]: z.boolean(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.name]: z.lazy(() => vitalParsingAnchorsConfigSchema),
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.name]: z.lazy(
+export const presetIndependentSettingsConfigSchema = z.object({
+  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceRead.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetIndependentSettings.allowOutsideWorkspaceWrite.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.name]: z.lazy(
+    () => vitalParsingAnchorsConfigSchema
+  ),
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.name]: z.lazy(
     () => notificationSettingsConfigSchema
   ),
-}) satisfies z.ZodType<NonOverrideableSettingsConfig>;
+}) satisfies z.ZodType<PresetIndependentSettingsConfig>;
 
 export interface VitalParsingAnchorsConfig {
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: string;
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]: string | null;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]: string | null;
 }
 
 export const vitalParsingAnchorsConfigSchema = z.object({
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]:
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]:
     buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]:
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]:
     buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]:
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]:
     buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: buildVitalAnchorSchema(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]:
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]:
+    buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]:
+    buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]:
     buildVitalAnchorSchema().nullable(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
 
 export interface NotificationSettingsConfig {
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation
     .name]: ConfigValidationNotificationSettingsConfig;
 }
 
 export const notificationSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.name]: z.lazy(
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.name]: z.lazy(
     () => configValidationNotificationSettingsConfigSchema
   ),
 }) satisfies z.ZodType<NotificationSettingsConfig>;
 
 export interface ConfigValidationNotificationSettingsConfig {
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressWarningIssuesToast
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast
     .name]: boolean;
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
     .name]: boolean;
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressNoIssuesToast
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast
     .name]: boolean;
 }
 
 export const configValidationNotificationSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressWarningIssuesToast.name]:
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast.name]:
     z.boolean(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast
     .name]: z.boolean(),
-  [systemConfigFieldPathMap.nonOverrideableSettings.notificationSettings.configValidation.suppressNoIssuesToast.name]:
+  [systemConfigFieldPathMap.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast.name]:
     z.boolean(),
 }) satisfies z.ZodType<ConfigValidationNotificationSettingsConfig>;
 
-export interface CoreSettingsConfig {
-  [systemConfigFieldPathMap.coreSettings.skipInstructions.name]: boolean;
-  [systemConfigFieldPathMap.coreSettings.skipCodeListings.name]: boolean;
-  [systemConfigFieldPathMap.coreSettings.ideToLlm.name]: IdeToLlmConfig;
-  [systemConfigFieldPathMap.coreSettings.llmToIde.name]: LlmToIdeConfig;
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.name]: PostFilePatchActionsConfig;
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.name]: InstructionsAndVariablesConfig;
-  [systemConfigFieldPathMap.coreSettings.llmToIdeSanitizationRulesById.name]: Record<string, LlmToIdeSanitizationRuleConfig>;
+export interface PresetDependentSettingsConfig {
+  [systemConfigFieldPathMap.presetDependentSettings.skipInstructions.name]: boolean;
+  [systemConfigFieldPathMap.presetDependentSettings.skipCodeListings.name]: boolean;
+  [systemConfigFieldPathMap.presetDependentSettings.ideToLlm.name]: IdeToLlmConfig;
+  [systemConfigFieldPathMap.presetDependentSettings.llmToIde.name]: LlmToIdeConfig;
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.name]: PostFilePatchActionsConfig;
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.name]: InstructionsAndVariablesConfig;
+  [systemConfigFieldPathMap.presetDependentSettings.llmToIdeSanitizationRulesById.name]: Record<
+    string,
+    LlmToIdeSanitizationRuleConfig
+  >;
 }
 
-export const coreSettingsConfigSchema = z.object({
-  [systemConfigFieldPathMap.coreSettings.skipInstructions.name]: z.boolean(),
-  [systemConfigFieldPathMap.coreSettings.skipCodeListings.name]: z.boolean(),
-  [systemConfigFieldPathMap.coreSettings.ideToLlm.name]: z.lazy(() => ideToLlmConfigSchema),
-  [systemConfigFieldPathMap.coreSettings.llmToIde.name]: z.lazy(() => llmToIdeConfigSchema),
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.name]: z.lazy(() => postFilePatchActionsConfigSchema),
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.name]: z.lazy(() => instructionsAndVariablesConfigSchema),
-  [systemConfigFieldPathMap.coreSettings.llmToIdeSanitizationRulesById.name]: z.record(
+export const presetDependentSettingsConfigSchema = z.object({
+  [systemConfigFieldPathMap.presetDependentSettings.skipInstructions.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetDependentSettings.skipCodeListings.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetDependentSettings.ideToLlm.name]: z.lazy(() => ideToLlmConfigSchema),
+  [systemConfigFieldPathMap.presetDependentSettings.llmToIde.name]: z.lazy(() => llmToIdeConfigSchema),
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.name]: z.lazy(
+    () => postFilePatchActionsConfigSchema
+  ),
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.name]: z.lazy(
+    () => instructionsAndVariablesConfigSchema
+  ),
+  [systemConfigFieldPathMap.presetDependentSettings.llmToIdeSanitizationRulesById.name]: z.record(
     z.string(),
     z.lazy(() => llmToIdeSanitizationRuleConfigSchema)
   ),
-}) satisfies z.ZodType<CoreSettingsConfig>;
+}) satisfies z.ZodType<PresetDependentSettingsConfig>;
 
 export interface PromptLimitsConfig {
   [systemConfigFieldPathMap.promptLimits.skipPromptSizeStatsInCopyNotification.name]: boolean;
@@ -132,36 +143,43 @@ export interface LlmToIdeConfig extends PromptLimitsConfig {}
 export const llmToIdeConfigSchema = promptLimitsConfigSchema satisfies z.ZodType<LlmToIdeConfig>;
 
 export interface PostFilePatchActionsConfig {
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: boolean;
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: boolean;
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: boolean;
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: boolean;
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: boolean;
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: boolean;
 }
 
 export const postFilePatchActionsConfigSchema = z.object({
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: z.boolean(),
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: z.boolean(),
-  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: z.boolean(),
+  [systemConfigFieldPathMap.presetDependentSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]:
+    z.boolean(),
 }) satisfies z.ZodType<PostFilePatchActionsConfig>;
 
 export interface InstructionsAndVariablesConfig {
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.instructionsById.name]: Record<string, InstructionConfig>;
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedVariablesById.name]: Record<string, unknown>;
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: Record<
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.instructionsById.name]: Record<
+    string,
+    InstructionConfig
+  >;
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedVariablesById.name]: Record<
+    string,
+    unknown
+  >;
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: Record<
     string,
     unknown
   >;
 }
 
 export const instructionsAndVariablesConfigSchema = z.object({
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.instructionsById.name]: z.record(
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.instructionsById.name]: z.record(
     z.string(),
     z.lazy(() => instructionConfigSchema)
   ),
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedVariablesById.name]: z.record(
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedVariablesById.name]: z.record(
     z.string(),
     z.unknown()
   ),
-  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: z.record(
+  [systemConfigFieldPathMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: z.record(
     z.string(),
     z.unknown()
   ),
@@ -170,14 +188,14 @@ export const instructionsAndVariablesConfigSchema = z.object({
 export interface InstructionConfig {
   [systemConfigFieldPathMap.instruction.path.name]: string;
   [systemConfigFieldPathMap.instruction.skip.name]: boolean;
-  [systemConfigFieldPathMap.instruction.showInOverrideMode.name]: boolean;
+  [systemConfigFieldPathMap.instruction.showInPresetsMode.name]: boolean;
   [systemConfigFieldPathMap.instruction.showInQuickInstructionMode.name]: boolean;
 }
 
 export const instructionConfigSchema = z.object({
   [systemConfigFieldPathMap.instruction.path.name]: nonEmptyStringSchema,
   [systemConfigFieldPathMap.instruction.skip.name]: z.boolean(),
-  [systemConfigFieldPathMap.instruction.showInOverrideMode.name]: z.boolean(),
+  [systemConfigFieldPathMap.instruction.showInPresetsMode.name]: z.boolean(),
   [systemConfigFieldPathMap.instruction.showInQuickInstructionMode.name]: z.boolean(),
 }) satisfies z.ZodType<InstructionConfig>;
 

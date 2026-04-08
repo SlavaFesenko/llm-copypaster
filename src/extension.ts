@@ -20,7 +20,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
       extensionContext,
       configService,
       logger,
-      config.nonOverrideableSettings.allowOutsideWorkspaceRead
+      config.presetIndependentSettings.allowOutsideWorkspaceRead
     );
 
     const llmToIdeFacade = new LlmToIdeFacade(configService, logger, extensionContext);

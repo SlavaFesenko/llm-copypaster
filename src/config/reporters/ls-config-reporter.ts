@@ -1,8 +1,8 @@
 import { GLOB_CONSTS } from '../../contracts/global-constants';
 import { ConfigService } from '../config-service';
-import { OverrideOptionMetadata } from '../contracts/other-contracts';
-import { CoreSettingsConfig } from '../contracts/system-config-contracts';
-import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
+import { PresetOptionMetadata } from '../contracts/other-contracts';
+import { PresetDependentSettingsConfig } from '../contracts/system-config-contracts';
+import { UserConfig } from '../contracts/user-config-contracts';
 import { readUserJsonConfigFile } from '../helpers/config-file-readers';
 import {
   BuildConfigReportMarkdownArgs,
@@ -28,7 +28,7 @@ export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs)
   const preparedOverrideReportEntries = await buildPreparedOverrideReportEntries({
     configService: args.configService,
     overrideOptions,
-    baseCoreSettingsConfig: basePublicConfig.coreSettings,
+    baseCoreSettingsConfig: basePublicConfig.presetDependentSettings,
     rawOverridesById: buildRawOverridesById(userConfig),
   });
 
@@ -40,22 +40,22 @@ export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs)
     currentNormalizedConfigDescription:
       'Base Config (core settings) is applied by default (when no override manually selected)',
     currentNormalizedConfigValue: basePublicConfig,
-    rawUserCoreSettingsConfig: userConfig?.coreSettings ?? null,
-    rawSystemCoreSettingsConfig: systemConfig.coreSettings,
+    rawUserCoreSettingsConfig: userConfig?.presetDependentSettings ?? null,
+    rawSystemCoreSettingsConfig: systemConfig.presetDependentSettings,
     preparedOverrideReportEntries,
   };
 
   return buildConfigReportMarkdown(buildConfigReportMarkdownArgs);
 }
 
-async function readUserConfig(): Promise<LlmCopypasterUserConfig | null> {
-  return readUserJsonConfigFile<LlmCopypasterUserConfig>();
+async function readUserConfig(): Promise<UserConfig | null> {
+  return readUserJsonConfigFile<UserConfig>();
 }
 
 async function buildPreparedOverrideReportEntries(args: {
   configService: ConfigService;
-  overrideOptions: OverrideOptionMetadata[];
-  baseCoreSettingsConfig: CoreSettingsConfig;
+  overrideOptions: PresetOptionMetadata[];
+  baseCoreSettingsConfig: PresetDependentSettingsConfig;
   rawOverridesById: Record<string, RawMergedOverrideConfigEntry> | null;
 }): Promise<PreparedOverrideReportEntry[]> {
   return await Promise.all(
@@ -64,7 +64,7 @@ async function buildPreparedOverrideReportEntries(args: {
         overrideOption.id,
       ]);
 
-      const normalizedOverrideCoreSettingsConfig = mergedOverrideConfigResult.mergedConfig.coreSettings;
+      const normalizedOverrideCoreSettingsConfig = mergedOverrideConfigResult.mergedConfig.presetDependentSettings;
 
       const normalizedOverrideDiffChangeset = await buildJsonDiffChangeset(
         args.baseCoreSettingsConfig,

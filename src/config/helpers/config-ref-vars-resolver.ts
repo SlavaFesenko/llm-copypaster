@@ -1,10 +1,10 @@
 import get from 'lodash/get';
 
-import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
+import { SystemConfig } from '../contracts/system-config-contracts';
 
 export class ConfigRefVarsResolver {
-  public resolve(config: LlmCopypasterConfig): LlmCopypasterConfig {
-    const instructionsAndVariables = config.coreSettings.instructionsAndVariables;
+  public resolve(config: SystemConfig): SystemConfig {
+    const instructionsAndVariables = config.presetDependentSettings.instructionsAndVariables;
     const sharedVariablesById = instructionsAndVariables.sharedVariablesById;
     const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
     const nextSharedVariablesById = { ...sharedVariablesById };
@@ -24,8 +24,8 @@ export class ConfigRefVarsResolver {
 
     return {
       ...config,
-      coreSettings: {
-        ...config.coreSettings,
+      presetDependentSettings: {
+        ...config.presetDependentSettings,
         instructionsAndVariables: {
           ...instructionsAndVariables,
           sharedVariablesById: nextSharedVariablesById,
@@ -35,7 +35,7 @@ export class ConfigRefVarsResolver {
     };
   }
 
-  private _resolveConfigVarRefValue(config: LlmCopypasterConfig, configRefPath: unknown): ResolveConfigVarRefValueResult {
+  private _resolveConfigVarRefValue(config: SystemConfig, configRefPath: unknown): ResolveConfigVarRefValueResult {
     if (typeof configRefPath !== 'string') return { isResolved: false, resolvedValue: configRefPath };
 
     const normalizedConfigRefPath = configRefPath.trim();

@@ -5,7 +5,7 @@ import { Liquid } from 'liquidjs';
 import {
   InstructionConfig,
   InstructionsAndVariablesConfig,
-  LlmCopypasterConfig,
+  SystemConfig,
 } from '../../../config/contracts/system-config-contracts';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
 import { collapseEmptyLines } from './helpers';
@@ -27,7 +27,7 @@ export class InstructionsBuilder {
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
-    private readonly _config: LlmCopypasterConfig
+    private readonly _config: SystemConfig
   ) {
     this._liquidStrict = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
     this._liquidLight = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
@@ -37,7 +37,7 @@ export class InstructionsBuilder {
     const resolvedBuildInstructionsArgs = this._resolveBuildInstructionsArgs(args);
 
     const instructionsAndVariablesConfig: Partial<InstructionsAndVariablesConfig> =
-      this._config.coreSettings.instructionsAndVariables ?? {};
+      this._config.presetDependentSettings.instructionsAndVariables ?? {};
     const instructionsById = instructionsAndVariablesConfig.instructionsById ?? {};
 
     const effectiveInstructionsIds = this._calculateInstructionIdsToBuild({
@@ -79,7 +79,7 @@ export class InstructionsBuilder {
 
     if (finalInstructionsText.length === 0) return '';
 
-    const delimiterLine = `\n${this._config.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
+    const delimiterLine = `\n${this._config.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
 
     return finalInstructionsText.join(delimiterLine);
   }
@@ -92,7 +92,7 @@ export class InstructionsBuilder {
     const allowedInstructionIds = Object.entries(args.instructionsById)
       .filter(([, instructionDetails]) => {
         if (instructionDetails.skip) return false;
-        if (args.mode === InstructionsBuilderMode.Override && !instructionDetails.showInOverrideMode) return false;
+        if (args.mode === InstructionsBuilderMode.Override && !instructionDetails.showInPresetsMode) return false;
         if (args.mode === InstructionsBuilderMode.QuickInstruction && !instructionDetails.showInQuickInstructionMode)
           return false;
 
@@ -165,7 +165,7 @@ export class InstructionsBuilder {
   }
 
   private _resolveTemplateVariablesById(): Record<string, unknown> {
-    const instructionsAndVariables = this._config.coreSettings.instructionsAndVariables;
+    const instructionsAndVariables = this._config.presetDependentSettings.instructionsAndVariables;
 
     return {
       ...instructionsAndVariables.sharedVariablesById,

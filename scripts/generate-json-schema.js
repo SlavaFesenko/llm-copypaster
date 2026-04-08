@@ -9,14 +9,14 @@ const z = require('zod');
 //
 // This keeps schema generation dependency-free at runtime:
 // no ts-node / tsx is needed, and the generator uses the same compiled artifacts as the real build
-const { llmCopypasterUserConfigSchema } = require('../out/config/contracts/user-config-contracts.js');
+const { userConfigSchema } = require('../out/config/contracts/user-config-contracts.js');
 const { GLOB_CONSTS } = require('../out/contracts/global-constants.js');
 
 const projectRootPath = path.resolve(__dirname, '..');
 const targetSchemaFilePath = path.resolve(projectRootPath, GLOB_CONSTS.USER_CONFIG_SCHEMA_FILE_NAME);
 
 // Convert the runtime user-config Zod schema into a JSON Schema document
-const generatedJsonSchema = z.toJSONSchema(llmCopypasterUserConfigSchema);
+const generatedJsonSchema = z.toJSONSchema(userConfigSchema);
 
 const jsonSchemaDocument = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',

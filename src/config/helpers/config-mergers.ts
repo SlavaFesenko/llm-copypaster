@@ -1,60 +1,57 @@
 import {
   ConfigValidationNotificationSettingsConfig,
-  CoreSettingsConfig,
   IdeToLlmConfig,
   InstructionConfig,
   InstructionsAndVariablesConfig,
-  LlmCopypasterConfig,
   LlmToIdeConfig,
   LlmToIdeSanitizationRuleConfig,
-  NonOverrideableSettingsConfig,
   NotificationSettingsConfig,
   PostFilePatchActionsConfig,
+  PresetDependentSettingsConfig,
+  PresetIndependentSettingsConfig,
+  SystemConfig,
   VitalParsingAnchorsConfig,
 } from '../contracts/system-config-contracts';
 import {
   ConfigValidationNotificationSettingsUserConfig,
-  CoreSettingsUserConfig,
   IdeToLlmUserConfig,
   InstructionUserConfig,
   InstructionsAndVariablesUserConfig,
-  LlmCopypasterUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
   LlmToIdeUserConfig,
-  NonOverrideableSettingsUserConfig,
   NotificationSettingsUserConfig,
   PostFilePatchActionsUserConfig,
+  PresetDependentSettingsUserConfig,
+  PresetIndependentSettingsUserConfig,
+  UserConfig,
   VitalParsingAnchorsUserConfig,
 } from '../contracts/user-config-contracts';
 
-export function mergeConfigs(
-  systemConfig: LlmCopypasterConfig,
-  userConfig: LlmCopypasterUserConfig | null
-): LlmCopypasterConfig {
+export function mergeConfigs(systemConfig: SystemConfig, userConfig: UserConfig | null): SystemConfig {
   if (!userConfig) return systemConfig;
 
   return applyUserConfig(systemConfig, userConfig);
 }
 
-export function applyUserConfig(
-  systemConfig: LlmCopypasterConfig,
-  userConfig: LlmCopypasterUserConfig
-): LlmCopypasterConfig {
-  const nextConfig: LlmCopypasterConfig = {
-    nonOverrideableSettings: mergeNonOverrideableSettingsConfig(
-      systemConfig.nonOverrideableSettings,
-      userConfig.nonOverrideableSettings
+export function applyUserConfig(systemConfig: SystemConfig, userConfig: UserConfig): SystemConfig {
+  const nextConfig: SystemConfig = {
+    presetIndependentSettings: mergePresetIndependentSettingsConfig(
+      systemConfig.presetIndependentSettings,
+      userConfig.presetIndependentSettings
     ),
-    coreSettings: mergeCoreSettingsConfig(systemConfig.coreSettings, userConfig.coreSettings),
+    presetDependentSettings: mergePresetDependentSettingsConfig(
+      systemConfig.presetDependentSettings,
+      userConfig.presetDependentSettings
+    ),
   };
 
   return nextConfig;
 }
 
-export function mergeNonOverrideableSettingsConfig(
-  baseSettings: NonOverrideableSettingsConfig,
-  userSettings?: NonOverrideableSettingsUserConfig
-): NonOverrideableSettingsConfig {
+export function mergePresetIndependentSettingsConfig(
+  baseSettings: PresetIndependentSettingsConfig,
+  userSettings?: PresetIndependentSettingsUserConfig
+): PresetIndependentSettingsConfig {
   if (!userSettings) return baseSettings;
 
   return {
@@ -136,10 +133,10 @@ export function mergeNullableAnchor(
   return userAnchorValue;
 }
 
-export function mergeCoreSettingsConfig(
-  baseSettings: CoreSettingsConfig,
-  userSettings: CoreSettingsUserConfig | undefined
-): CoreSettingsConfig {
+export function mergePresetDependentSettingsConfig(
+  baseSettings: PresetDependentSettingsConfig,
+  userSettings: PresetDependentSettingsUserConfig | undefined
+): PresetDependentSettingsConfig {
   if (!userSettings) return baseSettings;
 
   return {
@@ -260,23 +257,23 @@ export function mapInstructionsById(
         path: userInstruction.path,
         skip: userInstruction.skip,
         // Optional visibility flags default to false for newly created instructions
-        showInOverrideMode: !!userInstruction.showInOverrideMode,
+        showInPresetsMode: !!userInstruction.showInPresetsMode,
         showInQuickInstructionMode: !!userInstruction.showInQuickInstructionMode,
       };
 
       continue;
     }
 
-    // This branch merges a user override into an existing base instruction
+    // This branch merges a user preset-dependent change into an existing base instruction
     nextInstructionsById[instructionId] = {
       path: mergeOptionalValue(baseInstruction.path, userInstruction.path),
       skip: mergeOptionalValue(baseInstruction.skip, userInstruction.skip),
-      // Preserve the base flag when the user did not specify an override explicitly
-      showInOverrideMode:
-        userInstruction.showInOverrideMode === undefined
-          ? baseInstruction.showInOverrideMode
-          : userInstruction.showInOverrideMode,
-      // Preserve the base flag when the user did not specify an override explicitly
+      // Preserve the base flag when the user did not specify a preset-dependent value explicitly
+      showInPresetsMode:
+        userInstruction.showInPresetsMode === undefined
+          ? baseInstruction.showInPresetsMode
+          : userInstruction.showInPresetsMode,
+      // Preserve the base flag when the user did not specify a preset-dependent value explicitly
       showInQuickInstructionMode:
         userInstruction.showInQuickInstructionMode === undefined
           ? baseInstruction.showInQuickInstructionMode
@@ -289,7 +286,7 @@ export function mapInstructionsById(
 
 export function mergeLlmToIdeSanitizationRulesById(
   baseRulesById: Record<string, LlmToIdeSanitizationRuleConfig>,
-  userSettings: CoreSettingsUserConfig
+  userSettings: PresetDependentSettingsUserConfig
 ): Record<string, LlmToIdeSanitizationRuleConfig> {
   const userRulesById = userSettings.llmToIdeSanitizationRulesById;
   if (!userRulesById) return baseRulesById;

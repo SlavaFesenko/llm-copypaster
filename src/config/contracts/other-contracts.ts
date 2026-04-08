@@ -1,11 +1,11 @@
-import { CoreSettingsConfig, LlmCopypasterConfig } from './system-config-contracts';
+import { PresetDependentSettingsConfig, SystemConfig } from './system-config-contracts';
 
 export interface LlmCopypasterConfigWithDebugData {
-  mergedConfig: LlmCopypasterConfig;
+  mergedConfig: SystemConfig;
   debugData?: MergedConfigDebugData;
 }
 
-export interface OverrideOptionMetadata {
+export interface PresetOptionMetadata {
   id: string;
   description?: string;
   version?: string;
@@ -13,17 +13,17 @@ export interface OverrideOptionMetadata {
 
 export interface MergedConfigDebugData {
   hasUserConfig: boolean;
-  overrideOptions: OverrideOptionMetadata[] | null;
-  activeOverrideIds: string[];
-  systemUserMergedConfig: CoreSettingsConfig;
-  mergedCoreSettingsConfig: CoreSettingsConfig;
-  rawUserCoreSettingsConfig: unknown;
-  rawSystemCoreSettingsConfig: unknown;
-  overrideReportEntries: OverrideReportEntryData[];
+  presetOptions: PresetOptionMetadata[] | null;
+  activePresetsIds: string[];
+  systemUserMergedConfig: PresetDependentSettingsConfig;
+  mergedDependentSettingsConfig: PresetDependentSettingsConfig;
+  rawUserPresetDependentSettingsConfig: unknown;
+  rawSystemPresetDependentSettingsConfig: unknown;
+  presetReportEntries: PresetReportEntryData[];
 }
 
-export interface OverrideReportEntryData {
-  overrideOption: OverrideOptionMetadata;
-  rawOverrideCoreSettingsConfig: unknown;
-  normalizedOverrideCoreSettingsConfig: CoreSettingsConfig;
+export interface PresetReportEntryData {
+  presetOptionMetadata: PresetOptionMetadata;
+  rawPresetDependentSettingsConfig: unknown;
+  normalizedPresetDependentSettingsConfig: PresetDependentSettingsConfig;
 }

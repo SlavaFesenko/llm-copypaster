@@ -1,10 +1,10 @@
-import { LlmCopypasterConfig } from '../../../config/contracts/system-config-contracts';
+import { SystemConfig } from '../../../config/contracts/system-config-contracts';
 import { BuildLlmContextTextArgs, IdeToLlmFile } from '../contracts';
 
 export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
   const listings = args.fileItems.map(fileItem => buildSingleFileListing(fileItem, args.config)).join('\n');
 
-  const techPromptDelimiter = args.config.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR;
+  const techPromptDelimiter = args.config.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR;
 
   if (args.ignorePromptInstructions) return `\n${techPromptDelimiter}\n${listings}`;
 
@@ -15,8 +15,8 @@ export function buildFinalPromptText(args: BuildLlmContextTextArgs): string {
   return `\n${techPromptDelimiter}\n${instructionsText}\n${techPromptDelimiter}\n${listings}`;
 }
 
-function buildSingleFileListing(fileItem: IdeToLlmFile, config: LlmCopypasterConfig): string {
-  const headerLine = `${config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR} ${fileItem.path}`;
+function buildSingleFileListing(fileItem: IdeToLlmFile, config: SystemConfig): string {
+  const headerLine = `${config.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR} ${fileItem.path}`;
 
   const contentLines: string[] = [];
 

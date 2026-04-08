@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfigWithDebugData, OverrideOptionMetadata } from '../../../config/contracts/other-contracts';
-import { LlmCopypasterConfig } from '../../../config/contracts/system-config-contracts';
+import { LlmCopypasterConfigWithDebugData, PresetOptionMetadata } from '../../../config/contracts/other-contracts';
+import { SystemConfig } from '../../../config/contracts/system-config-contracts';
 import { ConfigReportFacade } from '../../../config/reporters/config-report-facade';
 import { CollectedFileItem } from '../../../contracts/file-contracts';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-virtual-doc-helpers';
@@ -33,10 +33,11 @@ export class CopiedNotificator {
 
       const promptStatsResult = buildTextSizeStats({
         promptText: currentPromptText,
-        contextConfig: effectiveConfig.coreSettings.ideToLlm,
+        contextConfig: effectiveConfig.presetDependentSettings.ideToLlm,
       });
 
-      const shouldShowPromptSizeStats = effectiveConfig.coreSettings.ideToLlm.skipPromptSizeStatsInCopyNotification !== true;
+      const shouldShowPromptSizeStats =
+        effectiveConfig.presetDependentSettings.ideToLlm.skipPromptSizeStatsInCopyNotification !== true;
 
       const baseMessage =
         unavailableFilesCount === 0
@@ -122,7 +123,7 @@ export class CopiedNotificator {
   }
 
   private async _pickProfileIds(args: {
-    overrideOptions: OverrideOptionMetadata[];
+    overrideOptions: PresetOptionMetadata[];
     selectedProfileIds: string[];
   }): Promise<PickProfileIdsResult | null> {
     const selectedProfileIdsSet = new Set(args.selectedProfileIds);
@@ -167,7 +168,7 @@ export class CopiedNotificator {
   }
 
   private async _buildLlmPromptText(args: {
-    effectiveConfig: LlmCopypasterConfig;
+    effectiveConfig: SystemConfig;
     includeTechPromptFromCommand: boolean;
     fileItems: CollectedFileItem[];
     forceSkipTechPrompt?: boolean;
@@ -175,9 +176,9 @@ export class CopiedNotificator {
     const shouldIncludeTechPrompt =
       args.includeTechPromptFromCommand &&
       args.forceSkipTechPrompt !== true &&
-      args.effectiveConfig.coreSettings.skipInstructions !== true;
+      args.effectiveConfig.presetDependentSettings.skipInstructions !== true;
 
-    const effectiveFileItems = args.effectiveConfig.coreSettings.skipCodeListings === true ? [] : args.fileItems;
+    const effectiveFileItems = args.effectiveConfig.presetDependentSettings.skipCodeListings === true ? [] : args.fileItems;
 
     const techPromptText = shouldIncludeTechPrompt
       ? await new InstructionsBuilder(this._deps.extensionContext, args.effectiveConfig).build()

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
-import { LlmCopypasterConfig, LlmToIdeSanitizationRuleConfig } from '../../config/contracts/system-config-contracts';
+import { LlmToIdeSanitizationRuleConfig, SystemConfig } from '../../config/contracts/system-config-contracts';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 
@@ -19,10 +19,10 @@ suite('applySanitizationRules', () => {
 
     assert.ok(stripCodefenceRule, 'strip-codefence rule was not found in current system config');
 
-    const config: LlmCopypasterConfig = {
+    const config: SystemConfig = {
       ...systemConfig,
-      coreSettings: {
-        ...systemConfig.coreSettings,
+      presetDependentSettings: {
+        ...systemConfig.presetDependentSettings,
         llmToIdeSanitizationRulesById: {
           'strip-codefence': stripCodefenceRule,
         },

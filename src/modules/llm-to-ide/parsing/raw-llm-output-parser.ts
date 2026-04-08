@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig, VitalParsingAnchorsConfig } from '../../../config/contracts/system-config-contracts';
+import { SystemConfig, VitalParsingAnchorsConfig } from '../../../config/contracts/system-config-contracts';
 import { FilePayload, FilesPayload } from '../../../contracts/file-contracts';
 import { isOutsideWorkspaceFilePath } from '../../../utils/file-utils';
 
@@ -9,9 +9,9 @@ export class RawLlmOutputParser {
   private readonly _firstNewLineRegex: RegExp = /\r?\n/;
   private readonly _leadingNewLineRegex: RegExp = /^\r?\n/;
 
-  public constructor(private readonly _config: LlmCopypasterConfig) {
-    this._codeListingHeaderAnchor = this._config.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR;
-    this._endOfOutputAnchor = this._config.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR;
+  public constructor(private readonly _config: SystemConfig) {
+    this._codeListingHeaderAnchor = this._config.presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR;
+    this._endOfOutputAnchor = this._config.presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR;
     this._fileHeaderRegex = new RegExp(String.raw`^${this._codeListingHeaderAnchor}\s+(.+)\s*$`, 'gm');
   }
 
@@ -20,7 +20,7 @@ export class RawLlmOutputParser {
 
     const parsedFilesPayload = this._parseConcatenatedFileListings(
       rawClipboardTextWithoutIgnoredTail,
-      this._config.nonOverrideableSettings.vitalParsingAnchors
+      this._config.presetIndependentSettings.vitalParsingAnchors
     );
 
     if (parsedFilesPayload.files.length === 0) throw new Error('No files found in clipboard text');

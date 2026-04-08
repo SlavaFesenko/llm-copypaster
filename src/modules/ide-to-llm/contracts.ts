@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
-import { IdeToLlmConfig, LlmCopypasterConfig, LlmToIdeConfig } from '../../config/contracts/system-config-contracts';
+import { IdeToLlmConfig, LlmToIdeConfig, SystemConfig } from '../../config/contracts/system-config-contracts';
 import { CollectedFileItem } from '../../contracts/file-contracts';
 import { OutputChannelLogger } from '../../utils/output-channel-logger';
 
@@ -46,7 +46,7 @@ export interface IdeToLlmFile {
 
 export interface BuildLlmContextTextArgs {
   fileItems: IdeToLlmFile[];
-  config: LlmCopypasterConfig;
+  config: SystemConfig;
   ignorePromptInstructions?: boolean;
   instructionsText?: string;
 }

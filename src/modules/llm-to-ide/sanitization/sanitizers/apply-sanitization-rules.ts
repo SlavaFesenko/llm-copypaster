@@ -1,4 +1,4 @@
-import { LlmCopypasterConfig } from '../../../../config/contracts/system-config-contracts';
+import { SystemConfig } from '../../../../config/contracts/system-config-contracts';
 
 export interface ApplySanitizationRulesFileMeta {
   path: string;
@@ -8,11 +8,11 @@ export interface ApplySanitizationRulesFileMeta {
 export function applySanitizationRules(
   inputText: string,
   fileMeta: ApplySanitizationRulesFileMeta,
-  config: LlmCopypasterConfig
+  config: SystemConfig
 ): string {
   let outputText = inputText;
 
-  const sanitizationRulesById = config.coreSettings.llmToIdeSanitizationRulesById;
+  const sanitizationRulesById = config.presetDependentSettings.llmToIdeSanitizationRulesById;
 
   for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
     if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;

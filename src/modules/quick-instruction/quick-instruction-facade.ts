@@ -37,7 +37,7 @@ export class QuickInstructionFacade {
 
     const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig();
 
-    const delimiterLine = `\n${llmCopypasterConfig.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
+    const delimiterLine = `\n${llmCopypasterConfig.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
     const nextClipboardText = `${delimiterLine}${instructionsSet}${delimiterLine}${currentClipboardText}`;
 
     await vscode.env.clipboard.writeText(nextClipboardText);
@@ -64,7 +64,7 @@ export class QuickInstructionFacade {
 
   private async _getInstructionsSet(quickPickPlaceHolder: string): Promise<string> {
     const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig();
-    const instructionsById = llmCopypasterConfig.coreSettings.instructionsAndVariables.instructionsById ?? {};
+    const instructionsById = llmCopypasterConfig.presetDependentSettings.instructionsAndVariables.instructionsById ?? {};
     const availableInstructionItems = this._buildAvailableInstructionItems(instructionsById);
 
     if (availableInstructionItems.length === 0) return '';

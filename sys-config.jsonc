@@ -1,6 +1,6 @@
 {
   "configVersion": "1.0.0",
-  "nonOverrideableSettings": {
+  "presetIndependentSettings": {
     "allowOutsideWorkspaceRead": true,
     "allowOutsideWorkspaceWrite": true,
     "vitalParsingAnchors": {
@@ -20,7 +20,7 @@
       },
     },
   },
-  "coreSettings": {
+  "presetDependentSettings": {
     "skipInstructions": false,
     "skipCodeListings": false,
     "ideToLlm": {
@@ -53,18 +53,18 @@
         "llm-response-rules": {
           "path": ".sys-instructions/llm-response-rules.liquid",
           "skip": false,
-          "showInOverrideMode": true,
+          "showInPresetsMode": true,
           "showInQuickInstructionMode": false,
         },
       },
       "sharedVariablesById": {},
       "sharedReferenceVariablesById": {
-        "CODE_LISTING_HEADER_START_FRAGMENT": "nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
-        "FILE_STATUS_PREFIX": "nonOverrideableSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR",
-        "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",
-        "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR",
-        "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR",
-        "END_OF_OUTPUT_ANCHOR": "nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR",
+        "CODE_LISTING_HEADER_START_FRAGMENT": "presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
+        "FILE_STATUS_PREFIX": "presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_CREATED": "presetIndependentSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR",
+        "FILE_PAYLOAD_OPERATION_TYPE_DELETED": "presetIndependentSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR",
+        "END_OF_OUTPUT_ANCHOR": "presetIndependentSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR",
       },
     },
   },

@@ -10,41 +10,41 @@ import {
 // User config has patch semantics, so every field here must stay explicitly `.optional()`
 // Building user schema by traversing system schema and making everything optional is possible, but too clever and brittle
 // Isolation is simpler to maintain, and it also leaves room for user-config field names/types to diverge from system-config in the future
-// Plus user-config has additional overrides section, which user-config doesn't have
+// Plus user-config has additional presets section, which system-config doesn't have
 
 // ! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
 
-export interface LlmCopypasterUserConfig {
-  nonOverrideableSettings?: NonOverrideableSettingsUserConfig;
-  coreSettings?: CoreSettingsUserConfig;
-  overridesById?: Record<string, OverrideUserConfig>;
+export interface UserConfig {
+  presetIndependentSettings?: PresetIndependentSettingsUserConfig;
+  presetDependentSettings?: PresetDependentSettingsUserConfig;
+  presetsById?: Record<string, PresetUserConfig>;
 }
 
-// ! this llmCopypasterConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
-export const llmCopypasterUserConfigSchema = z.object({
-  nonOverrideableSettings: z.lazy(() => nonOverrideableSettingsUserConfigSchema).optional(),
-  coreSettings: z.lazy(() => coreSettingsUserConfigSchema).optional(),
-  overridesById: z
+// ! this userConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
+export const userConfigSchema = z.object({
+  presetIndependentSettings: z.lazy(() => presetIndependentSettingsUserConfigSchema).optional(),
+  presetDependentSettings: z.lazy(() => presetDependentSettingsUserConfigSchema).optional(),
+  presetsById: z
     .record(
       z.string(),
-      z.lazy(() => overrideUserConfigSchema)
+      z.lazy(() => presetUserConfigSchema)
     )
     .optional(),
-}) satisfies z.ZodType<LlmCopypasterUserConfig>;
+}) satisfies z.ZodType<UserConfig>;
 
-export interface NonOverrideableSettingsUserConfig {
+export interface PresetIndependentSettingsUserConfig {
   allowOutsideWorkspaceRead?: boolean;
   allowOutsideWorkspaceWrite?: boolean;
   vitalParsingAnchors?: VitalParsingAnchorsUserConfig;
   notificationSettings?: NotificationSettingsUserConfig;
 }
 
-export const nonOverrideableSettingsUserConfigSchema = z.object({
+export const presetIndependentSettingsUserConfigSchema = z.object({
   allowOutsideWorkspaceRead: z.boolean().optional(),
   allowOutsideWorkspaceWrite: z.boolean().optional(),
   vitalParsingAnchors: z.lazy(() => vitalParsingAnchorsUserConfigSchema).optional(),
   notificationSettings: z.lazy(() => notificationSettingsUserConfigSchema).optional(),
-}) satisfies z.ZodType<NonOverrideableSettingsUserConfig>;
+}) satisfies z.ZodType<PresetIndependentSettingsUserConfig>;
 
 export interface VitalParsingAnchorsUserConfig {
   PROMPT_DELIMITER_ANCHOR?: string;
@@ -86,7 +86,7 @@ export const configValidationNotificationSettingsUserConfigSchema = z.object({
   suppressNoIssuesToast: z.boolean().optional(),
 }) satisfies z.ZodType<ConfigValidationNotificationSettingsUserConfig>;
 
-export interface CoreSettingsUserConfig {
+export interface PresetDependentSettingsUserConfig {
   skipInstructions?: boolean;
   skipCodeListings?: boolean;
   ideToLlm?: IdeToLlmUserConfig;
@@ -96,7 +96,7 @@ export interface CoreSettingsUserConfig {
   llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
-export const coreSettingsUserConfigSchema = z.object({
+export const presetDependentSettingsUserConfigSchema = z.object({
   skipInstructions: z.boolean().optional(),
   skipCodeListings: z.boolean().optional(),
   ideToLlm: z.lazy(() => ideToLlmUserConfigSchema).optional(),
@@ -109,7 +109,7 @@ export const coreSettingsUserConfigSchema = z.object({
       z.lazy(() => llmToIdeSanitizationRuleUserConfigSchema)
     )
     .optional(),
-}) satisfies z.ZodType<CoreSettingsUserConfig>;
+}) satisfies z.ZodType<PresetDependentSettingsUserConfig>;
 
 export interface PromptLimitsUserConfig {
   skipPromptSizeStatsInCopyNotification?: boolean;
@@ -165,14 +165,14 @@ export const instructionsAndVariablesUserConfigSchema = z.object({
 export interface InstructionUserConfig {
   path?: string;
   skip?: boolean;
-  showInOverrideMode?: boolean;
+  showInPresetsMode?: boolean;
   showInQuickInstructionMode?: boolean;
 }
 
 export const instructionUserConfigSchema = z.object({
   path: nonEmptyStringSchema.optional(),
   skip: z.boolean().optional(),
-  showInOverrideMode: z.boolean().optional(),
+  showInPresetsMode: z.boolean().optional(),
   showInQuickInstructionMode: z.boolean().optional(),
 }) satisfies z.ZodType<InstructionUserConfig>;
 
@@ -190,16 +190,16 @@ export const llmToIdeSanitizationRuleUserConfigSchema = z.object({
   skipForPaths: z.array(nonEmptyStringSchema).optional(),
 }) satisfies z.ZodType<LlmToIdeSanitizationRuleUserConfig>;
 
-export interface OverrideUserConfig {
+export interface PresetUserConfig {
   description?: string;
   version?: string;
   shouldBeSkipped?: boolean;
-  coreSettings?: CoreSettingsUserConfig;
+  presetDependentSettings?: PresetDependentSettingsUserConfig;
 }
 
-export const overrideUserConfigSchema = z.object({
+export const presetUserConfigSchema = z.object({
   description: z.string().optional(),
   version: z.string().optional(),
   shouldBeSkipped: z.boolean().optional(),
-  coreSettings: z.lazy(() => coreSettingsUserConfigSchema).optional(),
-}) satisfies z.ZodType<OverrideUserConfig>;
+  presetDependentSettings: z.lazy(() => presetDependentSettingsUserConfigSchema).optional(),
+}) satisfies z.ZodType<PresetUserConfig>;

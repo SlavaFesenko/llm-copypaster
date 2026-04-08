@@ -1,5 +1,5 @@
-import { LlmCopypasterConfig } from '../contracts/system-config-contracts';
-import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
+import { SystemConfig } from '../contracts/system-config-contracts';
+import { UserConfig } from '../contracts/user-config-contracts';
 
 export enum ValidationIssueSeverity {
   Critical = 'Critical',
@@ -24,9 +24,9 @@ export interface ValidationIssue {
 
 export interface ValidationRuleContext {
   targetConfigName: string;
-  targetConfig: LlmCopypasterConfig;
-  systemConfig: LlmCopypasterConfig;
-  userConfig: LlmCopypasterUserConfig | null;
+  targetConfig: SystemConfig;
+  systemConfig: SystemConfig;
+  userConfig: UserConfig | null;
 }
 
 export interface ValidationRule {

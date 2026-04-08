@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfig } from '../config/contracts/system-config-contracts';
+import { SystemConfig } from '../config/contracts/system-config-contracts';
 import { FilesPayload } from '../contracts/file-contracts';
 import { clearExtensionCache } from './extension-cache-service';
 
@@ -14,7 +14,7 @@ export class OutsideFilesProcessor {
   private static readonly _workspaceStateKey = 'outsideWorkspaceFileActions';
 
   public constructor(
-    private readonly _config: LlmCopypasterConfig,
+    private readonly _config: SystemConfig,
     private readonly _extensionContext?: vscode.ExtensionContext
   ) {}
 
@@ -23,7 +23,7 @@ export class OutsideFilesProcessor {
 
     if (outsideWorkspaceFiles.length === 0) return OutsideFilesProcessingAction.Continue;
 
-    if (!this._config.nonOverrideableSettings.allowOutsideWorkspaceWrite) return OutsideFilesProcessingAction.Skip;
+    if (!this._config.presetIndependentSettings.allowOutsideWorkspaceWrite) return OutsideFilesProcessingAction.Skip;
 
     const savedOutsideWorkspaceFileActions = this._getSavedOutsideWorkspaceFileActions();
 

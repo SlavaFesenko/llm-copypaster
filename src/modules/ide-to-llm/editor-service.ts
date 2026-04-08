@@ -229,7 +229,7 @@ export class EditorService {
 
     const promptStatsResult = buildTextSizeStats({
       promptText: finalPromptText,
-      contextConfig: config.coreSettings.ideToLlm,
+      contextConfig: config.presetDependentSettings.ideToLlm,
     });
 
     await vscode.env.clipboard.writeText(finalPromptText);

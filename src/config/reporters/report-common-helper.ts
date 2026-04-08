@@ -1,6 +1,6 @@
 import { GLOB_CONSTS } from '../../contracts/global-constants';
-import { MergedConfigDebugData, OverrideOptionMetadata } from '../contracts/other-contracts';
-import { LlmCopypasterUserConfig } from '../contracts/user-config-contracts';
+import { MergedConfigDebugData, PresetOptionMetadata } from '../contracts/other-contracts';
+import { UserConfig } from '../contracts/user-config-contracts';
 
 export const NORMALIZED_CONFIG_STATUS = '[NORMALIZED CONFIG]';
 export const RAW_CONFIG_BEFORE_NORMALIZATION_STATUS = '[RAW CONFIG]';
@@ -15,7 +15,7 @@ export interface RawMergedOverrideConfigEntry {
 }
 
 export interface PreparedOverrideReportEntry {
-  overrideOption: OverrideOptionMetadata;
+  overrideOption: PresetOptionMetadata;
   rawOverrideCoreSettingsConfig: unknown;
   normalizedOverrideCoreSettingsConfig: unknown;
   normalizedOverrideDiffHumanReadable: unknown;
@@ -28,7 +28,7 @@ export interface PreparedAppliedOverrideReportEntry {
 
 export interface BuildConfigReportMarkdownArgs {
   hasUserConfig: boolean;
-  overrideOptions: OverrideOptionMetadata[];
+  overrideOptions: PresetOptionMetadata[];
   activeOverrideIds?: string[];
   currentNormalizedConfigLabel: string;
   currentNormalizedConfigDescription: string;
@@ -41,7 +41,7 @@ export interface BuildConfigReportMarkdownArgs {
 
 export interface BuildStatusOverviewMarkdownArgs {
   hasUserConfig: boolean;
-  overrideOptions: OverrideOptionMetadata[];
+  overrideOptions: PresetOptionMetadata[];
   activeOverrideIds?: string[];
   shouldAlwaysMarkCurrentSourceAsApplied?: boolean;
   shouldOmitOverrideNamesInCurrentSourceLine?: boolean;
@@ -50,27 +50,25 @@ export interface BuildStatusOverviewMarkdownArgs {
 export function buildPreparedAppliedOverrideReportEntriesFromData(
   debugData: MergedConfigDebugData
 ): PreparedAppliedOverrideReportEntry[] {
-  const activeOverrideIdsSet = new Set(debugData.activeOverrideIds);
+  const activeOverrideIdsSet = new Set(debugData.activePresetsIds);
 
-  return debugData.overrideReportEntries
-    .filter(overrideReportEntry => activeOverrideIdsSet.has(overrideReportEntry.overrideOption.id))
+  return debugData.presetReportEntries
+    .filter(overrideReportEntry => activeOverrideIdsSet.has(overrideReportEntry.presetOptionMetadata.id))
     .map(overrideReportEntry => ({
-      overrideId: overrideReportEntry.overrideOption.id,
-      rawOverrideCoreSettingsConfig: overrideReportEntry.rawOverrideCoreSettingsConfig,
+      overrideId: overrideReportEntry.presetOptionMetadata.id,
+      rawOverrideCoreSettingsConfig: overrideReportEntry.rawPresetDependentSettingsConfig,
     }));
 }
 
-export function buildRawOverridesById(
-  userConfig: LlmCopypasterUserConfig | null
-): Record<string, RawMergedOverrideConfigEntry> | null {
-  const userOverridesById = userConfig?.overridesById;
+export function buildRawOverridesById(userConfig: UserConfig | null): Record<string, RawMergedOverrideConfigEntry> | null {
+  const userOverridesById = userConfig?.presetsById;
   if (!userOverridesById) return null;
 
   const rawOverridesById: Record<string, RawMergedOverrideConfigEntry> = {};
 
   for (const overrideId of Object.keys(userOverridesById)) {
     rawOverridesById[overrideId] = {
-      coreSettings: userOverridesById[overrideId]?.coreSettings ?? null,
+      coreSettings: userOverridesById[overrideId]?.presetDependentSettings ?? null,
     };
   }
 
