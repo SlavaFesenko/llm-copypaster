@@ -5,7 +5,6 @@ export class VarRefsExistRule implements ValidationRule {
   public readonly name = 'Shared variable config refs must point to existing config sections';
   public readonly rationale = 'Otherwise instructions will receive garbage instead of expected variables-values';
   public readonly severity = ValidationIssueSeverity.Warning;
-  public readonly skipForOverrides = false;
 
   public getViolationDescriptions(validationRuleContext: ValidationRuleContext): string[] {
     const invalidConfigRefs = this._getInvalidConfigRefs(validationRuleContext);
