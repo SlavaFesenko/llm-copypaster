@@ -1,3 +1,4 @@
+import { systemConfigFieldPathMap } from '../../contracts/system-config-map';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class VarRefsExistRule implements ValidationRule {
@@ -19,9 +20,7 @@ export class VarRefsExistRule implements ValidationRule {
     const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
 
     return Object.entries(sharedReferenceVariablesById).map(([sharedVariableId, variableValue]) => {
-      // TODO: если нельзя избежать хардкодных ссылок, нужно обеспечить струкутуру, обеспечивающую автопереименование по
-      // всему проекту, например, названия конфига хранить в обьекте, или все-таки задуматься о c#-аналоге nameof
-      const fullVariablePath = `coreSettings.instructionsAndVariables.sharedReferenceVariablesById.${sharedVariableId}`;
+      const fullVariablePath = `${systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedReferenceVariablesById.pathAndName}.${sharedVariableId}`;
       const configReferenceValuePath = typeof variableValue === 'string' ? variableValue : JSON.stringify(variableValue);
 
       return `"${fullVariablePath}": "${configReferenceValuePath}"`;

@@ -1,7 +1,5 @@
 import { z } from 'zod';
-
-// TODO: сделай фабрику для TS-типов + zod-config если можно, задача - сделать схему всех полей в одном месте проекта
-// чтобы поддерживать как минмум переименование в одном месте фабрики, а не разбросанным в куче мест.
+import { systemConfigFieldPathMap } from './system-config-map';
 
 // !!! After changing zod-schema run manually "npm run compile", which will trigger "postcompile" → "node ./scripts/generate-json-schema.js"
 
@@ -22,83 +20,87 @@ function buildVitalAnchorSchema() {
 // #endregion
 
 export interface LlmCopypasterConfig {
-  nonOverrideableSettings: NonOverrideableSettingsConfig;
-  coreSettings: CoreSettingsConfig;
+  [systemConfigFieldPathMap.nonOverrideableSettings.name]: NonOverrideableSettingsConfig;
+  [systemConfigFieldPathMap.coreSettings.name]: CoreSettingsConfig;
 }
 
 // ! this llmCopypasterConfigSchema + path is hardcoded in "generate-json-schema.js", so be careful, auto-rename won't work!
 export const llmCopypasterConfigSchema = z.object({
-  nonOverrideableSettings: z.lazy(() => nonOverrideableSettingsConfigSchema),
-  coreSettings: z.lazy(() => coreSettingsConfigSchema),
+  [systemConfigFieldPathMap.nonOverrideableSettings.name]: z.lazy(() => nonOverrideableSettingsConfigSchema),
+  [systemConfigFieldPathMap.coreSettings.name]: z.lazy(() => coreSettingsConfigSchema),
 }) satisfies z.ZodType<LlmCopypasterConfig>;
 
 export interface NonOverrideableSettingsConfig {
-  allowOutsideWorkspaceRead: boolean;
-  allowOutsideWorkspaceWrite: boolean;
-  vitalParsingAnchors: VitalParsingAnchorsConfig;
+  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceRead.name]: boolean;
+  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceWrite.name]: boolean;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.name]: VitalParsingAnchorsConfig;
 }
 
 export const nonOverrideableSettingsConfigSchema = z.object({
-  allowOutsideWorkspaceRead: z.boolean(),
-  allowOutsideWorkspaceWrite: z.boolean(),
-  vitalParsingAnchors: z.lazy(() => vitalParsingAnchorsConfigSchema),
+  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceRead.name]: z.boolean(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.allowOutsideWorkspaceWrite.name]: z.boolean(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.name]: z.lazy(() => vitalParsingAnchorsConfigSchema),
 }) satisfies z.ZodType<NonOverrideableSettingsConfig>;
 
 export interface VitalParsingAnchorsConfig {
-  PROMPT_DELIMITER_ANCHOR: string;
-  CODE_LISTING_HEADER_ANCHOR: string;
-  FILE_STATUS_ANCHOR: string;
-  FILE_EDITED_FULL_ANCHOR: string;
-  FILE_CREATED_ANCHOR: string;
-  FILE_DELETED_ANCHOR: string;
-  END_OF_OUTPUT_ANCHOR: string | null;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: string;
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]: string | null;
 }
 
 export const vitalParsingAnchorsConfigSchema = z.object({
-  PROMPT_DELIMITER_ANCHOR: buildVitalAnchorSchema(),
-  CODE_LISTING_HEADER_ANCHOR: buildVitalAnchorSchema(),
-  FILE_STATUS_ANCHOR: buildVitalAnchorSchema(),
-  FILE_EDITED_FULL_ANCHOR: buildVitalAnchorSchema(),
-  FILE_CREATED_ANCHOR: buildVitalAnchorSchema(),
-  FILE_DELETED_ANCHOR: buildVitalAnchorSchema(),
-  END_OF_OUTPUT_ANCHOR: buildVitalAnchorSchema().nullable(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR.name]:
+    buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR.name]:
+    buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR.name]:
+    buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_CREATED_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.FILE_DELETED_ANCHOR.name]: buildVitalAnchorSchema(),
+  [systemConfigFieldPathMap.nonOverrideableSettings.vitalParsingAnchors.END_OF_OUTPUT_ANCHOR.name]:
+    buildVitalAnchorSchema().nullable(),
 }) satisfies z.ZodType<VitalParsingAnchorsConfig>;
 
 export interface CoreSettingsConfig {
-  skipInstructions: boolean;
-  skipCodeListings: boolean;
-  ideToLlm: IdeToLlmConfig;
-  llmToIde: LlmToIdeConfig;
-  postFilePatchActions: PostFilePatchActionsConfig;
-  instructionsAndVariables: InstructionsAndVariablesConfig;
-  llmToIdeSanitizationRulesById: Record<string, LlmToIdeSanitizationRuleConfig>;
+  [systemConfigFieldPathMap.coreSettings.skipInstructions.name]: boolean;
+  [systemConfigFieldPathMap.coreSettings.skipCodeListings.name]: boolean;
+  [systemConfigFieldPathMap.coreSettings.ideToLlm.name]: IdeToLlmConfig;
+  [systemConfigFieldPathMap.coreSettings.llmToIde.name]: LlmToIdeConfig;
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.name]: PostFilePatchActionsConfig;
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.name]: InstructionsAndVariablesConfig;
+  [systemConfigFieldPathMap.coreSettings.llmToIdeSanitizationRulesById.name]: Record<string, LlmToIdeSanitizationRuleConfig>;
 }
 
 export const coreSettingsConfigSchema = z.object({
-  skipInstructions: z.boolean(),
-  skipCodeListings: z.boolean(),
-  ideToLlm: z.lazy(() => ideToLlmConfigSchema),
-  llmToIde: z.lazy(() => llmToIdeConfigSchema),
-  postFilePatchActions: z.lazy(() => postFilePatchActionsConfigSchema),
-  instructionsAndVariables: z.lazy(() => instructionsAndVariablesConfigSchema),
-  llmToIdeSanitizationRulesById: z.record(
+  [systemConfigFieldPathMap.coreSettings.skipInstructions.name]: z.boolean(),
+  [systemConfigFieldPathMap.coreSettings.skipCodeListings.name]: z.boolean(),
+  [systemConfigFieldPathMap.coreSettings.ideToLlm.name]: z.lazy(() => ideToLlmConfigSchema),
+  [systemConfigFieldPathMap.coreSettings.llmToIde.name]: z.lazy(() => llmToIdeConfigSchema),
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.name]: z.lazy(() => postFilePatchActionsConfigSchema),
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.name]: z.lazy(() => instructionsAndVariablesConfigSchema),
+  [systemConfigFieldPathMap.coreSettings.llmToIdeSanitizationRulesById.name]: z.record(
     z.string(),
     z.lazy(() => llmToIdeSanitizationRuleConfigSchema)
   ),
 }) satisfies z.ZodType<CoreSettingsConfig>;
 
 export interface PromptLimitsConfig {
-  skipPromptSizeStatsInCopyNotification: boolean;
-  charsPerToken: number;
-  linesMaxToShowWarning: number;
-  tokensMaxToShowWarning: number;
+  [systemConfigFieldPathMap.promptLimits.skipPromptSizeStatsInCopyNotification.name]: boolean;
+  [systemConfigFieldPathMap.promptLimits.charsPerToken.name]: number;
+  [systemConfigFieldPathMap.promptLimits.linesMaxToShowWarning.name]: number;
+  [systemConfigFieldPathMap.promptLimits.tokensMaxToShowWarning.name]: number;
 }
 
 export const promptLimitsConfigSchema = z.object({
-  skipPromptSizeStatsInCopyNotification: z.boolean(),
-  charsPerToken: positiveFiniteNumberSchema,
-  linesMaxToShowWarning: nonNegativeIntegerSchema,
-  tokensMaxToShowWarning: nonNegativeIntegerSchema,
+  [systemConfigFieldPathMap.promptLimits.skipPromptSizeStatsInCopyNotification.name]: z.boolean(),
+  [systemConfigFieldPathMap.promptLimits.charsPerToken.name]: positiveFiniteNumberSchema,
+  [systemConfigFieldPathMap.promptLimits.linesMaxToShowWarning.name]: nonNegativeIntegerSchema,
+  [systemConfigFieldPathMap.promptLimits.tokensMaxToShowWarning.name]: nonNegativeIntegerSchema,
 }) satisfies z.ZodType<PromptLimitsConfig>;
 
 export interface IdeToLlmConfig extends PromptLimitsConfig {}
@@ -110,56 +112,65 @@ export interface LlmToIdeConfig extends PromptLimitsConfig {}
 export const llmToIdeConfigSchema = promptLimitsConfigSchema satisfies z.ZodType<LlmToIdeConfig>;
 
 export interface PostFilePatchActionsConfig {
-  enableSaveAfterFilePatch: boolean;
-  enableLintingAfterFilePatch: boolean;
-  enableOpeningPatchedFilesInEditor: boolean;
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: boolean;
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: boolean;
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: boolean;
 }
 
 export const postFilePatchActionsConfigSchema = z.object({
-  enableSaveAfterFilePatch: z.boolean(),
-  enableLintingAfterFilePatch: z.boolean(),
-  enableOpeningPatchedFilesInEditor: z.boolean(),
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableSaveAfterFilePatch.name]: z.boolean(),
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableLintingAfterFilePatch.name]: z.boolean(),
+  [systemConfigFieldPathMap.coreSettings.postFilePatchActions.enableOpeningPatchedFilesInEditor.name]: z.boolean(),
 }) satisfies z.ZodType<PostFilePatchActionsConfig>;
 
 export interface InstructionsAndVariablesConfig {
-  instructionsById: Record<string, InstructionConfig>;
-  sharedVariablesById: Record<string, unknown>;
-  sharedReferenceVariablesById: Record<string, unknown>;
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.instructionsById.name]: Record<string, InstructionConfig>;
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedVariablesById.name]: Record<string, unknown>;
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: Record<
+    string,
+    unknown
+  >;
 }
 
 export const instructionsAndVariablesConfigSchema = z.object({
-  instructionsById: z.record(
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.instructionsById.name]: z.record(
     z.string(),
     z.lazy(() => instructionConfigSchema)
   ),
-  sharedVariablesById: z.record(z.string(), z.unknown()),
-  sharedReferenceVariablesById: z.record(z.string(), z.unknown()),
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedVariablesById.name]: z.record(
+    z.string(),
+    z.unknown()
+  ),
+  [systemConfigFieldPathMap.coreSettings.instructionsAndVariables.sharedReferenceVariablesById.name]: z.record(
+    z.string(),
+    z.unknown()
+  ),
 }) satisfies z.ZodType<InstructionsAndVariablesConfig>;
 
 export interface InstructionConfig {
-  path: string;
-  skip: boolean;
-  showInOverrideMode: boolean;
-  showInQuickInstructionMode: boolean;
+  [systemConfigFieldPathMap.instruction.path.name]: string;
+  [systemConfigFieldPathMap.instruction.skip.name]: boolean;
+  [systemConfigFieldPathMap.instruction.showInOverrideMode.name]: boolean;
+  [systemConfigFieldPathMap.instruction.showInQuickInstructionMode.name]: boolean;
 }
 
 export const instructionConfigSchema = z.object({
-  path: nonEmptyStringSchema,
-  skip: z.boolean(),
-  showInOverrideMode: z.boolean(),
-  showInQuickInstructionMode: z.boolean(),
+  [systemConfigFieldPathMap.instruction.path.name]: nonEmptyStringSchema,
+  [systemConfigFieldPathMap.instruction.skip.name]: z.boolean(),
+  [systemConfigFieldPathMap.instruction.showInOverrideMode.name]: z.boolean(),
+  [systemConfigFieldPathMap.instruction.showInQuickInstructionMode.name]: z.boolean(),
 }) satisfies z.ZodType<InstructionConfig>;
 
 export interface LlmToIdeSanitizationRuleConfig {
-  regexPattern: string;
-  replaceWith: string;
-  skipForLanguages: string[];
-  skipForPaths: string[];
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.regexPattern.name]: string;
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.replaceWith.name]: string;
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForLanguages.name]: string[];
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForPaths.name]: string[];
 }
 
 export const llmToIdeSanitizationRuleConfigSchema = z.object({
-  regexPattern: nonEmptyStringSchema,
-  replaceWith: z.string(),
-  skipForLanguages: z.array(nonEmptyStringSchema),
-  skipForPaths: z.array(nonEmptyStringSchema),
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.regexPattern.name]: nonEmptyStringSchema,
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.replaceWith.name]: z.string(),
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForLanguages.name]: z.array(nonEmptyStringSchema),
+  [systemConfigFieldPathMap.llmToIdeSanitizationRule.skipForPaths.name]: z.array(nonEmptyStringSchema),
 }) satisfies z.ZodType<LlmToIdeSanitizationRuleConfig>;
