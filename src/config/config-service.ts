@@ -42,14 +42,14 @@ export class ConfigService {
     return this._userConfig;
   }
 
-  public async getSystemUserMergedConfig(): Promise<SystemConfig> {
-    this._systemUserMergedConfig ??= await this._buildSystemUserMergedConfig();
+  public async getSystemUserMergedConfig(shouldRunValidation: boolean = true): Promise<SystemConfig> {
+    this._systemUserMergedConfig ??= await this._buildSystemUserMergedConfig(shouldRunValidation);
 
     return this._systemUserMergedConfig;
   }
 
   public async getSystemUserMergedConfigByOverrideIds(overrideIds?: string[]): Promise<LlmCopypasterConfigWithDebugData> {
-    const systemUserMergedConfig = await this.getSystemUserMergedConfig(); // this guy has to be already validated by extension.ts call
+    const systemUserMergedConfig = await this.getSystemUserMergedConfig(false); // validation will be later on, no need to run it twice
 
     if (!overrideIds?.length) {
       return {
@@ -72,7 +72,6 @@ export class ConfigService {
       });
     }
 
-    // resolved ref-vars are moved to sharedVariablesById, unresolved refs stay in sharedReferenceVariablesById
     const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
 
     await this._configValidator.validateConfig(
@@ -95,7 +94,7 @@ export class ConfigService {
     };
   }
 
-  private async _buildSystemUserMergedConfig(): Promise<SystemConfig> {
+  private async _buildSystemUserMergedConfig(shouldRunValidation: boolean = true): Promise<SystemConfig> {
     const systemConfig = await this.getSystemConfig();
     const userConfig = await this.getUserConfig();
 
@@ -103,14 +102,16 @@ export class ConfigService {
 
     const refVarResolvedConfig = this._configRefVarsResolver.resolve(mergedConfig);
 
-    const isConfigValid = await this._configValidator.validateConfig(
-      refVarResolvedConfig,
-      'System-User Merged Config',
-      systemConfig,
-      userConfig
-    );
+    if (shouldRunValidation) {
+      const isConfigValid = await this._configValidator.validateConfig(
+        refVarResolvedConfig,
+        'System-User Merged Config',
+        systemConfig,
+        userConfig
+      );
 
-    if (!isConfigValid) throw new Error('System + User merged config validation failed');
+      if (!isConfigValid) throw new Error('System + User merged config validation failed');
+    }
 
     return refVarResolvedConfig;
   }
