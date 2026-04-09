@@ -4,7 +4,6 @@ import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-vi
 
 export interface InstructionsResolveIssuesBag {
   instructionFileIssues: InstructionFileIssue[];
-  configVariablesIssues: ConfigVariablesResolveIssue[];
   liquidJsIssues: LiquidJsResolveIssue[];
 }
 
@@ -43,11 +42,7 @@ export function showNotificationIfAnyIssues(args: {
 }
 
 function calculateTotalIssuesCount(resolveIssues: InstructionsResolveIssuesBag): number {
-  return (
-    resolveIssues.instructionFileIssues.length +
-    resolveIssues.configVariablesIssues.length +
-    resolveIssues.liquidJsIssues.length
-  );
+  return resolveIssues.instructionFileIssues.length + resolveIssues.liquidJsIssues.length;
 }
 
 async function buildAndShowNotification(args: {
@@ -78,12 +73,8 @@ function buildMarkdownReport(resolveIssues: InstructionsResolveIssuesBag, totalI
   sections.push(`Total errors: ${totalIssuesCount}`);
   sections.push('');
 
-  sections.push(`## File Prompts Resolve Issues`);
+  sections.push(`## Instruction File Resolve Issues`);
   sections.push(buildFilePromptsIssuesMarkdown(resolveIssues.instructionFileIssues));
-  sections.push('');
-
-  sections.push(`## Config Variables Resolve Issues`);
-  sections.push(buildConfigVariablesIssuesMarkdown(resolveIssues.configVariablesIssues));
   sections.push('');
 
   sections.push(`## LiquidJS Issues`);

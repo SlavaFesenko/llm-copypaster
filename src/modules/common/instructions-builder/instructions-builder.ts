@@ -19,6 +19,10 @@ export interface BuildInstructionsArgs {
 
 export class InstructionsBuilder {
   private readonly _liquid: Liquid;
+  private _resolveIssuesBag: InstructionsResolveIssuesBag = {
+    instructionFileIssues: [],
+    liquidJsIssues: [],
+  };
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
@@ -33,6 +37,12 @@ export class InstructionsBuilder {
   }
 
   public async build(args?: BuildInstructionsArgs): Promise<string> {
+    // reset issues between runs
+    this._resolveIssuesBag = {
+      instructionFileIssues: [],
+      liquidJsIssues: [],
+    };
+
     const buildInstructionsArgs = {
       mode: args?.mode ?? InstructionsBuilderMode.Override,
       onlyForInstructionsIds: args?.onlyForInstructionsIds,
@@ -50,12 +60,6 @@ export class InstructionsBuilder {
 
     if (effectiveInstructionsIds.length === 0) return '';
 
-    const resolveIssuesBag: InstructionsResolveIssuesBag = {
-      instructionFileIssues: [],
-      configVariablesIssues: [],
-      liquidJsIssues: [],
-    };
-
     const finalInstructionsText: string[] = [];
 
     for (const instructionId of effectiveInstructionsIds) {
@@ -66,7 +70,6 @@ export class InstructionsBuilder {
         instructionId: instructionId,
         instructionDetails: instructionDetails,
         variablesById: this._config.presetDependentSettings.instructionsSettings.variablesById ?? {},
-        resolveIssuesBag: resolveIssuesBag,
       });
 
       if (!instructionText) continue;
@@ -74,7 +77,7 @@ export class InstructionsBuilder {
       finalInstructionsText.push(instructionText);
     }
 
-    showNotificationIfAnyIssues({ extensionContext: this._extensionContext, resolveIssues: resolveIssuesBag });
+    showNotificationIfAnyIssues({ extensionContext: this._extensionContext, resolveIssues: this._resolveIssuesBag });
 
     if (finalInstructionsText.length === 0) return '';
 
@@ -119,15 +122,10 @@ export class InstructionsBuilder {
     instructionId: string;
     instructionDetails: InstructionConfig;
     variablesById: Record<string, unknown>;
-    resolveIssuesBag: InstructionsResolveIssuesBag;
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const rawInstructionText = await this._tryReadRawInstructionTextFromFile(
-      args.instructionDetails,
-      args.instructionId,
-      args.resolveIssuesBag
-    );
+    const rawInstructionText = await this._tryReadRawInstructionTextFromFile(args.instructionDetails, args.instructionId);
     if (!rawInstructionText) return null;
 
     try {
@@ -143,7 +141,7 @@ export class InstructionsBuilder {
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
-      args.resolveIssuesBag.liquidJsIssues.push({
+      this._resolveIssuesBag.liquidJsIssues.push({
         instructionId: args.instructionId,
         errorText,
       });
@@ -154,14 +152,13 @@ export class InstructionsBuilder {
 
   private async _tryReadRawInstructionTextFromFile(
     instructionsConfig: InstructionConfig,
-    promptId: string,
-    resolveIssues: InstructionsResolveIssuesBag
+    promptId: string
   ): Promise<string | null> {
     const instructionFileSource = this._isSystemBundledInstructionFile(instructionsConfig.path) ? 'extension' : 'workspace';
     const instructionFileUri = this._tryBuildInstructionFileUri(instructionsConfig.path);
 
     if (!instructionFileUri) {
-      resolveIssues.instructionFileIssues.push({
+      this._resolveIssuesBag.instructionFileIssues.push({
         instructionId: promptId,
         source: instructionFileSource,
         pathToInstruction: instructionsConfig.path,
@@ -179,7 +176,7 @@ export class InstructionsBuilder {
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
-      resolveIssues.instructionFileIssues.push({
+      this._resolveIssuesBag.instructionFileIssues.push({
         instructionId: promptId,
         source: instructionFileSource,
         pathToInstruction: instructionsConfig.path,
