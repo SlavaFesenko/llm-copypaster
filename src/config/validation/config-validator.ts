@@ -35,7 +35,8 @@ export class ConfigValidator {
     targetConfig: SystemConfig,
     systemConfig: SystemConfig,
     userConfig: UserConfig | null,
-    overrideIds?: string[]
+    overrideIds?: string[],
+    fireAndForgetNotifications: boolean = false
   ): Promise<boolean> {
     const aggregatedValidationResult = this._buildAggregatedValidationResult(
       targetConfig,
@@ -45,13 +46,13 @@ export class ConfigValidator {
     );
 
     if (aggregatedValidationResult.criticalIssues.length) {
-      await this._showCriticalIssuesToast(aggregatedValidationResult);
+      await this._showCriticalIssuesToast(aggregatedValidationResult, fireAndForgetNotifications);
 
       return false;
     }
 
     if (aggregatedValidationResult.warningIssues.length) {
-      await this._showWarningIssuesToast(aggregatedValidationResult, targetConfig);
+      await this._showWarningIssuesToast(aggregatedValidationResult, targetConfig, fireAndForgetNotifications);
 
       return true;
     }
@@ -60,12 +61,12 @@ export class ConfigValidator {
     if (userConfig === null) return true;
 
     if (aggregatedValidationResult.recommendationIssues.length) {
-      await this._showStartupRecommendationIssuesToast(aggregatedValidationResult, targetConfig);
+      await this._showStartupRecommendationIssuesToast(aggregatedValidationResult, targetConfig, fireAndForgetNotifications);
 
       return true;
     }
 
-    if (!this._hasShownStartupNoIssuesToast) await this._showStartupNoIssuesToast(targetConfig);
+    if (!this._hasShownStartupNoIssuesToast) await this._showStartupNoIssuesToast(targetConfig, fireAndForgetNotifications);
 
     return true;
   }
@@ -148,27 +149,37 @@ export class ConfigValidator {
     };
   }
 
-  private async _showCriticalIssuesToast(validationResult: ValidationResult): Promise<void> {
+  private async _showCriticalIssuesToast(
+    validationResult: ValidationResult,
+    fireAndForgetNotifications: boolean
+  ): Promise<void> {
     await this._showToastWithOptionalReport(
       this._buildCriticalIssuesToastMessage(validationResult),
       'error',
-      validationResult
+      validationResult,
+      fireAndForgetNotifications
     );
   }
 
-  private async _showWarningIssuesToast(validationResult: ValidationResult, targetConfig: SystemConfig): Promise<void> {
+  private async _showWarningIssuesToast(
+    validationResult: ValidationResult,
+    targetConfig: SystemConfig,
+    fireAndForgetNotifications: boolean
+  ): Promise<void> {
     if (targetConfig.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast) return;
 
     await this._showToastWithOptionalReport(
       this._buildWarningIssuesToastMessage(validationResult),
       'warning',
-      validationResult
+      validationResult,
+      fireAndForgetNotifications
     );
   }
 
   private async _showStartupRecommendationIssuesToast(
     validationResult: ValidationResult,
-    targetConfig: SystemConfig
+    targetConfig: SystemConfig,
+    fireAndForgetNotifications: boolean
   ): Promise<void> {
     if (this._hasShownStartupRecommendationIssuesToast) return;
 
@@ -180,37 +191,52 @@ export class ConfigValidator {
     await this._showToastWithOptionalReport(
       this._buildRecommendationIssuesToastMessage(validationResult),
       'info',
-      validationResult
+      validationResult,
+      fireAndForgetNotifications
     );
   }
 
-  private async _showStartupNoIssuesToast(targetConfig: SystemConfig): Promise<void> {
+  private async _showStartupNoIssuesToast(targetConfig: SystemConfig, fireAndForgetNotifications: boolean): Promise<void> {
     if (targetConfig.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast) return;
 
     this._hasShownStartupNoIssuesToast = true;
 
-    await vscode.window.showInformationMessage(`Config validation succeeded!`, "Let's go!");
+    if (!fireAndForgetNotifications) {
+      await vscode.window.showInformationMessage(`Config validation succeeded!`, "Let's go!");
+
+      return;
+    }
+
+    void vscode.window.showInformationMessage(`Config validation succeeded!`, "Let's go!");
   }
 
   private async _showToastWithOptionalReport(
     toastMessage: string,
     toastSeverity: 'error' | 'warning' | 'info',
-    validationResult: ValidationResult
+    validationResult: ValidationResult,
+    fireAndForgetNotifications: boolean
   ): Promise<void> {
     const toastActionOpenDetails = 'Open Details In Editor';
+    const toastPromise = this._showToastMessage(toastMessage, toastSeverity, toastActionOpenDetails);
 
-    const clickedAction = await (async () => {
-      switch (toastSeverity) {
-        case 'error':
-          return await vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails);
+    // Needed for startup validation triggered from extension.activate()
+    // if we await this toast and user ignores it, VS Code keeps the promise unresolved
+    // so activate() never completes and the app looks dead until the toast is closed or clicked by user.
+    // if toast is closed by timeout - app remains dead :=)
+    if (fireAndForgetNotifications) {
+      void toastPromise.then(async clickedAction => {
+        if (clickedAction !== toastActionOpenDetails) return;
 
-        case 'warning':
-          return await vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);
+        await new ConfigValidationReporter({
+          extensionContext: this._extensionContext,
+          validationResult,
+        }).displayValidationReport();
+      });
 
-        default:
-          return await vscode.window.showInformationMessage(toastMessage, toastActionOpenDetails);
-      }
-    })();
+      return;
+    }
+
+    const clickedAction = await toastPromise;
 
     if (clickedAction !== toastActionOpenDetails) return;
 
@@ -218,6 +244,23 @@ export class ConfigValidator {
       extensionContext: this._extensionContext,
       validationResult,
     }).displayValidationReport();
+  }
+
+  private _showToastMessage(
+    toastMessage: string,
+    toastSeverity: 'error' | 'warning' | 'info',
+    toastActionOpenDetails: string
+  ): Thenable<string | undefined> {
+    switch (toastSeverity) {
+      case 'error':
+        return vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails);
+
+      case 'warning':
+        return vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);
+
+      default:
+        return vscode.window.showInformationMessage(toastMessage, toastActionOpenDetails);
+    }
   }
 
   private _buildCriticalIssuesToastMessage(validationResult: ValidationResult): string {

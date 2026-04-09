@@ -41,7 +41,10 @@ export class ConfigService {
     return this._userConfig;
   }
 
-  public async getSystemUserMergedConfig(shouldRunValidation: boolean = true): Promise<SystemConfig> {
+  public async getSystemUserMergedConfig(
+    shouldRunValidation: boolean = true,
+    fireAndForgetNotifications: boolean = false
+  ): Promise<SystemConfig> {
     const systemConfig = await this.getSystemConfig();
     const userConfig = await this.getUserConfig();
 
@@ -50,7 +53,13 @@ export class ConfigService {
 
     if (!shouldRunValidation) return refVarResolvedConfig;
 
-    const isConfigValid = await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig);
+    const isConfigValid = await this._configValidator.validate(
+      refVarResolvedConfig,
+      systemConfig,
+      userConfig,
+      undefined,
+      fireAndForgetNotifications
+    );
 
     return isConfigValid ? refVarResolvedConfig : systemConfig;
   }

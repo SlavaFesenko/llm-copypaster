@@ -14,7 +14,7 @@ export async function activate(extensionContext: vscode.ExtensionContext) {
   const configService = new ConfigService(extensionContext);
 
   try {
-    const config = await configService.getSystemUserMergedConfig();
+    const config = await configService.getSystemUserMergedConfig(true, true);
 
     const ideToLlmFacade = new IdeToLlmFacade(
       extensionContext,
