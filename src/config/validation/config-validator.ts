@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { GLOB_CONSTS } from '../../contracts/global-constants';
 import { SystemConfig } from '../contracts/system-config-contracts';
 import { UserConfig } from '../contracts/user-config-contracts';
 import { ConfigValidationReporter } from './config-validation-reporter';
@@ -190,7 +189,7 @@ export class ConfigValidator {
 
     this._hasShownStartupNoIssuesToast = true;
 
-    await vscode.window.showInformationMessage(`${GLOB_CONSTS.APP_NAME}: Config validation succeeded!`);
+    await vscode.window.showInformationMessage(`Config validation succeeded!`, "Let's go!");
   }
 
   private async _showToastWithOptionalReport(
