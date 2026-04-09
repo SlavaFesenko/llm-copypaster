@@ -9,8 +9,8 @@ export interface InstructionsResolveIssuesBag {
 
 export interface InstructionFileIssue {
   instructionId: string;
-  pathToInstruction: string;
-  instructionUri?: string;
+  rawFilePathFromConfig: string;
+  resolvedFileUri?: string;
   errorText: string;
 }
 
@@ -65,8 +65,8 @@ function buildFilePromptsIssuesMarkdown(filePromptsIssues: InstructionFileIssue[
 
   for (const issue of filePromptsIssues) {
     lines.push(`- Prompt id: "${issue.instructionId}"`);
-    lines.push(`  Path: "${issue.pathToInstruction}"`);
-    if (issue.instructionUri) lines.push(`  Uri: "${issue.instructionUri}"`);
+    lines.push(`  Path: "${issue.rawFilePathFromConfig}"`);
+    if (issue.resolvedFileUri) lines.push(`  Uri: "${issue.resolvedFileUri}"`);
     lines.push(`  Error: ${issue.errorText}`);
   }
 

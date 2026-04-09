@@ -132,7 +132,14 @@ export class InstructionsBuilder {
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const rawInstructionText = await this._tryReadRawInstructionTextFromFile(args.instructionDetails, args.instructionId);
+    const instructionFileUri = this._tryBuildInstructionFileUri(args.instructionDetails.path, args.instructionId);
+    if (!instructionFileUri) return null;
+
+    const rawInstructionText = await this._tryReadRawInstructionTextFromFile(
+      instructionFileUri,
+      args.instructionDetails,
+      args.instructionId
+    );
     if (!rawInstructionText) return null;
 
     try {
@@ -158,24 +165,13 @@ export class InstructionsBuilder {
   }
 
   private async _tryReadRawInstructionTextFromFile(
+    resolvedFileUri: vscode.Uri,
     instructionsConfig: InstructionConfig,
     instructionId: string
   ): Promise<string | null> {
-    const instructionFileUri = this._tryBuildInstructionFileUri(instructionsConfig.path);
-
-    if (!instructionFileUri) {
-      this._resolveIssuesBag.instructionFileIssues.push({
-        instructionId: instructionId,
-        pathToInstruction: instructionsConfig.path,
-        errorText: 'File location uri build process failes',
-      });
-
-      return null;
-    }
-
     try {
       // readFile can handle any type of url, so the most important is correctly calculated instructionFileUri
-      const bytes = await vscode.workspace.fs.readFile(instructionFileUri);
+      const bytes = await vscode.workspace.fs.readFile(resolvedFileUri);
 
       return Buffer.from(bytes).toString('utf8');
     } catch (error: unknown) {
@@ -183,27 +179,35 @@ export class InstructionsBuilder {
 
       this._resolveIssuesBag.instructionFileIssues.push({
         instructionId: instructionId,
-        pathToInstruction: instructionsConfig.path,
+        rawFilePathFromConfig: instructionsConfig.path,
+        resolvedFileUri: resolvedFileUri.toString(),
         errorText,
-        instructionUri: instructionFileUri.toString(),
       });
 
       return null;
     }
   }
 
-  private _tryBuildInstructionFileUri(pathToInstruction: string): vscode.Uri | null {
-    if (this._isSystemBundledInstructionFile(pathToInstruction))
-      return vscode.Uri.joinPath(this._extensionContext.extensionUri, pathToInstruction);
+  private _tryBuildInstructionFileUri(rawFilePathFromConfig: string, instructionId: string): vscode.Uri | null {
+    if (this._isSystemBundledInstructionFile(rawFilePathFromConfig))
+      return vscode.Uri.joinPath(this._extensionContext.extensionUri, rawFilePathFromConfig);
 
-    if (pathToInstruction.startsWith('file:')) return vscode.Uri.parse(pathToInstruction);
+    if (rawFilePathFromConfig.startsWith('file:')) return vscode.Uri.parse(rawFilePathFromConfig);
 
-    if (path.isAbsolute(pathToInstruction)) return vscode.Uri.file(pathToInstruction);
+    if (path.isAbsolute(rawFilePathFromConfig)) return vscode.Uri.file(rawFilePathFromConfig);
 
     const workspaceRootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!workspaceRootUri) return null;
+    if (!workspaceRootUri) {
+      this._resolveIssuesBag.instructionFileIssues.push({
+        instructionId: instructionId,
+        rawFilePathFromConfig: rawFilePathFromConfig,
+        errorText: 'Workspace folder not found for relative instruction path',
+      });
 
-    return vscode.Uri.joinPath(workspaceRootUri, pathToInstruction);
+      return null;
+    }
+
+    return vscode.Uri.joinPath(workspaceRootUri, rawFilePathFromConfig);
   }
 
   private _isSystemBundledInstructionFile(pathToSubInstruction: string): boolean {
