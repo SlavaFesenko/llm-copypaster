@@ -48,7 +48,7 @@ export interface BuildLlmContextTextArgs {
   fileItems: IdeToLlmFile[];
   config: SystemConfig;
   ignorePromptInstructions?: boolean;
-  instructionsText?: string;
+  instructionsText: string | null;
 }
 
 export interface TextSizeStatsInput {

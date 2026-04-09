@@ -36,7 +36,7 @@ export class InstructionsBuilder {
     });
   }
 
-  public async build(args?: BuildInstructionsArgs): Promise<string> {
+  public async build(args?: BuildInstructionsArgs): Promise<string | null> {
     // reset issues between runs
     this._resolveIssuesBag = {
       instructionFileIssues: [],
@@ -58,7 +58,7 @@ export class InstructionsBuilder {
       mode: buildInstructionsArgs.mode,
     });
 
-    if (effectiveInstructionsIds.length === 0) return '';
+    if (effectiveInstructionsIds.length === 0) return null;
 
     const finalInstructionsText: string[] = [];
 
@@ -86,7 +86,7 @@ export class InstructionsBuilder {
       });
     }
 
-    if (finalInstructionsText.length === 0) return '';
+    if (finalInstructionsText.length === 0) return null;
 
     const delimiterLine = `\n${this._config.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
 

@@ -16,7 +16,7 @@ export class QuickInstructionFacade {
   ) {}
 
   public async replaceClipboardByInstruction(): Promise<void> {
-    const instructionsSet = await this._getInstructionsSet('Select instructions to replace clipboard');
+    const instructionsSet = await this._tryGetInstructionsSet('Select instructions to replace clipboard');
     if (!instructionsSet) return;
 
     await vscode.env.clipboard.writeText(instructionsSet);
@@ -24,7 +24,7 @@ export class QuickInstructionFacade {
   }
 
   public async prependInstructionToClipboard(): Promise<void> {
-    const instructionsSet = await this._getInstructionsSet('Select instructions to prepend to clipboard');
+    const instructionsSet = await this._tryGetInstructionsSet('Select instructions to prepend to clipboard');
     if (!instructionsSet) return;
 
     const currentClipboardText = await vscode.env.clipboard.readText();
@@ -62,12 +62,17 @@ export class QuickInstructionFacade {
     });
   }
 
-  private async _getInstructionsSet(quickPickPlaceHolder: string): Promise<string> {
+  private async _tryGetInstructionsSet(quickPickPlaceHolder: string): Promise<string | null> {
     const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig();
     const instructionsById = llmCopypasterConfig.presetDependentSettings.instructionsSettings.instructionsById ?? {};
     const availableInstructionItems = this._buildAvailableInstructionItems(instructionsById);
 
-    if (availableInstructionItems.length === 0) return '';
+    if (availableInstructionItems.length === 0) {
+      await vscode.window.showWarningMessage(
+        'Quick instruction was not applied because no instructions are available in quick instruction mode'
+      );
+      return null;
+    }
 
     const selectedInstructionItems = await vscode.window.showQuickPick(availableInstructionItems, {
       canPickMany: true,
@@ -77,16 +82,23 @@ export class QuickInstructionFacade {
       ignoreFocusOut: true,
     });
 
-    if (!selectedInstructionItems || selectedInstructionItems.length === 0) return '';
+    if (!selectedInstructionItems || selectedInstructionItems.length === 0) return null;
 
     const onlyForInstructionsIds = selectedInstructionItems.map(
       selectedInstructionItem => selectedInstructionItem.instructionId
     );
 
-    return await new InstructionsBuilder(this._extensionContext, llmCopypasterConfig).build({
+    const instructionsSet = await new InstructionsBuilder(this._extensionContext, llmCopypasterConfig).build({
       mode: InstructionsBuilderMode.QuickInstruction,
       onlyForInstructionsIds,
     });
+
+    if (instructionsSet !== null) return instructionsSet;
+
+    await vscode.window.showWarningMessage(
+      'Quick instruction was not applied because selected instructions could not be resolved'
+    );
+    return null;
   }
 
   private _buildAvailableInstructionItems(
