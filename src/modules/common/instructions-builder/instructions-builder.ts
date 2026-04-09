@@ -18,15 +18,18 @@ export interface BuildInstructionsArgs {
 }
 
 export class InstructionsBuilder {
-  private readonly _liquidStrict: Liquid; // falls on the first error
-  private readonly _liquidLight: Liquid; // gather all existing errors
+  private readonly _liquid: Liquid;
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
     private readonly _config: SystemConfig
   ) {
-    this._liquidStrict = new Liquid({ cache: false, strictVariables: true, strictFilters: false });
-    this._liquidLight = new Liquid({ cache: false, strictVariables: false, strictFilters: false });
+    this._liquid = new Liquid({
+      cache: false, // do not reuse parsed templates between runs (instruction files may be changed)
+      strictVariables: true, // fail when template uses missing variable
+      strictFilters: true, // fail on unknown filter (i.e. {{ name | upcsae }})
+      catchAllErrors: true, // collect as many Liquid errors as possible instead of failing on first occurrence
+    });
   }
 
   public async build(args?: BuildInstructionsArgs): Promise<string> {
@@ -35,9 +38,9 @@ export class InstructionsBuilder {
       onlyForInstructionsIds: args?.onlyForInstructionsIds,
     } as BuildInstructionsArgs;
 
-    const instructionsAndVariablesConfig: Partial<InstructionsConfig> =
+    const instructionsSettings: Partial<InstructionsConfig> =
       this._config.presetDependentSettings.instructionsSettings ?? {};
-    const instructionsById = instructionsAndVariablesConfig.instructionsById ?? {};
+    const instructionsById = instructionsSettings.instructionsById ?? {};
 
     const effectiveInstructionsIds = this._calculateInstructionIdsToBuild({
       instructionsById,
@@ -120,48 +123,23 @@ export class InstructionsBuilder {
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const rawInstructionText = await this._tryReadInstructionTextFromFile(
+    const rawInstructionText = await this._tryReadRawInstructionTextFromFile(
       args.instructionDetails,
       args.instructionId,
       args.resolveIssuesBag
     );
     if (!rawInstructionText) return null;
 
-    let liquidProcessedInstructionText: string;
-
     try {
-      liquidProcessedInstructionText = await this._liquidStrict.parseAndRender(rawInstructionText, {
+      const liquidProcessedInstructionText = await this._liquid.parseAndRender(rawInstructionText, {
         ...args.variablesById,
       });
-    } catch {
-      // if _liquidStrict failed - let's gather all issues by running light mode, do not force user fix them one by one
-      await this._collectAllLiquidIssues({
-        instructionId: args.instructionId,
-        instructionText: rawInstructionText,
-        variablesById: args.variablesById,
-        resolveIssuesBag: args.resolveIssuesBag,
-      });
 
-      return null;
-    }
+      const normalizedRenderedText = collapseEmptyLines(liquidProcessedInstructionText);
 
-    const normalizedRenderedText = collapseEmptyLines(liquidProcessedInstructionText);
+      if (!normalizedRenderedText.trim()) return null;
 
-    if (!normalizedRenderedText.trim()) return null;
-
-    return normalizedRenderedText;
-  }
-
-  private async _collectAllLiquidIssues(args: {
-    instructionId: string;
-    instructionText: string;
-    variablesById: Record<string, unknown>;
-    resolveIssuesBag: InstructionsResolveIssuesBag;
-  }): Promise<void> {
-    try {
-      await this._liquidLight.parseAndRender(args.instructionText, {
-        ...args.variablesById,
-      });
+      return normalizedRenderedText;
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
@@ -169,10 +147,12 @@ export class InstructionsBuilder {
         instructionId: args.instructionId,
         errorText,
       });
+
+      return null;
     }
   }
 
-  private async _tryReadInstructionTextFromFile(
+  private async _tryReadRawInstructionTextFromFile(
     instructionsConfig: InstructionConfig,
     promptId: string,
     resolveIssues: InstructionsResolveIssuesBag
@@ -192,6 +172,7 @@ export class InstructionsBuilder {
     }
 
     try {
+      // TODO - зачем определять instructionFileSource если он не учитывается? Плюс разве не должен файл читаться в спец хелперах?
       const bytes = await vscode.workspace.fs.readFile(instructionFileUri);
 
       return Buffer.from(bytes).toString('utf8');
