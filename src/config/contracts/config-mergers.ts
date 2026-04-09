@@ -2,7 +2,7 @@ import {
   ConfigValidationNotificationSettingsConfig,
   IdeToLlmConfig,
   InstructionConfig,
-  InstructionsAndVariablesConfig,
+  InstructionsConfig,
   LlmToIdeConfig,
   LlmToIdeSanitizationRuleConfig,
   NotificationSettingsConfig,
@@ -16,7 +16,7 @@ import {
   ConfigValidationNotificationSettingsUserConfig,
   IdeToLlmUserConfig,
   InstructionUserConfig,
-  InstructionsAndVariablesUserConfig,
+  InstructionsSettingsUserConfig,
   LlmToIdeSanitizationRuleUserConfig,
   LlmToIdeUserConfig,
   NotificationSettingsUserConfig,
@@ -148,9 +148,9 @@ export function mergePresetDependentSettingsConfig(
       baseSettings.postFilePatchActions,
       userSettings.postFilePatchActions
     ),
-    instructionsAndVariables: mergeInstructionsAndVariablesConfig(
-      baseSettings.instructionsAndVariables,
-      userSettings.instructionsAndVariables
+    instructionsSettings: mergeInstructionsSettingsConfig(
+      baseSettings.instructionsSettings,
+      userSettings.instructionsSettings
     ),
     llmToIdeSanitizationRulesById: mergeLlmToIdeSanitizationRulesById(
       baseSettings.llmToIdeSanitizationRulesById,
@@ -212,26 +212,26 @@ export function mergePostFilePatchActionsConfig(
   };
 }
 
-export function mergeInstructionsAndVariablesConfig(
-  baseConfig: InstructionsAndVariablesConfig,
-  userConfig: InstructionsAndVariablesUserConfig | undefined
-): InstructionsAndVariablesConfig {
+export function mergeInstructionsSettingsConfig(
+  baseConfig: InstructionsConfig,
+  userConfig: InstructionsSettingsUserConfig | undefined
+): InstructionsConfig {
   if (!userConfig) return baseConfig;
 
-  const baseSharedVariablesById = baseConfig.sharedVariablesById;
-  const baseSharedReferenceVariablesById = baseConfig.sharedReferenceVariablesById;
+  const baseVariablesById = baseConfig.variablesById;
+  const baseReferencesById = baseConfig.referencesById;
   const baseInstructionsById = baseConfig.instructionsById;
 
-  const nextSharedVariablesById = { ...baseSharedVariablesById, ...(userConfig.sharedVariablesById ?? {}) };
-  const nextSharedReferenceVariablesById = {
-    ...baseSharedReferenceVariablesById,
-    ...(userConfig.sharedReferenceVariablesById ?? {}),
+  const nextVariablesById = { ...baseVariablesById, ...(userConfig.variablesById ?? {}) };
+  const nextReferencesById = {
+    ...baseReferencesById,
+    ...(userConfig.referencesById ?? {}),
   };
   const nextInstructionsById = mapInstructionsById(baseInstructionsById, userConfig.instructionsById ?? {});
 
   return {
-    sharedVariablesById: nextSharedVariablesById,
-    sharedReferenceVariablesById: nextSharedReferenceVariablesById,
+    variablesById: nextVariablesById,
+    referencesById: nextReferencesById,
     instructionsById: nextInstructionsById,
   };
 }

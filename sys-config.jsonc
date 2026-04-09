@@ -48,7 +48,7 @@
       "enableLintingAfterFilePatch": false,
       "enableOpeningPatchedFilesInEditor": true,
     },
-    "instructionsAndVariables": {
+    "instructionsSettings": {
       "instructionsById": {
         "llm-response-rules": {
           "path": ".sys-instructions/llm-response-rules.liquid",
@@ -57,8 +57,8 @@
           "showInQuickInstructionMode": false,
         },
       },
-      "sharedVariablesById": {},
-      "sharedReferenceVariablesById": {
+      "variablesById": {},
+      "referencesById": {
         "CODE_LISTING_HEADER_START_FRAGMENT": "presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
         "FILE_STATUS_PREFIX": "presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR",
         "FILE_PAYLOAD_OPERATION_TYPE_EDITED_FULL": "presetIndependentSettings.vitalParsingAnchors.FILE_EDITED_FULL_ANCHOR",

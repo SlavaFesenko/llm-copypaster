@@ -4,9 +4,9 @@ import { SystemConfig } from '../contracts/system-config-contracts';
 
 export class ConfigRefVarsResolver {
   public resolve(config: SystemConfig): SystemConfig {
-    const instructionsAndVariables = config.presetDependentSettings.instructionsAndVariables;
-    const sharedVariablesById = instructionsAndVariables.sharedVariablesById;
-    const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
+    const instructionsAndVariables = config.presetDependentSettings.instructionsSettings;
+    const sharedVariablesById = instructionsAndVariables.variablesById;
+    const sharedReferenceVariablesById = instructionsAndVariables.referencesById;
     const nextSharedVariablesById = { ...sharedVariablesById };
     const nextSharedReferenceVariablesById: Record<string, unknown> = {};
 
@@ -26,10 +26,10 @@ export class ConfigRefVarsResolver {
       ...config,
       presetDependentSettings: {
         ...config.presetDependentSettings,
-        instructionsAndVariables: {
+        instructionsSettings: {
           ...instructionsAndVariables,
-          sharedVariablesById: nextSharedVariablesById,
-          sharedReferenceVariablesById: nextSharedReferenceVariablesById,
+          variablesById: nextSharedVariablesById,
+          referencesById: nextSharedReferenceVariablesById,
         },
       },
     };

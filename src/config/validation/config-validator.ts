@@ -51,8 +51,11 @@ export class ConfigValidator {
       return systemConfig;
     }
 
-    if (aggregatedValidationResult.warningIssues.length)
+    if (aggregatedValidationResult.warningIssues.length) {
       await this._showWarningIssuesToast(aggregatedValidationResult, targetConfig);
+
+      return targetConfig;
+    }
 
     // no need to spam user in case he doesn't have user-config and system config is not seriously wrong for some buggy reason
     if (userConfig === null) return targetConfig;

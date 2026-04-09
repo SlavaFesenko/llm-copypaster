@@ -189,8 +189,7 @@
     "jsonValidation": [
       {
         "fileMatch": [
-          "llm-copypaster.jsonc",
-          "sys-config.jsonc"
+          "llm-copypaster.jsonc"
         ],
         "url": "./llm-copypaster.schema.json"
       }

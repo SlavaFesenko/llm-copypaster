@@ -64,7 +64,7 @@ export class QuickInstructionFacade {
 
   private async _getInstructionsSet(quickPickPlaceHolder: string): Promise<string> {
     const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig();
-    const instructionsById = llmCopypasterConfig.presetDependentSettings.instructionsAndVariables.instructionsById ?? {};
+    const instructionsById = llmCopypasterConfig.presetDependentSettings.instructionsSettings.instructionsById ?? {};
     const availableInstructionItems = this._buildAvailableInstructionItems(instructionsById);
 
     if (availableInstructionItems.length === 0) return '';

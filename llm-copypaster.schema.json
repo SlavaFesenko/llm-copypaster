@@ -141,7 +141,7 @@
           },
           "additionalProperties": false
         },
-        "instructionsAndVariables": {
+        "instructionsSettings": {
           "type": "object",
           "properties": {
             "instructionsById": {
@@ -169,14 +169,14 @@
                 "additionalProperties": false
               }
             },
-            "sharedVariablesById": {
+            "variablesById": {
               "type": "object",
               "propertyNames": {
                 "type": "string"
               },
               "additionalProperties": {}
             },
-            "sharedReferenceVariablesById": {
+            "referencesById": {
               "type": "object",
               "propertyNames": {
                 "type": "string"
@@ -311,7 +311,7 @@
                 },
                 "additionalProperties": false
               },
-              "instructionsAndVariables": {
+              "instructionsSettings": {
                 "type": "object",
                 "properties": {
                   "instructionsById": {
@@ -339,14 +339,14 @@
                       "additionalProperties": false
                     }
                   },
-                  "sharedVariablesById": {
+                  "variablesById": {
                     "type": "object",
                     "propertyNames": {
                       "type": "string"
                     },
                     "additionalProperties": {}
                   },
-                  "sharedReferenceVariablesById": {
+                  "referencesById": {
                     "type": "object",
                     "propertyNames": {
                       "type": "string"

@@ -2,11 +2,7 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
-import {
-  InstructionConfig,
-  InstructionsAndVariablesConfig,
-  SystemConfig,
-} from '../../../config/contracts/system-config-contracts';
+import { InstructionConfig, InstructionsConfig, SystemConfig } from '../../../config/contracts/system-config-contracts';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
 import { collapseEmptyLines } from './helpers';
 import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './report-helpers';
@@ -36,8 +32,8 @@ export class InstructionsBuilder {
   public async build(args?: BuildInstructionsArgs): Promise<string> {
     const resolvedBuildInstructionsArgs = this._resolveBuildInstructionsArgs(args);
 
-    const instructionsAndVariablesConfig: Partial<InstructionsAndVariablesConfig> =
-      this._config.presetDependentSettings.instructionsAndVariables ?? {};
+    const instructionsAndVariablesConfig: Partial<InstructionsConfig> =
+      this._config.presetDependentSettings.instructionsSettings ?? {};
     const instructionsById = instructionsAndVariablesConfig.instructionsById ?? {};
 
     const effectiveInstructionsIds = this._calculateInstructionIdsToBuild({
@@ -165,10 +161,10 @@ export class InstructionsBuilder {
   }
 
   private _resolveTemplateVariablesById(): Record<string, unknown> {
-    const instructionsAndVariables = this._config.presetDependentSettings.instructionsAndVariables;
+    const instructionsAndVariables = this._config.presetDependentSettings.instructionsSettings;
 
     return {
-      ...instructionsAndVariables.sharedVariablesById,
+      ...instructionsAndVariables.variablesById,
     };
   }
 

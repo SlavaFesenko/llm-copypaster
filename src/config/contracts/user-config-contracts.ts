@@ -92,7 +92,7 @@ export interface PresetDependentSettingsUserConfig {
   ideToLlm?: IdeToLlmUserConfig;
   llmToIde?: LlmToIdeUserConfig;
   postFilePatchActions?: PostFilePatchActionsUserConfig;
-  instructionsAndVariables?: InstructionsAndVariablesUserConfig;
+  instructionsSettings?: InstructionsSettingsUserConfig;
   llmToIdeSanitizationRulesById?: Record<string, LlmToIdeSanitizationRuleUserConfig>;
 }
 
@@ -102,7 +102,7 @@ export const presetDependentSettingsUserConfigSchema = z.strictObject({
   ideToLlm: z.lazy(() => ideToLlmUserConfigSchema).optional(),
   llmToIde: z.lazy(() => llmToIdeUserConfigSchema).optional(),
   postFilePatchActions: z.lazy(() => postFilePatchActionsUserConfigSchema).optional(),
-  instructionsAndVariables: z.lazy(() => instructionsAndVariablesUserConfigSchema).optional(),
+  instructionsSettings: z.lazy(() => instructionsSettingsUserConfigSchema).optional(),
   llmToIdeSanitizationRulesById: z
     .record(
       z.string(),
@@ -145,22 +145,22 @@ export const postFilePatchActionsUserConfigSchema = z.strictObject({
   enableOpeningPatchedFilesInEditor: z.boolean().optional(),
 }) satisfies z.ZodType<PostFilePatchActionsUserConfig>;
 
-export interface InstructionsAndVariablesUserConfig {
+export interface InstructionsSettingsUserConfig {
   instructionsById?: Record<string, InstructionUserConfig>;
-  sharedVariablesById?: Record<string, unknown>;
-  sharedReferenceVariablesById?: Record<string, string>;
+  variablesById?: Record<string, unknown>;
+  referencesById?: Record<string, string>;
 }
 
-export const instructionsAndVariablesUserConfigSchema = z.strictObject({
+export const instructionsSettingsUserConfigSchema = z.strictObject({
   instructionsById: z
     .record(
       z.string(),
       z.lazy(() => instructionUserConfigSchema)
     )
     .optional(),
-  sharedVariablesById: z.record(z.string(), z.unknown()).optional(),
-  sharedReferenceVariablesById: z.record(z.string(), z.string()).optional(),
-}) satisfies z.ZodType<InstructionsAndVariablesUserConfig>;
+  variablesById: z.record(z.string(), z.unknown()).optional(),
+  referencesById: z.record(z.string(), z.string()).optional(),
+}) satisfies z.ZodType<InstructionsSettingsUserConfig>;
 
 export interface InstructionUserConfig {
   path?: string;

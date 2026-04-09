@@ -1,10 +1,9 @@
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
-import { systemConfigPropsMap } from '../../contracts/system-config-map';
+import { systemConfigMap } from '../../contracts/system-config-map';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 const flag =
-  systemConfigPropsMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast
-    .pathAndName;
+  systemConfigMap.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast.pathAndName;
 
 export class SuppressWarningIssuesToastRule implements ValidationRule {
   public readonly severity = ValidationIssueSeverity.Recommendation;

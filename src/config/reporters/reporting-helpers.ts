@@ -1,7 +1,7 @@
+import { mergeConfigs } from '../contracts/config-mergers';
 import { MergedConfigDebugData, PresetOptionMetadata, PresetReportEntryData } from '../contracts/other-contracts';
 import { SystemConfig } from '../contracts/system-config-contracts';
 import { UserConfig } from '../contracts/user-config-contracts';
-import { mergeConfigs } from '../helpers/config-mergers';
 
 export function buildMergedConfigDebugData(args: {
   presetOptions: PresetOptionMetadata[] | null;

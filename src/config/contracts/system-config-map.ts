@@ -104,8 +104,8 @@ const postFilePatchActionsConfigPathNode = buildConfigFieldPathNode(
   'postFilePatchActions',
   presetDependentSettingsConfigPathNode.pathAndName
 );
-const instructionsAndVariablesConfigPathNode = buildConfigFieldPathNode(
-  'instructionsAndVariables',
+const instructionsSettingsConfigPathNode = buildConfigFieldPathNode(
+  'instructionsSettings',
   presetDependentSettingsConfigPathNode.pathAndName
 );
 const llmToIdeSanitizationRulesByIdConfigPathNode = buildConfigFieldPathNode(
@@ -169,15 +169,15 @@ const enableOpeningPatchedFilesInEditorConfigPathNode = buildConfigFieldPathNode
 
 const instructionsByIdConfigPathNode = buildConfigFieldPathNode(
   'instructionsById',
-  instructionsAndVariablesConfigPathNode.pathAndName
+  instructionsSettingsConfigPathNode.pathAndName
 );
-const sharedVariablesByIdConfigPathNode = buildConfigFieldPathNode(
-  'sharedVariablesById',
-  instructionsAndVariablesConfigPathNode.pathAndName
+const variablesByIdConfigPathNode = buildConfigFieldPathNode(
+  'variablesById',
+  instructionsSettingsConfigPathNode.pathAndName
 );
-const sharedReferenceVariablesByIdConfigPathNode = buildConfigFieldPathNode(
-  'sharedReferenceVariablesById',
-  instructionsAndVariablesConfigPathNode.pathAndName
+const referencesByIdConfigPathNode = buildConfigFieldPathNode(
+  'referencesById',
+  instructionsSettingsConfigPathNode.pathAndName
 );
 
 const instructionPathConfigPathNode = buildConfigFieldPathNode('path');
@@ -190,7 +190,7 @@ const llmToIdeSanitizationRuleReplaceWithConfigPathNode = buildConfigFieldPathNo
 const llmToIdeSanitizationRuleSkipForLanguagesConfigPathNode = buildConfigFieldPathNode('skipForLanguages');
 const llmToIdeSanitizationRuleSkipForPathsConfigPathNode = buildConfigFieldPathNode('skipForPaths');
 
-export const systemConfigPropsMap = {
+export const systemConfigMap = {
   llmCopypasterConfig: systemConfigPathNode,
   presetIndependentSettings: {
     ...presetIndependentSettingsConfigPathNode,
@@ -240,11 +240,11 @@ export const systemConfigPropsMap = {
       enableLintingAfterFilePatch: enableLintingAfterFilePatchConfigPathNode,
       enableOpeningPatchedFilesInEditor: enableOpeningPatchedFilesInEditorConfigPathNode,
     },
-    instructionsAndVariables: {
-      ...instructionsAndVariablesConfigPathNode,
+    instructionsSettings: {
+      ...instructionsSettingsConfigPathNode,
       instructionsById: instructionsByIdConfigPathNode,
-      sharedVariablesById: sharedVariablesByIdConfigPathNode,
-      sharedReferenceVariablesById: sharedReferenceVariablesByIdConfigPathNode,
+      variablesById: variablesByIdConfigPathNode,
+      referencesById: referencesByIdConfigPathNode,
     },
     llmToIdeSanitizationRulesById: llmToIdeSanitizationRulesByIdConfigPathNode,
   },

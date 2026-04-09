@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
+import { mergeConfigs } from './contracts/config-mergers';
 import { PresetOptionMetadata, SystemConfigWithDebugData } from './contracts/other-contracts';
 import { SystemConfig } from './contracts/system-config-contracts';
 import { UserConfig } from './contracts/user-config-contracts';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
-import { mergeConfigs } from './helpers/config-mergers';
 import { ConfigRefVarsResolver } from './helpers/config-ref-vars-resolver';
 import { buildMergedConfigDebugData } from './reporters/reporting-helpers';
 import { ConfigValidator } from './validation/config-validator';

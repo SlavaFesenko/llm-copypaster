@@ -1,5 +1,5 @@
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
-import { systemConfigPropsMap } from '../../contracts/system-config-map';
+import { systemConfigMap } from '../../contracts/system-config-map';
 import { ValidationIssueSeverity, ValidationRule, ValidationRuleContext } from '../contracts';
 
 export class VarRefsExistRule implements ValidationRule {
@@ -17,11 +17,11 @@ export class VarRefsExistRule implements ValidationRule {
   }
 
   private _getInvalidConfigRefs(validationRuleContext: ValidationRuleContext): string[] {
-    const instructionsAndVariables = validationRuleContext.targetConfig.presetDependentSettings.instructionsAndVariables;
-    const sharedReferenceVariablesById = instructionsAndVariables.sharedReferenceVariablesById;
+    const instructionsAndVariables = validationRuleContext.targetConfig.presetDependentSettings.instructionsSettings;
+    const sharedReferenceVariablesById = instructionsAndVariables.referencesById;
 
     return Object.entries(sharedReferenceVariablesById).map(([sharedVariableId, variableValue]) => {
-      const fullVariablePath = `${systemConfigPropsMap.presetDependentSettings.instructionsAndVariables.sharedReferenceVariablesById.pathAndName}.${sharedVariableId}`;
+      const fullVariablePath = `${systemConfigMap.presetDependentSettings.instructionsSettings.variablesById.pathAndName}.${sharedVariableId}`;
       const configReferenceValuePath = typeof variableValue === 'string' ? variableValue : JSON.stringify(variableValue);
 
       return `"${fullVariablePath}": "${configReferenceValuePath}"`;
