@@ -30,7 +30,10 @@ export class InstructionsBuilder {
   }
 
   public async build(args?: BuildInstructionsArgs): Promise<string> {
-    const resolvedBuildInstructionsArgs = this._resolveBuildInstructionsArgs(args);
+    const buildInstructionsArgs = {
+      mode: args?.mode ?? InstructionsBuilderMode.Override,
+      onlyForInstructionsIds: args?.onlyForInstructionsIds,
+    } as BuildInstructionsArgs;
 
     const instructionsAndVariablesConfig: Partial<InstructionsConfig> =
       this._config.presetDependentSettings.instructionsSettings ?? {};
@@ -38,8 +41,8 @@ export class InstructionsBuilder {
 
     const effectiveInstructionsIds = this._calculateInstructionIdsToBuild({
       instructionsById,
-      onlyForInstructionsIds: resolvedBuildInstructionsArgs.onlyForInstructionsIds,
-      mode: resolvedBuildInstructionsArgs.mode,
+      onlyForInstructionsIds: buildInstructionsArgs.onlyForInstructionsIds,
+      mode: buildInstructionsArgs.mode,
     });
 
     if (effectiveInstructionsIds.length === 0) return '';
@@ -158,19 +161,18 @@ export class InstructionsBuilder {
   }
 
   private async _readInstructionTextFromFile(
-    promptInstructionsConfig: InstructionConfig,
+    instructionsConfig: InstructionConfig,
     promptId: string,
     resolveIssues: InstructionsResolveIssuesBag
   ): Promise<string | null> {
-    const promptUri = this._tryBuildPromptUri(promptInstructionsConfig.path);
-    const isSystemBundledPromptFile = this._isSystemBundledInstructionFile(promptInstructionsConfig.path);
-    const promptSource = isSystemBundledPromptFile ? 'extension' : 'workspace';
+    const instructionFileSource = this._isSystemBundledInstructionFile(instructionsConfig.path) ? 'extension' : 'workspace';
+    const instructionFileUri = this._tryBuildInstructionFileUri(instructionsConfig.path);
 
-    if (!promptUri) {
+    if (!instructionFileUri) {
       resolveIssues.filePromptsIssues.push({
         promptId,
-        source: promptSource,
-        relativePathToSubInstruction: promptInstructionsConfig.path,
+        source: instructionFileSource,
+        relativePathToSubInstruction: instructionsConfig.path,
         errorText: 'Workspace folder not found',
       });
 
@@ -178,7 +180,7 @@ export class InstructionsBuilder {
     }
 
     try {
-      const bytes = await vscode.workspace.fs.readFile(promptUri);
+      const bytes = await vscode.workspace.fs.readFile(instructionFileUri);
 
       return Buffer.from(bytes).toString('utf8');
     } catch (error: unknown) {
@@ -186,42 +188,33 @@ export class InstructionsBuilder {
 
       resolveIssues.filePromptsIssues.push({
         promptId,
-        source: promptSource,
-        relativePathToSubInstruction: promptInstructionsConfig.path,
+        source: instructionFileSource,
+        relativePathToSubInstruction: instructionsConfig.path,
         errorText,
-        promptUriString: promptUri.toString(),
+        promptUriString: instructionFileUri.toString(),
       });
 
       return null;
     }
   }
 
-  private _tryBuildPromptUri(relativePathToSubInstruction: string): vscode.Uri | null {
-    if (this._isSystemBundledInstructionFile(relativePathToSubInstruction))
-      return vscode.Uri.joinPath(this._extensionContext.extensionUri, relativePathToSubInstruction);
+  private _tryBuildInstructionFileUri(pathToInstruction: string): vscode.Uri | null {
+    if (this._isSystemBundledInstructionFile(pathToInstruction))
+      return vscode.Uri.joinPath(this._extensionContext.extensionUri, pathToInstruction);
 
-    if (relativePathToSubInstruction.startsWith('file:')) return vscode.Uri.parse(relativePathToSubInstruction);
+    if (pathToInstruction.startsWith('file:')) return vscode.Uri.parse(pathToInstruction);
 
-    if (path.isAbsolute(relativePathToSubInstruction)) return vscode.Uri.file(relativePathToSubInstruction);
+    if (path.isAbsolute(pathToInstruction)) return vscode.Uri.file(pathToInstruction);
 
     const workspaceRootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
     if (!workspaceRootUri) return null;
 
-    return vscode.Uri.joinPath(workspaceRootUri, relativePathToSubInstruction);
+    return vscode.Uri.joinPath(workspaceRootUri, pathToInstruction);
   }
 
-  private _isSystemBundledInstructionFile(relativePathToSubInstruction: string): boolean {
-    const normalizedRelativePathToSubInstruction = (relativePathToSubInstruction ?? '').replaceAll('\\', '/');
+  private _isSystemBundledInstructionFile(pathToSubInstruction: string): boolean {
+    const normalizedPathToSubInstruction = (pathToSubInstruction ?? '').replaceAll('\\', '/');
 
-    return (Object.values(GLOB_CONSTS.SYSTEM_INSTRUCTIONS) as readonly string[]).includes(
-      normalizedRelativePathToSubInstruction
-    );
-  }
-
-  private _resolveBuildInstructionsArgs(args?: BuildInstructionsArgs): BuildInstructionsArgs {
-    return {
-      mode: args?.mode ?? InstructionsBuilderMode.Override,
-      onlyForInstructionsIds: args?.onlyForInstructionsIds,
-    };
+    return (Object.values(GLOB_CONSTS.SYSTEM_INSTRUCTIONS) as readonly string[]).includes(normalizedPathToSubInstruction);
   }
 }
