@@ -102,7 +102,8 @@ export class InstructionsBuilder {
       .filter(([, instructionDetails]) => {
         if (instructionDetails.skip) return false;
         if (args.mode === InstructionsBuilderMode.Override && !instructionDetails.showInPresetsMode) return false;
-
+        if (args.mode === InstructionsBuilderMode.QuickInstruction && !instructionDetails.showInQuickInstructionMode)
+          return false;
         return true;
       })
       .map(([instructionId]) => instructionId);
