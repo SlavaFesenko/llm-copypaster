@@ -159,24 +159,22 @@ export class InstructionsBuilder {
 
   private async _tryReadRawInstructionTextFromFile(
     instructionsConfig: InstructionConfig,
-    promptId: string
+    instructionId: string
   ): Promise<string | null> {
-    const instructionFileSource = this._isSystemBundledInstructionFile(instructionsConfig.path) ? 'extension' : 'workspace';
     const instructionFileUri = this._tryBuildInstructionFileUri(instructionsConfig.path);
 
     if (!instructionFileUri) {
       this._resolveIssuesBag.instructionFileIssues.push({
-        instructionId: promptId,
-        fileSource: instructionFileSource,
+        instructionId: instructionId,
         pathToInstruction: instructionsConfig.path,
-        errorText: 'Workspace folder not found',
+        errorText: 'File location uri build process failes',
       });
 
       return null;
     }
 
     try {
-      // TODO - зачем определять instructionFileSource если он не учитывается? Плюс разве не должен файл читаться в спец хелперах?
+      // readFile can handle any type of url, so the most important is correctly calculated instructionFileUri
       const bytes = await vscode.workspace.fs.readFile(instructionFileUri);
 
       return Buffer.from(bytes).toString('utf8');
@@ -184,8 +182,7 @@ export class InstructionsBuilder {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
       this._resolveIssuesBag.instructionFileIssues.push({
-        instructionId: promptId,
-        fileSource: instructionFileSource,
+        instructionId: instructionId,
         pathToInstruction: instructionsConfig.path,
         errorText,
         instructionUri: instructionFileUri.toString(),
