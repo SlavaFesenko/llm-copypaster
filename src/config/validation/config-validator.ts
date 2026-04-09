@@ -10,6 +10,7 @@ import {
   ValidationRule,
   ValidationRuleContext,
 } from './contracts';
+import { SuppressWarningIssuesToastRule } from './validation-rules/suppress-warning-issues-toast-recommendation-rule';
 import { SystemConfigSchemaValidationRule } from './validation-rules/system-config-schema-validation-rule';
 import { UserConfigSchemaValidationRule } from './validation-rules/user-config-schema-validation-rule';
 import { VarRefsExistRule } from './validation-rules/var-refs-exists-rule';
@@ -20,7 +21,7 @@ const systemUserMergedConfigWithOverridesNamePrefix = 'System-User Merged Config
 export const systemConfigValidationRules: ValidationRule[] = [
   new SystemConfigSchemaValidationRule(),
   new VarRefsExistRule(),
-  // TODO add recommendation rule for suppressWarningIssuesToast === true
+  new SuppressWarningIssuesToastRule(),
 ];
 
 export const userConfigValidationRules: ValidationRule[] = [new UserConfigSchemaValidationRule()];
@@ -120,6 +121,7 @@ export class ConfigValidator {
         ruleRationale: validationRule.rationale,
         violationDescription,
         severity: validationRule.severity,
+        fixTip: validationRule.fixTip,
       }))
     );
 
@@ -225,6 +227,6 @@ export class ConfigValidator {
   }
 
   private _buildRecommendationIssuesToastMessage(validationResult: ValidationResult): string {
-    return `Config validation found ${validationResult.recommendationIssues.length} recommendation issue(s)`;
+    return `Config validation found ${validationResult.recommendationIssues.length} recommendation(s)`;
   }
 }

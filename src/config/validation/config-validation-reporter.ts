@@ -74,14 +74,12 @@ function buildValidationIssuesSectionMarkdown(sectionTitle: string, validationIs
   let sectionMarkdown = `### ${sectionTitle}\n\n`;
 
   for (const validationIssue of validationIssues) {
-    sectionMarkdown += `${buildValidationIssueHeader(validationIssue)}\n\n`;
-    sectionMarkdown += `- Violation: ${validationIssue.violationDescription}\n`;
-    sectionMarkdown += `- Rationale: ${validationIssue.ruleRationale}\n\n`;
+    sectionMarkdown += `#### Violated Rule Name: "${validationIssue.violatedRuleName}"\n\n`;
+    sectionMarkdown += `Violation: ${validationIssue.violationDescription}\n`;
+    sectionMarkdown += `Rationale: ${validationIssue.ruleRationale}\n`;
+    if (validationIssue.fixTip) sectionMarkdown += `Fix Tip: ${validationIssue.fixTip}\n`;
+    sectionMarkdown += '\n';
   }
 
   return sectionMarkdown.trimEnd();
-}
-
-function buildValidationIssueHeader(validationIssue: ValidationIssue): string {
-  return `#### Violated Rule: ${validationIssue.violatedRuleName}`;
 }

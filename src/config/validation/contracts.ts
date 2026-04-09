@@ -20,6 +20,7 @@ export interface ValidationIssue {
   ruleRationale: string;
   violationDescription: string;
   severity: ValidationIssueSeverity;
+  fixTip?: string;
 }
 
 export interface ValidationRuleContext {
@@ -33,5 +34,6 @@ export interface ValidationRule {
   name: string;
   rationale: string;
   severity: ValidationIssueSeverity;
+  fixTip?: string;
   getViolationDescriptions(validationRuleContext: ValidationRuleContext): string[];
 }
