@@ -50,19 +50,16 @@ export class InstructionsBuilder {
       liquidJsIssues: [],
     };
 
-    const resolvedTemplateVariablesById = this._resolveTemplateVariablesById();
-
     const finalInstructionsText: string[] = [];
 
     for (const instructionId of effectiveInstructionsIds) {
       const instructionDetails = instructionsById[instructionId];
-
       if (!instructionDetails) continue;
 
       const instructionText = await this._buildInstructionsText({
         instructionId: instructionId,
         instructionDetails: instructionDetails,
-        resolvedTemplateVariablesById,
+        variablesById: this._config.presetDependentSettings.instructionsSettings.variablesById ?? {},
         resolveIssuesBag: resolveIssuesBag,
       });
 
@@ -115,12 +112,12 @@ export class InstructionsBuilder {
   private async _buildInstructionsText(args: {
     instructionId: string;
     instructionDetails: InstructionConfig;
-    resolvedTemplateVariablesById: Record<string, unknown>;
+    variablesById: Record<string, unknown>;
     resolveIssuesBag: InstructionsResolveIssuesBag;
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const instructionText = await this._readInstructionText(
+    const instructionText = await this._readInstructionTextFromFile(
       args.instructionDetails,
       args.instructionId,
       args.resolveIssuesBag
@@ -131,7 +128,7 @@ export class InstructionsBuilder {
 
     try {
       renderedTextOrNull = await this._liquidStrict.parseAndRender(instructionText, {
-        ...args.resolvedTemplateVariablesById,
+        ...args.variablesById,
       });
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
@@ -145,7 +142,7 @@ export class InstructionsBuilder {
     if (renderedTextOrNull === null) {
       try {
         renderedTextOrNull = await this._liquidLight.parseAndRender(instructionText, {
-          ...args.resolvedTemplateVariablesById,
+          ...args.variablesById,
         });
       } catch {
         return null;
@@ -160,15 +157,7 @@ export class InstructionsBuilder {
     return normalizedRenderedText;
   }
 
-  private _resolveTemplateVariablesById(): Record<string, unknown> {
-    const instructionsAndVariables = this._config.presetDependentSettings.instructionsSettings;
-
-    return {
-      ...instructionsAndVariables.variablesById,
-    };
-  }
-
-  private async _readInstructionText(
+  private async _readInstructionTextFromFile(
     promptInstructionsConfig: InstructionConfig,
     promptId: string,
     resolveIssues: InstructionsResolveIssuesBag
