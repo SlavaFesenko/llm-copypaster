@@ -21,7 +21,12 @@ export async function readUserJsonConfigFile<TConfig>(): Promise<TConfig | null>
   const parseErrors: ParseError[] = [];
   const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
 
-  if (parseErrors.length > 0) throw new Error(buildConfigReadErrorMessage(GLOB_CONSTS.USER_CONFIG_FILE_NAME));
+  if (parseErrors.length > 0) {
+    vscode.window.showErrorMessage(
+      `Invalid JSON structure in "${GLOB_CONSTS.USER_CONFIG_FILE_NAME}"! The app go on with default settings.`
+    );
+    return null; // broken user config json treated as absent file, the only difference is notification
+  }
 
   return parsed;
 }
@@ -33,11 +38,7 @@ export async function readSystemJsonConfigFile<TConfig>(): Promise<TConfig> {
   const parseErrors: ParseError[] = [];
   const parsed = parse(jsonText, parseErrors, { allowTrailingComma: true }) as TConfig;
 
-  if (parseErrors.length > 0) throw new Error(buildConfigReadErrorMessage(GLOB_CONSTS.SYS_CONFIG_FILE_NAME));
+  if (parseErrors.length > 0) throw new Error(`Invalid JSON structure in "${GLOB_CONSTS.SYS_CONFIG_FILE_NAME}"!`);
 
   return parsed;
-}
-
-function buildConfigReadErrorMessage(configFileName: string): string {
-  return `Invalid JSON structure in "${configFileName}"!`;
 }
