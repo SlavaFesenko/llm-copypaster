@@ -3,16 +3,16 @@ import * as vscode from 'vscode';
 import { ensureReadonlyVirtualMarkdownDocOpened } from '../../../utils/editor-virtual-doc-helpers';
 
 export interface InstructionsResolveIssuesBag {
-  filePromptsIssues: FilePromptResolveIssue[];
+  instructionFileIssues: InstructionFileIssue[];
   configVariablesIssues: ConfigVariablesResolveIssue[];
   liquidJsIssues: LiquidJsResolveIssue[];
 }
 
-export interface FilePromptResolveIssue {
-  promptId: string;
+export interface InstructionFileIssue {
+  instructionId: string;
   source: 'extension' | 'workspace';
-  relativePathToSubInstruction: string;
-  promptUriString?: string;
+  pathToInstruction: string;
+  instructionUri?: string;
   errorText: string;
 }
 
@@ -44,7 +44,9 @@ export function showNotificationIfAnyIssues(args: {
 
 function calculateTotalIssuesCount(resolveIssues: InstructionsResolveIssuesBag): number {
   return (
-    resolveIssues.filePromptsIssues.length + resolveIssues.configVariablesIssues.length + resolveIssues.liquidJsIssues.length
+    resolveIssues.instructionFileIssues.length +
+    resolveIssues.configVariablesIssues.length +
+    resolveIssues.liquidJsIssues.length
   );
 }
 
@@ -77,7 +79,7 @@ function buildMarkdownReport(resolveIssues: InstructionsResolveIssuesBag, totalI
   sections.push('');
 
   sections.push(`## File Prompts Resolve Issues`);
-  sections.push(buildFilePromptsIssuesMarkdown(resolveIssues.filePromptsIssues));
+  sections.push(buildFilePromptsIssuesMarkdown(resolveIssues.instructionFileIssues));
   sections.push('');
 
   sections.push(`## Config Variables Resolve Issues`);
@@ -91,16 +93,16 @@ function buildMarkdownReport(resolveIssues: InstructionsResolveIssuesBag, totalI
   return sections.join('\n');
 }
 
-function buildFilePromptsIssuesMarkdown(filePromptsIssues: FilePromptResolveIssue[]): string {
+function buildFilePromptsIssuesMarkdown(filePromptsIssues: InstructionFileIssue[]): string {
   if (filePromptsIssues.length === 0) return `No issues`;
 
   const lines: string[] = [];
 
   for (const issue of filePromptsIssues) {
-    lines.push(`- Prompt id: "${issue.promptId}"`);
+    lines.push(`- Prompt id: "${issue.instructionId}"`);
     lines.push(`  Source: "${issue.source}"`);
-    lines.push(`  Path: "${issue.relativePathToSubInstruction}"`);
-    if (issue.promptUriString) lines.push(`  Uri: "${issue.promptUriString}"`);
+    lines.push(`  Path: "${issue.pathToInstruction}"`);
+    if (issue.instructionUri) lines.push(`  Uri: "${issue.instructionUri}"`);
     lines.push(`  Error: ${issue.errorText}`);
   }
 

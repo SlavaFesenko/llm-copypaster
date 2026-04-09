@@ -48,7 +48,7 @@ export class InstructionsBuilder {
     if (effectiveInstructionsIds.length === 0) return '';
 
     const resolveIssuesBag: InstructionsResolveIssuesBag = {
-      filePromptsIssues: [],
+      instructionFileIssues: [],
       configVariablesIssues: [],
       liquidJsIssues: [],
     };
@@ -169,10 +169,10 @@ export class InstructionsBuilder {
     const instructionFileUri = this._tryBuildInstructionFileUri(instructionsConfig.path);
 
     if (!instructionFileUri) {
-      resolveIssues.filePromptsIssues.push({
-        promptId,
+      resolveIssues.instructionFileIssues.push({
+        instructionId: promptId,
         source: instructionFileSource,
-        relativePathToSubInstruction: instructionsConfig.path,
+        pathToInstruction: instructionsConfig.path,
         errorText: 'Workspace folder not found',
       });
 
@@ -186,12 +186,12 @@ export class InstructionsBuilder {
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
-      resolveIssues.filePromptsIssues.push({
-        promptId,
+      resolveIssues.instructionFileIssues.push({
+        instructionId: promptId,
         source: instructionFileSource,
-        relativePathToSubInstruction: instructionsConfig.path,
+        pathToInstruction: instructionsConfig.path,
         errorText,
-        promptUriString: instructionFileUri.toString(),
+        instructionUri: instructionFileUri.toString(),
       });
 
       return null;
