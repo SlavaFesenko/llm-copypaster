@@ -18,8 +18,8 @@ export interface BuildInstructionsArgs {
 }
 
 export class InstructionsBuilder {
-  private readonly _liquidStrict: Liquid;
-  private readonly _liquidLight: Liquid;
+  private readonly _liquidStrict: Liquid; // falls on the first error
+  private readonly _liquidLight: Liquid; // gather all existing errors
 
   public constructor(
     private readonly _extensionContext: vscode.ExtensionContext,
@@ -120,31 +120,31 @@ export class InstructionsBuilder {
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const instructionText = await this._readInstructionTextFromFile(
+    const instructionText = await this._tryReadInstructionTextFromFile(
       args.instructionDetails,
       args.instructionId,
       args.resolveIssuesBag
     );
     if (!instructionText) return null;
 
-    let renderedTextOrNull: string | null = null;
+    let liquidProcessedInstructionText: string | null = null;
 
     try {
-      renderedTextOrNull = await this._liquidStrict.parseAndRender(instructionText, {
+      liquidProcessedInstructionText = await this._liquidStrict.parseAndRender(instructionText, {
         ...args.variablesById,
       });
     } catch (error: unknown) {
       const errorText = error instanceof Error ? error.message || error.name : String(error);
 
       args.resolveIssuesBag.liquidJsIssues.push({
-        promptId: args.instructionId,
+        instructionId: args.instructionId,
         errorText,
       });
     }
 
-    if (renderedTextOrNull === null) {
+    if (liquidProcessedInstructionText === null) {
       try {
-        renderedTextOrNull = await this._liquidLight.parseAndRender(instructionText, {
+        liquidProcessedInstructionText = await this._liquidLight.parseAndRender(instructionText, {
           ...args.variablesById,
         });
       } catch {
@@ -152,7 +152,7 @@ export class InstructionsBuilder {
       }
     }
 
-    const renderedText = renderedTextOrNull ?? '';
+    const renderedText = liquidProcessedInstructionText ?? '';
     const normalizedRenderedText = collapseEmptyLines(renderedText);
 
     if (!normalizedRenderedText.trim()) return null;
@@ -160,7 +160,7 @@ export class InstructionsBuilder {
     return normalizedRenderedText;
   }
 
-  private async _readInstructionTextFromFile(
+  private async _tryReadInstructionTextFromFile(
     instructionsConfig: InstructionConfig,
     promptId: string,
     resolveIssues: InstructionsResolveIssuesBag

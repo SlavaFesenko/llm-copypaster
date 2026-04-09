@@ -24,7 +24,7 @@ export interface ConfigVariablesResolveIssue {
 }
 
 export interface LiquidJsResolveIssue {
-  promptId: string;
+  instructionId: string;
   errorText: string;
 }
 
@@ -130,7 +130,7 @@ function buildLiquidJsIssuesMarkdown(liquidJsIssues: LiquidJsResolveIssue[]): st
   const lines: string[] = [];
 
   for (const issue of liquidJsIssues) {
-    lines.push(`- Prompt id: "${issue.promptId}"`);
+    lines.push(`- Prompt id: "${issue.instructionId}"`);
     lines.push(`  Error: ${issue.errorText}`);
   }
 
