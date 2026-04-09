@@ -16,7 +16,9 @@ export interface InstructionFileIssue {
 
 export interface LiquidJsResolveIssue {
   instructionId: string;
-  errorText: string;
+  summary: string;
+  originalErrorText?: string;
+  contextText?: string;
 }
 
 export async function buildAndShowNotification(args: {
@@ -25,7 +27,7 @@ export async function buildAndShowNotification(args: {
   issuesCount: number;
 }): Promise<void> {
   const selection = await vscode.window.showWarningMessage(
-    `Tech prompt resolve issues detected: ${args.issuesCount} issues(s)`,
+    `Tech prompt resolve issues detected: ${args.issuesCount} issue(s)`,
     'Show Report'
   );
 
@@ -44,7 +46,8 @@ function buildMarkdownReport(resolveIssues: InstructionsResolveIssuesBag, totalI
   const sections: string[] = [];
 
   sections.push(`# Tech Prompt Resolve Report`);
-  sections.push(`Total errors: ${totalIssuesCount}`);
+  sections.push('');
+  sections.push(`**Total issues:** ${totalIssuesCount}`);
   sections.push('');
 
   sections.push(`## Instruction File Resolve Issues`);
@@ -61,27 +64,44 @@ function buildMarkdownReport(resolveIssues: InstructionsResolveIssuesBag, totalI
 function buildFilePromptsIssuesMarkdown(filePromptsIssues: InstructionFileIssue[]): string {
   if (filePromptsIssues.length === 0) return `No issues`;
 
-  const lines: string[] = [];
+  const blocks: string[] = [];
 
   for (const issue of filePromptsIssues) {
-    lines.push(`- Prompt id: "${issue.instructionId}"`);
-    lines.push(`  Path: "${issue.rawFilePathFromConfig}"`);
-    if (issue.resolvedFileUri) lines.push(`  Uri: "${issue.resolvedFileUri}"`);
-    lines.push(`  Error: ${issue.errorText}`);
+    const lines: string[] = [];
+
+    lines.push(`### Prompt: \`${issue.instructionId}\``);
+    lines.push(`- **Path:** \`${issue.rawFilePathFromConfig}\``);
+    if (issue.resolvedFileUri) lines.push(`- **Resolved URI:** \`${issue.resolvedFileUri}\``);
+    lines.push(`- **Error:** ${issue.errorText}`);
+
+    blocks.push(lines.join('\n'));
   }
 
-  return lines.join('\n');
+  return blocks.join('\n\n');
 }
 
 function buildLiquidJsIssuesMarkdown(liquidJsIssues: LiquidJsResolveIssue[]): string {
   if (liquidJsIssues.length === 0) return `No issues`;
 
-  const lines: string[] = [];
+  const blocks: string[] = [];
 
   for (const issue of liquidJsIssues) {
-    lines.push(`- Prompt id: "${issue.instructionId}"`);
-    lines.push(`  Error: ${issue.errorText}`);
+    const lines: string[] = [];
+
+    lines.push(`### Prompt: \`${issue.instructionId}\``);
+    lines.push(`- **Error:** ${issue.summary}`);
+
+    if (issue.originalErrorText) lines.push(`- **Original error:** ${issue.originalErrorText}`);
+
+    if (issue.contextText) {
+      lines.push(`- **Context:**`);
+      lines.push('`' + '``text');
+      lines.push(issue.contextText.trimEnd());
+      lines.push('`' + '``');
+    }
+
+    blocks.push(lines.join('\n'));
   }
 
-  return lines.join('\n');
+  return blocks.join('\n\n');
 }
