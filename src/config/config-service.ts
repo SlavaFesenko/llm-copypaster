@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { LlmCopypasterConfigWithDebugData, PresetOptionMetadata } from './contracts/other-contracts';
+import { PresetOptionMetadata, SystemConfigWithDebugData } from './contracts/other-contracts';
 import { SystemConfig } from './contracts/system-config-contracts';
 import { UserConfig } from './contracts/user-config-contracts';
 import { readSystemJsonConfigFile, readUserJsonConfigFile } from './helpers/config-file-readers';
@@ -11,8 +11,7 @@ import { ConfigValidator } from './validation/config-validator';
 export class ConfigService {
   private _systemConfig?: SystemConfig;
   private _userConfig?: UserConfig | null;
-  private _systemUserMergedConfig?: SystemConfig;
-  private _overrideOptions?: PresetOptionMetadata[] | null;
+  private _presetOptions?: PresetOptionMetadata[] | null;
   private readonly _configValidator: ConfigValidator;
   private readonly _configRefVarsResolver = new ConfigRefVarsResolver();
 
@@ -20,12 +19,12 @@ export class ConfigService {
     this._configValidator = new ConfigValidator(extensionContext);
   }
 
-  public get overrideOptions(): PresetOptionMetadata[] | null {
-    if (this._overrideOptions === null) return null;
+  public get presetOptions(): PresetOptionMetadata[] | null {
+    if (this._presetOptions === null) return null;
 
-    this._overrideOptions ??= this._setOverrideOptions(this._userConfig ?? null);
+    this._presetOptions ??= this._setPresetOptions(this._userConfig ?? null);
 
-    return this._overrideOptions;
+    return this._presetOptions;
   }
 
   public async getSystemConfig(): Promise<SystemConfig> {
@@ -35,7 +34,7 @@ export class ConfigService {
   }
 
   public async getUserConfig(): Promise<UserConfig | null> {
-    if (this._userConfig !== undefined) return this._userConfig;
+    if (this._userConfig !== undefined) return this._userConfig; // if userConfig is normal or null - it's already processed
 
     this._userConfig = await readUserJsonConfigFile<UserConfig>();
 
@@ -43,83 +42,61 @@ export class ConfigService {
   }
 
   public async getSystemUserMergedConfig(shouldRunValidation: boolean = true): Promise<SystemConfig> {
-    this._systemUserMergedConfig ??= await this._buildSystemUserMergedConfig(shouldRunValidation);
-
-    return this._systemUserMergedConfig;
-  }
-
-  public async getSystemUserMergedConfigByOverrideIds(overrideIds?: string[]): Promise<LlmCopypasterConfigWithDebugData> {
-    const systemUserMergedConfig = await this.getSystemUserMergedConfig(false); // validation will be later on, no need to run it twice
-
-    if (!overrideIds?.length) {
-      return {
-        mergedConfig: systemUserMergedConfig,
-      } as LlmCopypasterConfigWithDebugData;
-    }
-
-    const userConfig = await this.getUserConfig();
-    const systemConfig = await this.getSystemConfig();
-
-    let multiOverrideConfig = systemUserMergedConfig;
-
-    for (const overrideId of overrideIds) {
-      const overrideCoreSettings = userConfig?.presetsById?.[overrideId]?.presetDependentSettings;
-      if (!overrideCoreSettings) continue;
-
-      // each iteration modifies already modified value preparing multi-override config
-      multiOverrideConfig = mergeConfigs(multiOverrideConfig, {
-        presetDependentSettings: overrideCoreSettings,
-      });
-    }
-
-    const refVarResolvedMultiOverrideConfig = this._configRefVarsResolver.resolve(multiOverrideConfig);
-
-    await this._configValidator.validateConfig(
-      refVarResolvedMultiOverrideConfig,
-      `System-User Merged Config + Overrides: ${overrideIds.join(', ')}`,
-      systemConfig,
-      userConfig
-    );
-
-    return {
-      mergedConfig: refVarResolvedMultiOverrideConfig,
-      debugData: buildMergedConfigDebugData({
-        presetOptions: this.overrideOptions,
-        activeOverrideIds: overrideIds,
-        systemConfig,
-        userConfig,
-        systemUserMergedConfig,
-        mergedConfig: refVarResolvedMultiOverrideConfig,
-      }),
-    };
-  }
-
-  private async _buildSystemUserMergedConfig(shouldRunValidation: boolean = true): Promise<SystemConfig> {
     const systemConfig = await this.getSystemConfig();
     const userConfig = await this.getUserConfig();
 
     const mergedConfig = mergeConfigs(systemConfig, userConfig);
-
     const refVarResolvedConfig = this._configRefVarsResolver.resolve(mergedConfig);
 
-    if (shouldRunValidation) {
-      const isConfigValid = await this._configValidator.validateConfig(
-        refVarResolvedConfig,
-        'System-User Merged Config',
-        systemConfig,
-        userConfig
-      );
+    if (!shouldRunValidation) return refVarResolvedConfig;
 
-      if (!isConfigValid) throw new Error('System + User merged config validation failed');
-    }
-
-    return refVarResolvedConfig;
+    return await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig);
   }
 
-  private _setOverrideOptions(userConfig: UserConfig | null): PresetOptionMetadata[] | null {
+  public async getSystemUserMergedConfigByOverrideIds(presetIds?: string[]): Promise<SystemConfigWithDebugData> {
+    if (!presetIds?.length) {
+      return {
+        targetConfig: await this.getSystemUserMergedConfig(),
+      } as SystemConfigWithDebugData; // no debug data available in this case
+    }
+
+    const systemUserMergedConfig = await this.getSystemUserMergedConfig(false); // validation will be later on, no need to run it twice
+    const userConfig = await this.getUserConfig();
+    const systemConfig = await this.getSystemConfig();
+
+    let multiPresetsConfig = systemUserMergedConfig;
+
+    for (const presetId of presetIds) {
+      const presetDependentSettings = userConfig?.presetsById?.[presetId]?.presetDependentSettings;
+      if (!presetDependentSettings) continue;
+
+      // each iteration modifies already modified value preparing multi-override config
+      multiPresetsConfig = mergeConfigs(multiPresetsConfig, {
+        presetDependentSettings: presetDependentSettings,
+      });
+    }
+
+    const refVarResolvedConfig = this._configRefVarsResolver.resolve(multiPresetsConfig);
+
+    const validatedConfig = await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig, presetIds);
+
+    return {
+      targetConfig: validatedConfig,
+      debugData: buildMergedConfigDebugData({
+        presetOptions: this.presetOptions,
+        activeOverrideIds: presetIds,
+        systemConfig,
+        userConfig,
+        systemUserMergedConfig,
+        mergedConfig: validatedConfig,
+      }),
+    };
+  }
+
+  private _setPresetOptions(userConfig: UserConfig | null): PresetOptionMetadata[] | null {
     if (!userConfig) return null;
 
-    const overrideOptions: PresetOptionMetadata[] = [];
+    const presetOptions: PresetOptionMetadata[] = [];
     const presetsById = userConfig.presetsById ?? {};
 
     for (const presetById of Object.keys(presetsById)) {
@@ -127,13 +104,13 @@ export class ConfigService {
 
       if (presetConfig.shouldBeSkipped) continue;
 
-      overrideOptions.push({
+      presetOptions.push({
         id: presetById,
         description: presetConfig.description,
         version: presetConfig.version,
       });
     }
 
-    return overrideOptions;
+    return presetOptions;
   }
 }

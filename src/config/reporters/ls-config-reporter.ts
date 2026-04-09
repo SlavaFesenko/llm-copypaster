@@ -23,7 +23,7 @@ export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs)
   const systemConfig = await args.configService.getSystemConfig();
   const userConfig = await readUserConfig();
   const basePublicConfig = await args.configService.getSystemUserMergedConfig();
-  const overrideOptions = args.configService.overrideOptions ?? [];
+  const overrideOptions = args.configService.presetOptions ?? [];
 
   const preparedOverrideReportEntries = await buildPreparedOverrideReportEntries({
     configService: args.configService,
@@ -64,7 +64,7 @@ async function buildPreparedOverrideReportEntries(args: {
         overrideOption.id,
       ]);
 
-      const normalizedOverrideCoreSettingsConfig = mergedOverrideConfigResult.mergedConfig.presetDependentSettings;
+      const normalizedOverrideCoreSettingsConfig = mergedOverrideConfigResult.targetConfig.presetDependentSettings;
 
       const normalizedOverrideDiffChangeset = await buildJsonDiffChangeset(
         args.baseCoreSettingsConfig,

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { LlmCopypasterConfigWithDebugData, PresetOptionMetadata } from '../../../config/contracts/other-contracts';
+import { PresetOptionMetadata, SystemConfigWithDebugData } from '../../../config/contracts/other-contracts';
 import { SystemConfig } from '../../../config/contracts/system-config-contracts';
 import { ConfigReportFacade } from '../../../config/reporters/config-report-facade';
 import { CollectedFileItem } from '../../../contracts/file-contracts';
@@ -16,7 +16,7 @@ export class CopiedNotificator {
   public async showCopyResultNotification(args: ShowCopyResultNotificationArgs): Promise<void> {
     const unavailableFilesCount = args.totalFilesCount - args.copiedFilesCount;
 
-    const overrideOptions = this._deps.configService.overrideOptions ?? [];
+    const overrideOptions = this._deps.configService.presetOptions ?? [];
     const hasProfiles = overrideOptions.length > 0;
 
     const openPromptInEditor = 'Open Prompt in Editor';
@@ -25,11 +25,11 @@ export class CopiedNotificator {
     let selectedProfileIds: string[] = [];
     let currentPromptText = args.promptText;
     let isTechPromptErased = false;
-    let currentMergedConfigResult: LlmCopypasterConfigWithDebugData =
+    let currentMergedConfigResult: SystemConfigWithDebugData =
       await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
 
     while (true) {
-      const effectiveConfig = currentMergedConfigResult.mergedConfig;
+      const effectiveConfig = currentMergedConfigResult.targetConfig;
 
       const promptStatsResult = buildTextSizeStats({
         promptText: currentPromptText,
@@ -103,7 +103,7 @@ export class CopiedNotificator {
           await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
 
         currentPromptText = await this._buildLlmPromptText({
-          effectiveConfig: currentMergedConfigResult.mergedConfig,
+          effectiveConfig: currentMergedConfigResult.targetConfig,
           includeTechPromptFromCommand: args.includeTechPrompt,
           fileItems: args.fileItems,
           forceSkipTechPrompt: isTechPromptErased,

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { GLOB_CONSTS } from '../../contracts/global-constants';
 import { SystemConfig } from '../contracts/system-config-contracts';
 import { UserConfig } from '../contracts/user-config-contracts';
 import { ConfigValidationReporter } from './config-validation-reporter';
@@ -13,22 +14,71 @@ import { SystemConfigSchemaValidationRule } from './validation-rules/system-conf
 import { UserConfigSchemaValidationRule } from './validation-rules/user-config-schema-validation-rule';
 import { VarRefsExistRule } from './validation-rules/var-refs-exists-rule';
 
+const systemUserMergedConfigName = 'System-User Merged Config';
+const systemUserMergedConfigWithOverridesNamePrefix = 'System-User Merged Config + Overrides: ';
+
 export const systemConfigValidationRules: ValidationRule[] = [
   new SystemConfigSchemaValidationRule(),
   new VarRefsExistRule(),
+  // TODO add recommendation rule for suppressWarningIssuesToast === true
 ];
 
 export const userConfigValidationRules: ValidationRule[] = [new UserConfigSchemaValidationRule()];
 
 export class ConfigValidator {
+  private _hasShownStartupRecommendationIssuesToast = false;
+  private _hasShownStartupNoIssuesToast = false;
+
   public constructor(private readonly _extensionContext: vscode.ExtensionContext) {}
 
-  public async validateConfig(
+  public async validate(
+    targetConfig: SystemConfig,
+    systemConfig: SystemConfig,
+    userConfig: UserConfig | null,
+    overrideIds?: string[]
+  ): Promise<SystemConfig> {
+    const aggregatedValidationResult = this._buildAggregatedValidationResult(
+      targetConfig,
+      this._buildTargetConfigName(overrideIds),
+      systemConfig,
+      userConfig
+    );
+
+    if (aggregatedValidationResult.criticalIssues.length) {
+      await this._showCriticalIssuesToast(aggregatedValidationResult);
+
+      return systemConfig;
+    }
+
+    if (aggregatedValidationResult.warningIssues.length)
+      await this._showWarningIssuesToast(aggregatedValidationResult, targetConfig);
+
+    // no need to spam user in case he doesn't have user-config and system config is not seriously wrong for some buggy reason
+    if (userConfig === null) return targetConfig;
+
+    if (aggregatedValidationResult.recommendationIssues.length) {
+      await this._showStartupRecommendationIssuesToast(aggregatedValidationResult, targetConfig);
+
+      return targetConfig;
+    }
+
+    if (!this._hasShownStartupNoIssuesToast) await this._showStartupNoIssuesToast(targetConfig);
+
+    return targetConfig;
+  }
+
+  private _buildTargetConfigName(overrideIds?: string[]): string {
+    if (!overrideIds?.length) return systemUserMergedConfigName;
+
+    return `${systemUserMergedConfigWithOverridesNamePrefix}${overrideIds.join(', ')}`;
+  }
+
+  private _buildAggregatedValidationResult(
     targetConfig: SystemConfig,
     targetConfigName: string,
     systemConfig: SystemConfig,
     userConfig: UserConfig | null
-  ): Promise<boolean> {
+  ): ValidationResult {
     const validationResults: ValidationResult[] = [
       this._validateWithRules(targetConfig, targetConfigName, systemConfig, userConfig, systemConfigValidationRules),
     ];
@@ -39,7 +89,7 @@ export class ConfigValidator {
       );
     }
 
-    const aggregatedValidationResult: ValidationResult = {
+    return {
       validatedConfigNames: Array.from(
         new Set(validationResults.flatMap(validationResult => validationResult.validatedConfigNames))
       ),
@@ -47,11 +97,6 @@ export class ConfigValidator {
       warningIssues: validationResults.flatMap(validationResult => validationResult.warningIssues),
       recommendationIssues: validationResults.flatMap(validationResult => validationResult.recommendationIssues),
     };
-
-    if (aggregatedValidationResult.criticalIssues.length || aggregatedValidationResult.warningIssues.length)
-      await this._showToastAndReportForValidationResult(aggregatedValidationResult);
-
-    return !aggregatedValidationResult.criticalIssues.length;
   }
 
   private _validateWithRules(
@@ -99,31 +144,87 @@ export class ConfigValidator {
     };
   }
 
-  private async _showToastAndReportForValidationResult(validationResult: ValidationResult): Promise<void> {
-    const toastActionOpenDetails = 'Open Details In Editor';
-    const toastMessage = this._buildValidationToastMessage(validationResult);
-
-    const clickedAction = validationResult.criticalIssues.length
-      ? await vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails)
-      : await vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);
-
-    if (clickedAction === toastActionOpenDetails) {
-      await new ConfigValidationReporter({
-        extensionContext: this._extensionContext,
-        validationResult,
-      }).displayValidationReport();
-    }
+  private async _showCriticalIssuesToast(validationResult: ValidationResult): Promise<void> {
+    await this._showToastWithOptionalReport(
+      this._buildCriticalIssuesToastMessage(validationResult),
+      'error',
+      validationResult
+    );
   }
 
-  private _buildValidationToastMessage(validationResult: ValidationResult): string {
-    const criticalIssuesCount = validationResult.criticalIssues.length;
-    const warningIssuesCount = validationResult.warningIssues.length;
+  private async _showWarningIssuesToast(validationResult: ValidationResult, targetConfig: SystemConfig): Promise<void> {
+    if (targetConfig.presetIndependentSettings.notificationSettings.configValidation.suppressWarningIssuesToast) return;
 
-    const issuesSummaryParts: string[] = [];
+    await this._showToastWithOptionalReport(
+      this._buildWarningIssuesToastMessage(validationResult),
+      'warning',
+      validationResult
+    );
+  }
 
-    if (criticalIssuesCount) issuesSummaryParts.push(`${criticalIssuesCount} critical`);
-    if (warningIssuesCount) issuesSummaryParts.push(`${warningIssuesCount} warning`);
+  private async _showStartupRecommendationIssuesToast(
+    validationResult: ValidationResult,
+    targetConfig: SystemConfig
+  ): Promise<void> {
+    if (this._hasShownStartupRecommendationIssuesToast) return;
 
-    return `Config validation found ${issuesSummaryParts.join(' and ')} issue(s)`;
+    if (targetConfig.presetIndependentSettings.notificationSettings.configValidation.suppressRecommendationIssuesToast)
+      return;
+
+    this._hasShownStartupRecommendationIssuesToast = true;
+
+    await this._showToastWithOptionalReport(
+      this._buildRecommendationIssuesToastMessage(validationResult),
+      'info',
+      validationResult
+    );
+  }
+
+  private async _showStartupNoIssuesToast(targetConfig: SystemConfig): Promise<void> {
+    if (targetConfig.presetIndependentSettings.notificationSettings.configValidation.suppressNoIssuesToast) return;
+
+    this._hasShownStartupNoIssuesToast = true;
+
+    await vscode.window.showInformationMessage(`${GLOB_CONSTS.APP_NAME}: Config validation succeeded!`);
+  }
+
+  private async _showToastWithOptionalReport(
+    toastMessage: string,
+    toastSeverity: 'error' | 'warning' | 'info',
+    validationResult: ValidationResult
+  ): Promise<void> {
+    const toastActionOpenDetails = 'Open Details In Editor';
+
+    const clickedAction = await (async () => {
+      switch (toastSeverity) {
+        case 'error':
+          return await vscode.window.showErrorMessage(toastMessage, toastActionOpenDetails);
+
+        case 'warning':
+          return await vscode.window.showWarningMessage(toastMessage, toastActionOpenDetails);
+
+        default:
+          return await vscode.window.showInformationMessage(toastMessage, toastActionOpenDetails);
+      }
+    })();
+
+    if (clickedAction !== toastActionOpenDetails) return;
+
+    await new ConfigValidationReporter({
+      extensionContext: this._extensionContext,
+      validationResult,
+    }).displayValidationReport();
+  }
+
+  private _buildCriticalIssuesToastMessage(validationResult: ValidationResult): string {
+    return `Config validation found ${validationResult.criticalIssues.length} critical issue(s). Using system config only`;
+  }
+
+  private _buildWarningIssuesToastMessage(validationResult: ValidationResult): string {
+    return `Config validation found ${validationResult.warningIssues.length} warning issue(s)`;
+  }
+
+  private _buildRecommendationIssuesToastMessage(validationResult: ValidationResult): string {
+    return `Config validation found ${validationResult.recommendationIssues.length} recommendation issue(s)`;
   }
 }

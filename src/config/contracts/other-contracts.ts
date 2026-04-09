@@ -1,7 +1,7 @@
 import { PresetDependentSettingsConfig, SystemConfig } from './system-config-contracts';
 
-export interface LlmCopypasterConfigWithDebugData {
-  mergedConfig: SystemConfig;
+export interface SystemConfigWithDebugData {
+  targetConfig: SystemConfig;
   debugData?: MergedConfigDebugData;
 }
 

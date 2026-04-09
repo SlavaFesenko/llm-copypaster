@@ -1,4 +1,5 @@
 export const GLOB_CONSTS = {
+  APP_NAME: 'LLM Copypaster',
   SYS_CONFIG_FILE_NAME: 'sys-config.jsonc',
   USER_CONFIG_FILE_NAME: 'llm-copypaster.jsonc',
   USER_CONFIG_SCHEMA_FILE_NAME: 'llm-copypaster.schema.json',
