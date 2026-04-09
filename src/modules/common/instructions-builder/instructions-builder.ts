@@ -1,10 +1,10 @@
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { Liquid } from 'liquidjs';
 import { InstructionConfig, InstructionsConfig, SystemConfig } from '../../../config/contracts/system-config-contracts';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
-import { collapseEmptyLines } from './helpers';
+import { collapseEmptyLines, tryBuildInstructionFileUri, tryReadRawInstructionTextFromFile } from './helpers';
+import { LiquidJsErrorsResolver } from './liquid-js-errors-resolver';
 import { buildAndShowNotification, type InstructionsResolveIssuesBag } from './report-helpers';
 
 export enum InstructionsBuilderMode {
@@ -132,15 +132,37 @@ export class InstructionsBuilder {
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const instructionFileUri = this._tryBuildInstructionFileUri(args.instructionDetails.path, args.instructionId);
-    if (!instructionFileUri) return null;
+    const isSystemBundledInstructionFile = this._isSystemBundledInstructionFile(args.instructionDetails.path);
 
-    const rawInstructionText = await this._tryReadRawInstructionTextFromFile(
-      instructionFileUri,
-      args.instructionDetails,
-      args.instructionId
-    );
-    if (!rawInstructionText) return null;
+    const instructionFileUri = tryBuildInstructionFileUri({
+      rawFilePathFromConfig: args.instructionDetails.path,
+      instructionId: args.instructionId,
+      isSystemBundledInstructionFile,
+      extensionUri: this._extensionContext.extensionUri,
+      workspaceRootUri: vscode.workspace.workspaceFolders?.[0]?.uri,
+    });
+
+    if (!instructionFileUri) {
+      this._resolveIssuesBag.instructionFileIssues.push({
+        instructionId: args.instructionId,
+        rawFilePathFromConfig: args.instructionDetails.path,
+        errorText: 'Workspace folder not found for relative instruction path',
+      });
+
+      return null;
+    }
+
+    const rawInstructionText = await tryReadRawInstructionTextFromFile(instructionFileUri);
+    if (rawInstructionText === null) {
+      this._resolveIssuesBag.instructionFileIssues.push({
+        instructionId: args.instructionId,
+        rawFilePathFromConfig: args.instructionDetails.path,
+        resolvedFileUri: instructionFileUri.toString(),
+        errorText: 'Failed to read instruction file',
+      });
+
+      return null;
+    }
 
     try {
       const liquidProcessedInstructionText = await this._liquid.parseAndRender(rawInstructionText, {
@@ -153,61 +175,12 @@ export class InstructionsBuilder {
 
       return normalizedRenderedText;
     } catch (error: unknown) {
-      const errorText = error instanceof Error ? error.message || error.name : String(error);
+      const liquidJsResolveIssues = LiquidJsErrorsResolver.resolve(args.instructionId, error);
 
-      this._resolveIssuesBag.liquidJsIssues.push({
-        instructionId: args.instructionId,
-        errorText,
-      });
+      this._resolveIssuesBag.liquidJsIssues.push(...liquidJsResolveIssues);
 
       return null;
     }
-  }
-
-  private async _tryReadRawInstructionTextFromFile(
-    resolvedFileUri: vscode.Uri,
-    instructionsConfig: InstructionConfig,
-    instructionId: string
-  ): Promise<string | null> {
-    try {
-      // readFile can handle any type of url, so the most important is correctly calculated instructionFileUri
-      const bytes = await vscode.workspace.fs.readFile(resolvedFileUri);
-
-      return Buffer.from(bytes).toString('utf8');
-    } catch (error: unknown) {
-      const errorText = error instanceof Error ? error.message || error.name : String(error);
-
-      this._resolveIssuesBag.instructionFileIssues.push({
-        instructionId: instructionId,
-        rawFilePathFromConfig: instructionsConfig.path,
-        resolvedFileUri: resolvedFileUri.toString(),
-        errorText,
-      });
-
-      return null;
-    }
-  }
-
-  private _tryBuildInstructionFileUri(rawFilePathFromConfig: string, instructionId: string): vscode.Uri | null {
-    if (this._isSystemBundledInstructionFile(rawFilePathFromConfig))
-      return vscode.Uri.joinPath(this._extensionContext.extensionUri, rawFilePathFromConfig);
-
-    if (rawFilePathFromConfig.startsWith('file:')) return vscode.Uri.parse(rawFilePathFromConfig);
-
-    if (path.isAbsolute(rawFilePathFromConfig)) return vscode.Uri.file(rawFilePathFromConfig);
-
-    const workspaceRootUri = vscode.workspace.workspaceFolders?.[0]?.uri;
-    if (!workspaceRootUri) {
-      this._resolveIssuesBag.instructionFileIssues.push({
-        instructionId: instructionId,
-        rawFilePathFromConfig: rawFilePathFromConfig,
-        errorText: 'Workspace folder not found for relative instruction path',
-      });
-
-      return null;
-    }
-
-    return vscode.Uri.joinPath(workspaceRootUri, rawFilePathFromConfig);
   }
 
   private _isSystemBundledInstructionFile(pathToSubInstruction: string): boolean {

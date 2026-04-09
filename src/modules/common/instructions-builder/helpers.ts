@@ -1,3 +1,6 @@
+import * as path from 'node:path';
+import * as vscode from 'vscode';
+
 export function collapseEmptyLines(text: string): string {
   const normalized = (text ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
@@ -49,4 +52,35 @@ export function tryExtractConfigVariablePath(rawTemplate: string, configVariable
   if (!normalized.startsWith(configVariablePrefix)) return undefined;
 
   return normalized;
+}
+
+export interface TryBuildInstructionFileUriArgs {
+  rawFilePathFromConfig: string;
+  instructionId: string;
+  isSystemBundledInstructionFile: boolean;
+  extensionUri: vscode.Uri;
+  workspaceRootUri?: vscode.Uri;
+}
+
+export function tryBuildInstructionFileUri(args: TryBuildInstructionFileUriArgs): vscode.Uri | null {
+  if (args.isSystemBundledInstructionFile) return vscode.Uri.joinPath(args.extensionUri, args.rawFilePathFromConfig);
+
+  if (args.rawFilePathFromConfig.startsWith('file:')) return vscode.Uri.parse(args.rawFilePathFromConfig);
+
+  if (path.isAbsolute(args.rawFilePathFromConfig)) return vscode.Uri.file(args.rawFilePathFromConfig);
+
+  if (!args.workspaceRootUri) return null;
+
+  return vscode.Uri.joinPath(args.workspaceRootUri, args.rawFilePathFromConfig);
+}
+
+export async function tryReadRawInstructionTextFromFile(resolvedFileUri: vscode.Uri): Promise<string | null> {
+  try {
+    // readFile can handle any type of url, so the most important is correctly calculated instructionFileUri
+    const bytes = await vscode.workspace.fs.readFile(resolvedFileUri);
+
+    return Buffer.from(bytes).toString('utf8');
+  } catch {
+    return null;
+  }
 }
