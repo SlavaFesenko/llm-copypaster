@@ -5,7 +5,7 @@ import { Liquid } from 'liquidjs';
 import { InstructionConfig, InstructionsConfig, SystemConfig } from '../../../config/contracts/system-config-contracts';
 import { GLOB_CONSTS } from '../../../contracts/global-constants';
 import { collapseEmptyLines } from './helpers';
-import { showNotificationIfAnyIssues, type InstructionsResolveIssuesBag } from './report-helpers';
+import { buildAndShowNotification, type InstructionsResolveIssuesBag } from './report-helpers';
 
 export enum InstructionsBuilderMode {
   Override = 'override',
@@ -77,7 +77,14 @@ export class InstructionsBuilder {
       finalInstructionsText.push(instructionText);
     }
 
-    showNotificationIfAnyIssues({ extensionContext: this._extensionContext, resolveIssues: this._resolveIssuesBag });
+    const issuesCount = this._resolveIssuesBag.instructionFileIssues.length + this._resolveIssuesBag.liquidJsIssues.length;
+    if (issuesCount > 0) {
+      await buildAndShowNotification({
+        extensionContext: this._extensionContext,
+        resolveIssues: this._resolveIssuesBag,
+        issuesCount,
+      });
+    }
 
     if (finalInstructionsText.length === 0) return '';
 
@@ -160,7 +167,7 @@ export class InstructionsBuilder {
     if (!instructionFileUri) {
       this._resolveIssuesBag.instructionFileIssues.push({
         instructionId: promptId,
-        source: instructionFileSource,
+        fileSource: instructionFileSource,
         pathToInstruction: instructionsConfig.path,
         errorText: 'Workspace folder not found',
       });
@@ -178,7 +185,7 @@ export class InstructionsBuilder {
 
       this._resolveIssuesBag.instructionFileIssues.push({
         instructionId: promptId,
-        source: instructionFileSource,
+        fileSource: instructionFileSource,
         pathToInstruction: instructionsConfig.path,
         errorText,
         instructionUri: instructionFileUri.toString(),

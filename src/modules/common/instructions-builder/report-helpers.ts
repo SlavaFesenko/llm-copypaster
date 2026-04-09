@@ -9,16 +9,9 @@ export interface InstructionsResolveIssuesBag {
 
 export interface InstructionFileIssue {
   instructionId: string;
-  source: 'extension' | 'workspace';
+  fileSource: 'extension' | 'workspace';
   pathToInstruction: string;
   instructionUri?: string;
-  errorText: string;
-}
-
-export interface ConfigVariablesResolveIssue {
-  sharedVariableId: string;
-  rawTemplate: string;
-  configVariablePath?: string;
   errorText: string;
 }
 
@@ -27,25 +20,7 @@ export interface LiquidJsResolveIssue {
   errorText: string;
 }
 
-export function showNotificationIfAnyIssues(args: {
-  extensionContext: vscode.ExtensionContext;
-  resolveIssues: InstructionsResolveIssuesBag;
-}): void {
-  const issuesCount = calculateTotalIssuesCount(args.resolveIssues);
-  if (issuesCount === 0) return;
-
-  void buildAndShowNotification({
-    extensionContext: args.extensionContext,
-    resolveIssues: args.resolveIssues,
-    issuesCount,
-  });
-}
-
-function calculateTotalIssuesCount(resolveIssues: InstructionsResolveIssuesBag): number {
-  return resolveIssues.instructionFileIssues.length + resolveIssues.liquidJsIssues.length;
-}
-
-async function buildAndShowNotification(args: {
+export async function buildAndShowNotification(args: {
   extensionContext: vscode.ExtensionContext;
   resolveIssues: InstructionsResolveIssuesBag;
   issuesCount: number;
@@ -91,7 +66,7 @@ function buildFilePromptsIssuesMarkdown(filePromptsIssues: InstructionFileIssue[
 
   for (const issue of filePromptsIssues) {
     lines.push(`- Prompt id: "${issue.instructionId}"`);
-    lines.push(`  Source: "${issue.source}"`);
+    lines.push(`  Source: "${issue.fileSource}"`);
     lines.push(`  Path: "${issue.pathToInstruction}"`);
     if (issue.instructionUri) lines.push(`  Uri: "${issue.instructionUri}"`);
     lines.push(`  Error: ${issue.errorText}`);
