@@ -120,17 +120,46 @@ export class InstructionsBuilder {
   }): Promise<string | null> {
     if (args.instructionDetails.skip) return null;
 
-    const instructionText = await this._tryReadInstructionTextFromFile(
+    const rawInstructionText = await this._tryReadInstructionTextFromFile(
       args.instructionDetails,
       args.instructionId,
       args.resolveIssuesBag
     );
-    if (!instructionText) return null;
+    if (!rawInstructionText) return null;
 
-    let liquidProcessedInstructionText: string | null = null;
+    let liquidProcessedInstructionText: string;
 
     try {
-      liquidProcessedInstructionText = await this._liquidStrict.parseAndRender(instructionText, {
+      liquidProcessedInstructionText = await this._liquidStrict.parseAndRender(rawInstructionText, {
+        ...args.variablesById,
+      });
+    } catch {
+      // if _liquidStrict failed - let's gather all issues by running light mode, do not force user fix them one by one
+      await this._collectAllLiquidIssues({
+        instructionId: args.instructionId,
+        instructionText: rawInstructionText,
+        variablesById: args.variablesById,
+        resolveIssuesBag: args.resolveIssuesBag,
+      });
+
+      return null;
+    }
+
+    const normalizedRenderedText = collapseEmptyLines(liquidProcessedInstructionText);
+
+    if (!normalizedRenderedText.trim()) return null;
+
+    return normalizedRenderedText;
+  }
+
+  private async _collectAllLiquidIssues(args: {
+    instructionId: string;
+    instructionText: string;
+    variablesById: Record<string, unknown>;
+    resolveIssuesBag: InstructionsResolveIssuesBag;
+  }): Promise<void> {
+    try {
+      await this._liquidLight.parseAndRender(args.instructionText, {
         ...args.variablesById,
       });
     } catch (error: unknown) {
@@ -141,23 +170,6 @@ export class InstructionsBuilder {
         errorText,
       });
     }
-
-    if (liquidProcessedInstructionText === null) {
-      try {
-        liquidProcessedInstructionText = await this._liquidLight.parseAndRender(instructionText, {
-          ...args.variablesById,
-        });
-      } catch {
-        return null;
-      }
-    }
-
-    const renderedText = liquidProcessedInstructionText ?? '';
-    const normalizedRenderedText = collapseEmptyLines(renderedText);
-
-    if (!normalizedRenderedText.trim()) return null;
-
-    return normalizedRenderedText;
   }
 
   private async _tryReadInstructionTextFromFile(
