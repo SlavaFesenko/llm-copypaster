@@ -100,21 +100,6 @@ function buildFilePromptsIssuesMarkdown(filePromptsIssues: InstructionFileIssue[
   return lines.join('\n');
 }
 
-function buildConfigVariablesIssuesMarkdown(configVariablesIssues: ConfigVariablesResolveIssue[]): string {
-  if (configVariablesIssues.length === 0) return `No issues`;
-
-  const lines: string[] = [];
-
-  for (const issue of configVariablesIssues) {
-    lines.push(`- Shared var id: "${issue.sharedVariableId}"`);
-    if (issue.configVariablePath) lines.push(`  Config variable: "${issue.configVariablePath}"`);
-    lines.push(`  Template: ${issue.rawTemplate}`);
-    lines.push(`  Error: ${issue.errorText}`);
-  }
-
-  return lines.join('\n');
-}
-
 function buildLiquidJsIssuesMarkdown(liquidJsIssues: LiquidJsResolveIssue[]): string {
   if (liquidJsIssues.length === 0) return `No issues`;
 
