@@ -2,7 +2,7 @@ LLM Copypaster: build + install local VSIX
 
 # 1) In `package.json` increase `"version"` (semantic versioning), e.g. `0.0.1` -> `0.0.2`
 
-# 2) npx vsce package -o Compiled/llm-copypaster-0.14.0.vsix
+# 2) npx vsce package -o Compiled/llm-copypaster-0.14.1.vsix
 
 # 3) Extension Tab -> ... > Install from .VSIX (C:\Users\Viacheslav_Fesenko\Documents\GitHub\llm-copypaster\Compiled)
 

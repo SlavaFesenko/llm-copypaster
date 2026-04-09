@@ -35,7 +35,7 @@ export class QuickInstructionFacade {
       return;
     }
 
-    const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig();
+    const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig(true);
 
     const delimiterLine = `\n${llmCopypasterConfig.presetIndependentSettings.vitalParsingAnchors.PROMPT_DELIMITER_ANCHOR}\n`;
     const nextClipboardText = `${delimiterLine}${instructionsSet}${delimiterLine}${currentClipboardText}`;
@@ -63,7 +63,7 @@ export class QuickInstructionFacade {
   }
 
   private async _tryGetInstructionsSet(quickPickPlaceHolder: string): Promise<string | null> {
-    const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig();
+    const llmCopypasterConfig = await this._configService.getSystemUserMergedConfig(true);
     const instructionsById = llmCopypasterConfig.presetDependentSettings.instructionsSettings.instructionsById ?? {};
     const availableInstructionItems = this._buildAvailableInstructionItems(instructionsById);
 

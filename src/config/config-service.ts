@@ -42,7 +42,7 @@ export class ConfigService {
   }
 
   public async getSystemUserMergedConfig(
-    shouldRunValidation: boolean = true,
+    shouldRunValidation: boolean,
     fireAndForgetNotifications: boolean = false
   ): Promise<SystemConfig> {
     const systemConfig = await this.getSystemConfig();
@@ -64,10 +64,11 @@ export class ConfigService {
     return isConfigValid ? refVarResolvedConfig : systemConfig;
   }
 
-  public async getSystemUserMergedConfigByOverrideIds(presetIds?: string[]): Promise<SystemConfigWithDebugData> {
-    if (!presetIds?.length) {
+  public async getSystemUserMergedConfigByOverrideIds(presetIds: string[]): Promise<SystemConfigWithDebugData> {
+    if (!presetIds.length) {
       return {
-        targetConfig: await this.getSystemUserMergedConfig(),
+        // as this is a backdoor for case no presetIds passed - no validation should be done
+        targetConfig: await this.getSystemUserMergedConfig(false),
       } as SystemConfigWithDebugData; // no debug data available in this case
     }
 

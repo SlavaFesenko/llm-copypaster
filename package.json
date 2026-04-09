@@ -2,7 +2,7 @@
   "name": "llm-copypaster",
   "displayName": "LLM Copypaster",
   "description": "Copy project and file context with reusable instructions to any AI via clipboard, then apply the AI response back to your files.",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "repository": {
     "type": "git",
     "url": "[https://github.com/SlavaFesenko/llm-copypaster.git](https://github.com/SlavaFesenko/llm-copypaster.git)"

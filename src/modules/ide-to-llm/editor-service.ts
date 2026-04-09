@@ -216,7 +216,7 @@ export class EditorService {
       return;
     }
 
-    const config = await this._deps.configService.getSystemUserMergedConfig();
+    const config = await this._deps.configService.getSystemUserMergedConfig(true);
     const fileItems = args.selectionFileItems;
 
     const instructionsText = await new InstructionsBuilder(this._deps.extensionContext, config).build();

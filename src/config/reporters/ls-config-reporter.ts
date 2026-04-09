@@ -22,7 +22,7 @@ export interface BuildLsConfigReportTextArgs {
 export async function buildLsConfigReportText(args: BuildLsConfigReportTextArgs): Promise<string> {
   const systemConfig = await args.configService.getSystemConfig();
   const userConfig = await readUserConfig();
-  const basePublicConfig = await args.configService.getSystemUserMergedConfig();
+  const basePublicConfig = await args.configService.getSystemUserMergedConfig(false);
   const overrideOptions = args.configService.presetOptions ?? [];
 
   const preparedOverrideReportEntries = await buildPreparedOverrideReportEntries({

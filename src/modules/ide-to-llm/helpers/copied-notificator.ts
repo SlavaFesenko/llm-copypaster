@@ -25,8 +25,9 @@ export class CopiedNotificator {
     let selectedProfileIds: string[] = [];
     let currentPromptText = args.promptText;
     let isTechPromptErased = false;
-    let currentMergedConfigResult: SystemConfigWithDebugData =
-      await this._deps.configService.getSystemUserMergedConfigByOverrideIds(selectedProfileIds);
+    let currentMergedConfigResult: SystemConfigWithDebugData = {
+      targetConfig: await this._deps.configService.getSystemUserMergedConfig(false), // if we're here - config already validated
+    };
 
     while (true) {
       const effectiveConfig = currentMergedConfigResult.targetConfig;

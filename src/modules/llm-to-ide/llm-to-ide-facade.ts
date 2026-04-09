@@ -24,7 +24,7 @@ export class LlmToIdeFacade {
 
   public async applyClipboardToFiles(): Promise<void> {
     const clipboardText = await vscode.env.clipboard.readText();
-    const config = await this._configService.getSystemUserMergedConfig();
+    const config = await this._configService.getSystemUserMergedConfig(false);
     const rawLlmOutputParser = new RawLlmOutputParser(config);
 
     let parsedFilesPayload: FilesPayload;
