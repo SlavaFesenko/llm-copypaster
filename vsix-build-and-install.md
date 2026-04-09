@@ -4,7 +4,7 @@ LLM Copypaster: build + install local VSIX
 
 # 2) npx vsce package -o Compiled/llm-copypaster-0.14.0.vsix
 
-# 3) Extension Tab -> ... > Install from .VSIX
+# 3) Extension Tab -> ... > Install from .VSIX (C:\Users\Viacheslav_Fesenko\Documents\GitHub\llm-copypaster\Compiled)
 
 CLI (may not work properly): code --install-extension ./Compiled/llm-copypaster-0.11.0.vsix
 
