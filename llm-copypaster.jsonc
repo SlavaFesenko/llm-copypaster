@@ -1,19 +1,18 @@
 // Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig (TODO: when release ext - add url of the file)
 // NOTE: if you don’t want to “show” the file in git, add `/llm-copypaster.jsonc` to `.git/info/exclude`
-// todo: show warning if config can't be parsed, let's say when required param (profile version) was not defined or so
 {
-  "coreSettings": {
-    "instructionsAndVariables": {
+  "presetDependentSettings": {
+    "instructionsSettings": {
       "instructionsById": {
         "llm-response-rules": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\llm-response-rules.liquid",
           "skip": false,
-          "showInOverrideMode": true,
+          "showInPresetsMode": true,
         },
         "web-git": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\web-git.liquid",
           "skip": false,
-          "showInOverrideMode": true,
+          "showInPresetsMode": true,
         },
         "forget-response-rules": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\quick-instructions\\forget-response-rules.liquid",
@@ -26,8 +25,8 @@
           "showInQuickInstructionMode": true,
         },
       },
-      "sharedVariablesById": {
-        "WEB_GIT_PROMPT_IGNORE": "LLM_CPP_CFG.coreSettings.instructionsAndVariables.instructionsById.web-git.skip",
+      "variablesById": {
+        "WEB_GIT_PROMPT_IGNORE": "presetDependentSettings.instructionsSettings.instructionsById.web-git.skip",
         "WEB_GIT_PROMPT_NAME": "Web Git Rules",
         "BRANCH_NAME": "master",
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
@@ -38,11 +37,11 @@
       },
     },
   },
-  "overridesById": {
+  "presetsById": {
     "Disallow IS_REMOTE_FILE_EDIT_ALLOWED": {
-      "coreSettings": {
-        "instructionsAndVariables": {
-          "sharedVariablesById": {
+      "presetDependentSettings": {
+        "instructionsSettings": {
+          "variablesById": {
             "IS_REMOTE_FILE_EDIT_ALLOWED": "false",
           },
         },
@@ -50,10 +49,10 @@
     },
 
     "Skip web-git-prompt": {
-      "coreSettings": {
-        "instructionsAndVariables": {
+      "presetDependentSettings": {
+        "instructionsSettings": {
           "instructionsById": {
-            "web-git-prompt": {
+            "web-git": {
               "skip": true,
             },
           },
@@ -62,9 +61,9 @@
     },
 
     "Change AUTHOR_REPO": {
-      "coreSettings": {
-        "instructionsAndVariables": {
-          "sharedVariablesById": {
+      "presetDependentSettings": {
+        "instructionsSettings": {
+          "variablesById": {
             "AUTHOR_REPO": "AnotherAuthor",
           },
         },
