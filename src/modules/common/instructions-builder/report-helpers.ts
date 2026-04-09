@@ -25,7 +25,7 @@ export async function buildAndShowNotification(args: {
   issuesCount: number;
 }): Promise<void> {
   const selection = await vscode.window.showWarningMessage(
-    `Tech prompt resolve issues detected: ${args.issuesCount} error(s)`,
+    `Tech prompt resolve issues detected: ${args.issuesCount} issues(s)`,
     'Show Report'
   );
 
