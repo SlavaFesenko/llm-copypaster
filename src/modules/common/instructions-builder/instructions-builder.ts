@@ -104,6 +104,7 @@ export class InstructionsBuilder {
         if (args.mode === InstructionsBuilderMode.Override && !instructionDetails.showInPresetsMode) return false;
         if (args.mode === InstructionsBuilderMode.QuickInstruction && !instructionDetails.showInQuickInstructionMode)
           return false;
+
         return true;
       })
       .map(([instructionId]) => instructionId);
