@@ -37,7 +37,7 @@ export class ConfigValidator {
     systemConfig: SystemConfig,
     userConfig: UserConfig | null,
     overrideIds?: string[]
-  ): Promise<SystemConfig> {
+  ): Promise<boolean> {
     const aggregatedValidationResult = this._buildAggregatedValidationResult(
       targetConfig,
       this._buildTargetConfigName(overrideIds),
@@ -48,27 +48,27 @@ export class ConfigValidator {
     if (aggregatedValidationResult.criticalIssues.length) {
       await this._showCriticalIssuesToast(aggregatedValidationResult);
 
-      return systemConfig;
+      return false;
     }
 
     if (aggregatedValidationResult.warningIssues.length) {
       await this._showWarningIssuesToast(aggregatedValidationResult, targetConfig);
 
-      return targetConfig;
+      return true;
     }
 
     // no need to spam user in case he doesn't have user-config and system config is not seriously wrong for some buggy reason
-    if (userConfig === null) return targetConfig;
+    if (userConfig === null) return true;
 
     if (aggregatedValidationResult.recommendationIssues.length) {
       await this._showStartupRecommendationIssuesToast(aggregatedValidationResult, targetConfig);
 
-      return targetConfig;
+      return true;
     }
 
     if (!this._hasShownStartupNoIssuesToast) await this._showStartupNoIssuesToast(targetConfig);
 
-    return targetConfig;
+    return true;
   }
 
   private _buildTargetConfigName(overrideIds?: string[]): string {

@@ -50,7 +50,9 @@ export class ConfigService {
 
     if (!shouldRunValidation) return refVarResolvedConfig;
 
-    return await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig);
+    const isConfigValid = await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig);
+
+    return isConfigValid ? refVarResolvedConfig : systemConfig;
   }
 
   public async getSystemUserMergedConfigByOverrideIds(presetIds?: string[]): Promise<SystemConfigWithDebugData> {
@@ -78,17 +80,18 @@ export class ConfigService {
 
     const refVarResolvedConfig = this._configRefVarsResolver.resolve(multiPresetsConfig);
 
-    const validatedConfig = await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig, presetIds);
+    const isConfigValid = await this._configValidator.validate(refVarResolvedConfig, systemConfig, userConfig, presetIds);
+    const targetConfig = isConfigValid ? refVarResolvedConfig : systemConfig;
 
     return {
-      targetConfig: validatedConfig,
+      targetConfig,
       debugData: buildMergedConfigDebugData({
         presetOptions: this.presetOptions,
         activeOverrideIds: presetIds,
         systemConfig,
         userConfig,
         systemUserMergedConfig,
-        mergedConfig: validatedConfig,
+        mergedConfig: targetConfig,
       }),
     };
   }
