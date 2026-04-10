@@ -1,6 +1,20 @@
 // Workspace config file for LLM Copypaster based on LlmCopypasterUserConfig (TODO: when release ext - add url of the file)
 // NOTE: if you don’t want to “show” the file in git, add `/llm-copypaster.jsonc` to `.git/info/exclude`
 {
+  "presetIndependentSettings": {
+    "allowOutsideWorkspaceRead": true,
+    "allowOutsideWorkspaceWrite": true,
+    "vitalParsingAnchors": {
+      "END_OF_OUTPUT_ANCHOR": "## LLM-CPP-EOF-OUTPUT", // set null when there's a trouble with this flag "## LLM-CPP-EOF-OUTPUT"
+    },
+    "notificationSettings": {
+      "configValidation": {
+        "suppressWarningIssuesToast": false,
+        "suppressRecommendationIssuesToast": false,
+        "suppressNoIssuesToast": false,
+      },
+    },
+  },
   "presetDependentSettings": {
     "instructionsSettings": {
       "instructionsById": {
