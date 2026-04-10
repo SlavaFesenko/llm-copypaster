@@ -298,36 +298,41 @@ export function mapLlmToIdeSanitizationRulesById(
   baseRulesById: Record<string, LlmToIdeSanitizationRuleConfig>,
   userRulesById: Record<string, LlmToIdeSanitizationRuleUserConfig>
 ): Record<string, LlmToIdeSanitizationRuleConfig> {
+  // 1: Start from a shallow copy so untouched base rules stay in the final map
   const nextRulesById: Record<string, LlmToIdeSanitizationRuleConfig> = { ...baseRulesById };
 
+  // 2: Then process only rule ids explicitly provided by the user if any
   for (const ruleId of Object.keys(userRulesById)) {
     const baseRule = baseRulesById[ruleId];
     const userRule = userRulesById[ruleId];
 
-    if (!baseRule) {
-      if (
-        userRule.regexPattern === undefined ||
-        userRule.replaceWith === undefined ||
-        userRule.skipForLanguages === undefined ||
-        userRule.skipForPaths === undefined
-      )
-        continue;
-
+    // 2-a: If baseRule was found by key, update only fields explicitly provided by the user
+    if (baseRule !== undefined) {
       nextRulesById[ruleId] = {
-        regexPattern: userRule.regexPattern,
-        replaceWith: userRule.replaceWith,
-        skipForLanguages: userRule.skipForLanguages,
-        skipForPaths: userRule.skipForPaths,
+        regexPattern: mergeOptionalValue(baseRule.regexPattern, userRule.regexPattern),
+        replaceWith: mergeOptionalValue(baseRule.replaceWith, userRule.replaceWith),
+        skipForLanguages: mergeOptionalValue(baseRule.skipForLanguages, userRule.skipForLanguages),
+        skipForPaths: mergeOptionalValue(baseRule.skipForPaths, userRule.skipForPaths),
       };
 
       continue;
     }
 
+    // 2-b: If baseRule was not found by key, treat it as a NEW rule candidate
+    if (
+      userRule.regexPattern === undefined ||
+      userRule.replaceWith === undefined ||
+      userRule.skipForLanguages === undefined ||
+      userRule.skipForPaths === undefined
+    )
+      continue; // If at least one required field is missing for a new rule, skip it
+
+    // 2-c: All required fields are present, so add a new rule
     nextRulesById[ruleId] = {
-      regexPattern: mergeOptionalValue(baseRule.regexPattern, userRule.regexPattern),
-      replaceWith: mergeOptionalValue(baseRule.replaceWith, userRule.replaceWith),
-      skipForLanguages: mergeOptionalValue(baseRule.skipForLanguages, userRule.skipForLanguages),
-      skipForPaths: mergeOptionalValue(baseRule.skipForPaths, userRule.skipForPaths),
+      regexPattern: userRule.regexPattern,
+      replaceWith: userRule.replaceWith,
+      skipForLanguages: userRule.skipForLanguages,
+      skipForPaths: userRule.skipForPaths,
     };
   }
 
