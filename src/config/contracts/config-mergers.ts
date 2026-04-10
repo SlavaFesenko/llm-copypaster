@@ -222,10 +222,10 @@ export function mergeInstructionsSettingsConfig(
   const baseReferencesById = baseConfig.referencesById;
   const baseInstructionsById = baseConfig.instructionsById;
 
-  const nextVariablesById = { ...baseVariablesById, ...(userConfig.variablesById ?? {}) };
+  const nextVariablesById = { ...baseVariablesById, ...userConfig.variablesById };
   const nextReferencesById = {
     ...baseReferencesById,
-    ...(userConfig.referencesById ?? {}),
+    ...userConfig.referencesById,
   };
   const nextInstructionsById = mapInstructionsById(baseInstructionsById, userConfig.instructionsById ?? {});
 
