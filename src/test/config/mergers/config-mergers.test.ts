@@ -1,6 +1,6 @@
-import { suite, test } from 'mocha';
+// import * as assert from 'node:assert';
 import assert from 'node:assert/strict';
-
+// import test, { suite } from 'node:test';
 import { mapLlmToIdeSanitizationRulesById } from '../../../config/contracts/config-mergers';
 import { buildMapLlmToIdeSanitizationRulesByIdCases } from './cases/map-llm-to-ide-sanitization-rules-by-id-cases';
 
