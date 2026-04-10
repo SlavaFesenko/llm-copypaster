@@ -14,26 +14,28 @@ export function applySanitizationRules(
 
   const sanitizationRulesById = config.presetDependentSettings.llmToIdeSanitizationRulesById;
 
-  for (const [ruleId, ruleConfig] of Object.entries(sanitizationRulesById)) {
-    if (isRuleDisabledForFile(ruleConfig, fileMeta)) continue;
+  for (const [_, rule] of Object.entries(sanitizationRulesById)) {
+    if (rule.skip) continue;
 
-    const regexp = new RegExp(ruleConfig.regexPattern, 'g');
-    outputText = outputText.replace(regexp, ruleConfig.replaceWith);
+    if (isRuleDisabledForFile(rule.skipForLanguages, rule.skipForPaths, fileMeta)) continue;
+
+    const regexp = new RegExp(rule.regexPattern, rule.regexFlags ?? '');
+
+    outputText = outputText.replace(regexp, rule.replaceWith);
   }
 
   return outputText;
 }
 
 function isRuleDisabledForFile(
-  rule: { skipForLanguages?: string[]; skipForPaths?: string[] },
+  skipForLanguages: string[] | null,
+  skipForPaths: string[] | null,
   fileMeta: ApplySanitizationRulesFileMeta
 ): boolean {
-  const skipForLanguages = rule.skipForLanguages ?? [];
-  const skipForPaths = rule.skipForPaths ?? [];
+  // Null means "no filter configured"
+  if (fileMeta.languageId && skipForLanguages?.includes(fileMeta.languageId)) return true;
 
-  if (fileMeta.languageId && skipForLanguages.includes(fileMeta.languageId)) return true;
-
-  for (const skipPathPrefix of skipForPaths) {
+  for (const skipPathPrefix of skipForPaths ?? []) {
     if (fileMeta.path.startsWith(skipPathPrefix)) return true;
   }
 

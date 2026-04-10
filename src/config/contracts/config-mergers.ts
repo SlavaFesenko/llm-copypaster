@@ -293,42 +293,40 @@ export function mapLlmToIdeSanitizationRulesById(
   baseRulesById: Record<string, LlmToIdeSanitizationRuleConfig>,
   userRulesById: Record<string, LlmToIdeSanitizationRuleUserConfig>
 ): Record<string, LlmToIdeSanitizationRuleConfig> {
-  // 1: Start from a shallow copy so untouched base rules stay in the final map
+  // Start from a shallow copy so untouched base rules stay in the final map
   const nextRulesById: Record<string, LlmToIdeSanitizationRuleConfig> = { ...baseRulesById };
 
-  // 2: Then process only rule ids explicitly provided by the user if any
   for (const ruleId of Object.keys(userRulesById)) {
     const baseRule = baseRulesById[ruleId];
     const userRule = userRulesById[ruleId];
 
-    // 2-a: If baseRule was found by key, update only fields explicitly provided by the user
-    if (baseRule !== undefined) {
+    // NEW RULE CASE (record id not matched)
+    if (baseRule === undefined) {
+      // New rules require only business-mandatory fields - if this violated they're skipped
+      if (userRule.regexPattern === undefined || userRule.replaceWith === undefined) continue;
+
+      // Optional filters are normalized to null in system config
       nextRulesById[ruleId] = {
+        skip: userRule.skip ?? false,
+        regexPattern: userRule.regexPattern,
+        replaceWith: userRule.replaceWith,
+        regexFlags: userRule.regexFlags ?? null,
+        skipForLanguages: userRule.skipForLanguages ?? null,
+        skipForPaths: userRule.skipForPaths ?? null,
+      };
+    }
+
+    // EXISTING RULE (id-match) acts patch-like: not specified prop will be skipped, if null for allowed fields - null will be applied
+    else {
+      nextRulesById[ruleId] = {
+        skip: mergeOptionalValue(baseRule.skip, userRule.skip),
         regexPattern: mergeOptionalValue(baseRule.regexPattern, userRule.regexPattern),
+        regexFlags: mergeOptionalValue(baseRule.regexFlags, userRule.regexFlags),
         replaceWith: mergeOptionalValue(baseRule.replaceWith, userRule.replaceWith),
         skipForLanguages: mergeOptionalValue(baseRule.skipForLanguages, userRule.skipForLanguages),
         skipForPaths: mergeOptionalValue(baseRule.skipForPaths, userRule.skipForPaths),
       };
-
-      continue;
     }
-
-    // 2-b: If baseRule was not found by key, treat it as a NEW rule candidate
-    if (
-      userRule.regexPattern === undefined ||
-      userRule.replaceWith === undefined ||
-      userRule.skipForLanguages === undefined ||
-      userRule.skipForPaths === undefined
-    )
-      continue; // If at least one required field is missing for a new rule, skip it
-
-    // 2-c: All required fields are present, so add a new rule
-    nextRulesById[ruleId] = {
-      regexPattern: userRule.regexPattern,
-      replaceWith: userRule.replaceWith,
-      skipForLanguages: userRule.skipForLanguages,
-      skipForPaths: userRule.skipForPaths,
-    };
   }
 
   return nextRulesById;

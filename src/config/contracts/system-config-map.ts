@@ -185,10 +185,16 @@ const instructionSkipConfigPathNode = buildConfigFieldPathNode('skip');
 const instructionShowInPresetsModeConfigPathNode = buildConfigFieldPathNode('showInPresetsMode');
 const instructionShowInQuickInstructionModeConfigPathNode = buildConfigFieldPathNode('showInQuickInstructionMode');
 
+const llmToIdeSanitizationRuleSkipConfigPathNode = buildConfigFieldPathNode('skip');
 const llmToIdeSanitizationRuleRegexPatternConfigPathNode = buildConfigFieldPathNode('regexPattern');
 const llmToIdeSanitizationRuleReplaceWithConfigPathNode = buildConfigFieldPathNode('replaceWith');
+const llmToIdeSanitizationRuleRegexFlagsConfigPathNode = buildConfigFieldPathNode('regexFlags');
 const llmToIdeSanitizationRuleSkipForLanguagesConfigPathNode = buildConfigFieldPathNode('skipForLanguages');
 const llmToIdeSanitizationRuleSkipForPathsConfigPathNode = buildConfigFieldPathNode('skipForPaths');
+
+export const systemSanitizationRulesIdsMap = {
+  stripCodefence: 'strip-codefence',
+} as const;
 
 export const systemConfigMap = {
   llmCopypasterConfig: systemConfigPathNode,
@@ -261,8 +267,10 @@ export const systemConfigMap = {
     showInQuickInstructionMode: instructionShowInQuickInstructionModeConfigPathNode,
   },
   llmToIdeSanitizationRule: {
-    regexPattern: llmToIdeSanitizationRuleRegexPatternConfigPathNode,
+    skip: llmToIdeSanitizationRuleSkipConfigPathNode,
+    regexFlags: llmToIdeSanitizationRuleRegexFlagsConfigPathNode,
     replaceWith: llmToIdeSanitizationRuleReplaceWithConfigPathNode,
+    regexPattern: llmToIdeSanitizationRuleRegexPatternConfigPathNode,
     skipForLanguages: llmToIdeSanitizationRuleSkipForLanguagesConfigPathNode,
     skipForPaths: llmToIdeSanitizationRuleSkipForPathsConfigPathNode,
   },

@@ -9,6 +9,8 @@ interface ApplyUserConfigTestCase {
 }
 
 export function buildApplyUserConfigCases(): ApplyUserConfigTestCase[] {
+  const stripCodeFenceTestRuleId = 'strip-codefence-test';
+
   return [
     {
       name: 'preserves untouched dependent settings while applying only preset independent overrides',
@@ -70,8 +72,10 @@ export function buildApplyUserConfigCases(): ApplyUserConfigTestCase[] {
             },
           },
           llmToIdeSanitizationRulesById: {
-            'strip-codefence': {
+            [stripCodeFenceTestRuleId]: {
+              skip: false,
               regexPattern: String.raw`\`\`\`[\s\S]*?\`\`\``,
+              regexFlags: 'g',
               replaceWith: '',
               skipForLanguages: ['markdown'],
               skipForPaths: ['docs/'],
@@ -145,8 +149,10 @@ export function buildApplyUserConfigCases(): ApplyUserConfigTestCase[] {
             },
           },
           llmToIdeSanitizationRulesById: {
-            'strip-codefence': {
+            [stripCodeFenceTestRuleId]: {
+              skip: false,
               regexPattern: String.raw`\`\`\`[\s\S]*?\`\`\``,
+              regexFlags: 'g',
               replaceWith: '',
               skipForLanguages: ['markdown'],
               skipForPaths: ['docs/'],

@@ -4,6 +4,8 @@ import {
   nonEmptyStringSchema,
   nonNegativeIntegerSchema,
   positiveFiniteNumberSchema,
+  regexFlagsSchema,
+  regexLikeStringSchema,
 } from '../helpers/zod-shared-schemas';
 import { systemConfigMap } from './system-config-map';
 
@@ -163,15 +165,19 @@ export const instructionConfigSchema = z.object({
 }) satisfies z.ZodType<InstructionConfig>;
 
 export interface LlmToIdeSanitizationRuleConfig {
+  skip: boolean;
   regexPattern: string;
   replaceWith: string;
-  skipForLanguages: string[];
-  skipForPaths: string[];
+  regexFlags: string | null;
+  skipForLanguages: string[] | null;
+  skipForPaths: string[] | null;
 }
 
 export const llmToIdeSanitizationRuleConfigSchema = z.object({
-  [systemConfigMap.llmToIdeSanitizationRule.regexPattern.name]: nonEmptyStringSchema,
-  [systemConfigMap.llmToIdeSanitizationRule.replaceWith.name]: z.string(),
-  [systemConfigMap.llmToIdeSanitizationRule.skipForLanguages.name]: z.array(nonEmptyStringSchema),
-  [systemConfigMap.llmToIdeSanitizationRule.skipForPaths.name]: z.array(nonEmptyStringSchema),
+  [systemConfigMap.llmToIdeSanitizationRule.skip.name]: z.boolean(),
+  [systemConfigMap.llmToIdeSanitizationRule.regexPattern.name]: regexLikeStringSchema,
+  [systemConfigMap.llmToIdeSanitizationRule.replaceWith.name]: z.string(), // empty string is valid for this case
+  [systemConfigMap.llmToIdeSanitizationRule.regexFlags.name]: regexFlagsSchema.nullable(),
+  [systemConfigMap.llmToIdeSanitizationRule.skipForLanguages.name]: z.array(nonEmptyStringSchema).nullable(),
+  [systemConfigMap.llmToIdeSanitizationRule.skipForPaths.name]: z.array(nonEmptyStringSchema).nullable(),
 }) satisfies z.ZodType<LlmToIdeSanitizationRuleConfig>;

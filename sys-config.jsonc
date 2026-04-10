@@ -37,7 +37,9 @@
     },
     "llmToIdeSanitizationRulesById": {
       "strip-codefence": {
+        "skip": false,
         "regexPattern": "`{3}[^\\r\\n]*",
+        "regexFlags": "g",
         "replaceWith": "",
         "skipForLanguages": ["markdown"],
         "skipForPaths": ["docs/"],

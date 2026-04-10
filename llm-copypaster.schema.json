@@ -196,6 +196,9 @@
           "additionalProperties": {
             "type": "object",
             "properties": {
+              "skip": {
+                "type": "boolean"
+              },
               "regexPattern": {
                 "type": "string",
                 "minLength": 1
@@ -203,19 +206,43 @@
               "replaceWith": {
                 "type": "string"
               },
+              "regexFlags": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "skipForLanguages": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "skipForPaths": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "additionalProperties": false
@@ -366,6 +393,9 @@
                 "additionalProperties": {
                   "type": "object",
                   "properties": {
+                    "skip": {
+                      "type": "boolean"
+                    },
                     "regexPattern": {
                       "type": "string",
                       "minLength": 1
@@ -373,19 +403,43 @@
                     "replaceWith": {
                       "type": "string"
                     },
+                    "regexFlags": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "skipForLanguages": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "minLength": 1
-                      }
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "skipForPaths": {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "minLength": 1
-                      }
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     }
                   },
                   "additionalProperties": false

@@ -4,6 +4,7 @@ import {
   nonEmptyStringSchema,
   nonNegativeIntegerSchema,
   positiveFiniteNumberSchema,
+  regexFlagsSchema,
 } from '../helpers/zod-shared-schemas';
 
 // This file intentionally keeps user-config Zod schema isolated from system-config Zod schema
@@ -177,17 +178,21 @@ export const instructionUserConfigSchema = z.strictObject({
 }) satisfies z.ZodType<InstructionUserConfig>;
 
 export interface LlmToIdeSanitizationRuleUserConfig {
+  skip?: boolean;
   regexPattern?: string;
   replaceWith?: string;
-  skipForLanguages?: string[];
-  skipForPaths?: string[];
+  regexFlags?: string | null;
+  skipForLanguages?: string[] | null;
+  skipForPaths?: string[] | null;
 }
 
 export const llmToIdeSanitizationRuleUserConfigSchema = z.strictObject({
+  skip: z.boolean().optional(),
   regexPattern: nonEmptyStringSchema.optional(),
   replaceWith: z.string().optional(),
-  skipForLanguages: z.array(nonEmptyStringSchema).optional(),
-  skipForPaths: z.array(nonEmptyStringSchema).optional(),
+  regexFlags: regexFlagsSchema.nullable().optional(),
+  skipForLanguages: z.array(nonEmptyStringSchema).nullable().optional(),
+  skipForPaths: z.array(nonEmptyStringSchema).nullable().optional(),
 }) satisfies z.ZodType<LlmToIdeSanitizationRuleUserConfig>;
 
 export interface PresetUserConfig {

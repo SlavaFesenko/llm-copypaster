@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 
 import { ConfigService } from '../../config/config-service';
 import { LlmToIdeSanitizationRuleConfig, SystemConfig } from '../../config/contracts/system-config-contracts';
+import { systemSanitizationRulesIdsMap } from '../../config/contracts/system-config-map';
 import { applySanitizationRules } from '../../modules/llm-to-ide/sanitization/sanitizers/apply-sanitization-rules';
 import { buildStripCodefenceCases } from './cases/strip-codefence-cases';
 
@@ -13,9 +14,9 @@ suite('applySanitizationRules', () => {
 
     // Read the rule from the current config shape used by the sanitization pipeline
     const stripCodefenceRule: LlmToIdeSanitizationRuleConfig | undefined =
-      systemConfig.presetDependentSettings.llmToIdeSanitizationRulesById['strip-codefence'];
+      systemConfig.presetDependentSettings.llmToIdeSanitizationRulesById[systemSanitizationRulesIdsMap.stripCodefence];
 
-    assert.ok(stripCodefenceRule, 'strip-codefence rule was not found in current system config');
+    assert.ok(stripCodefenceRule, `"${systemSanitizationRulesIdsMap.stripCodefence}" rule was not found in system config`);
 
     const config: SystemConfig = {
       ...systemConfig,
@@ -23,7 +24,7 @@ suite('applySanitizationRules', () => {
         ...systemConfig.presetDependentSettings,
         // Limit the test config to the single target rule to keep assertions focused
         llmToIdeSanitizationRulesById: {
-          'strip-codefence': stripCodefenceRule,
+          [systemSanitizationRulesIdsMap.stripCodefence]: stripCodefenceRule,
         },
       },
     };
