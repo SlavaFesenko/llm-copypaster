@@ -268,16 +268,11 @@ export function mapInstructionsById(
     nextInstructionsById[instructionId] = {
       path: mergeOptionalValue(baseInstruction.path, userInstruction.path),
       skip: mergeOptionalValue(baseInstruction.skip, userInstruction.skip),
-      // Preserve the base flag when the user did not specify a preset-dependent value explicitly
-      showInPresetsMode:
-        userInstruction.showInPresetsMode === undefined
-          ? baseInstruction.showInPresetsMode
-          : userInstruction.showInPresetsMode,
-      // Preserve the base flag when the user did not specify a preset-dependent value explicitly
-      showInQuickInstructionMode:
-        userInstruction.showInQuickInstructionMode === undefined
-          ? baseInstruction.showInQuickInstructionMode
-          : userInstruction.showInQuickInstructionMode,
+      showInPresetsMode: mergeOptionalValue(baseInstruction.showInPresetsMode, userInstruction.showInPresetsMode),
+      showInQuickInstructionMode: mergeOptionalValue(
+        baseInstruction.showInQuickInstructionMode,
+        userInstruction.showInQuickInstructionMode
+      ),
     };
   }
 
