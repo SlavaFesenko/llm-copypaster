@@ -16,7 +16,7 @@
       "configValidation": {
         "suppressWarningIssuesToast": false,
         "suppressRecommendationIssuesToast": false,
-        "suppressNoIssuesToast": false,
+        "suppressNoIssuesToast": true,
       },
     },
   },
