@@ -24,7 +24,7 @@
           "showInPresetsMode": true,
         },
         "codestyle-rules-local": {
-          "path": "user-instructions/codestyle-rules.liquid",
+          "path": ".user-instructions/codestyle-rules.liquid",
           "skip": false,
           "showInPresetsMode": true,
         },
