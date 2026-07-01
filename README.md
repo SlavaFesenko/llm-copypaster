@@ -46,8 +46,26 @@ TODO: show an example `llm-copypaster.json` with simple overrides compared to th
 
 The key feature of the extension is not just copying files to the clipboard, but automatically adding project-specific instructions.
 
-This is what makes the workflow genuinely useful:
+### Dynamic Overrides - Cover every context gathering case
 
-- the model receives not only code, but also the relevant project rules
-- each project can have its own instruction set
-- the same extension remains useful across different teams, repositories and LLM tools
+Each Copy Action applies the default config. But when you need to tweak something for a specific context-gathering case, you can prepare it beforehand by adding a config override.
+
+Because, let’s be honest, sooner or later every dev needs “almost the same thing, but slightly different this time”.
+
+![Override](resources/images/override.png)
+
+### Quick Instructions
+
+Built-in quick instructions are like a tiny prompt notepad inside VS Code: useful user prompts that are not important enough to become full-blown skills or commands.
+
+One shortcut, pick the needed quick instruction, and the prompt is copied/appended to the clipboard. No digging through random notes, no “where did I save that prompt again?” adventure.
+
+![Quick Instructions](resources/images/quick_instructions.png)
+
+### Enhanced Debugging & Tracing
+
+Because the extension uses a pretty flexible user-managed three-level config, plus a bunch of read/write operations with the file system, it is kind of vital to understand what went wrong and why without taking a round-the-world trip through the console.
+
+Whenever I personally tripped over something, I added convenient ways to figure out what happened. At least convenient from my point of view, which is legally close enough 😄
+
+I’m not adding a screenshot here because there are quite a few such places.
