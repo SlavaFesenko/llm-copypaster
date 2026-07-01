@@ -28,9 +28,13 @@ TODO: gif/youtube with the basic copy-paste scenario: show `Copy This File` from
 
 ### IDE ←→ LLM Flow
 
+![Editor Context Menu Options](resources/images/context_menu_options.png)
+
 The extension lets you quickly collect context from files and folders directly from VS Code using editor and explorer menu commands.
 
 The basic scenarios include copying the current file, files from the current tab group, selected files or folders, and applying clipboard content back into the project. Other commands are close variations of the same workflow.
+
+![Solution Explorer - Any selection strategies](resources/images/solution_explorer_option.png)
 
 The extension can take an LLM response from the clipboard and apply it back to project files using the `Paste Clipboard to Files` command.
 
