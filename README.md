@@ -42,6 +42,14 @@ The extension can take an LLM response from the clipboard and apply it back to p
 
 TODO: show an example `llm-copypaster.json` with simple overrides compared to the system config, and demonstrate how it affects the final generated prompt.
 
+### Dynamic Overrides
+
+Each Copy Action applies the default config. But when you need to tweak something for a specific context-gathering case, you can prepare it beforehand by adding a config override.
+
+Because, let’s be honest, sooner or later every dev needs “almost the same thing, but slightly different this time”.
+
+![Override](resources/images/override.png)
+
 ### Instructions (aka Commands/Skills)
 
 The extension can automatically add project instructions to the copied context. Instead of keeping the same rules in random markdown files, notes or half-forgotten chat bookmarks, you store instruction texts in physical files, register those files in the config, and let LLM Copypaster attach them automatically — unless this behavior is disabled in the project config.
@@ -58,14 +66,6 @@ In other words: the instruction stays reusable, and the config decides how it sh
 
 ![Liquid.js Logic](resources/images/liquid-js-logic.png)
 
-### Dynamic Overrides
-
-Each Copy Action applies the default config. But when you need to tweak something for a specific context-gathering case, you can prepare it beforehand by adding a config override.
-
-Because, let’s be honest, sooner or later every dev needs “almost the same thing, but slightly different this time”.
-
-![Override](resources/images/override.png)
-
 ### Quick Instructions
 
 Built-in quick instructions are like a tiny prompt notepad inside VS Code: useful user prompts that are not important enough to become full-blown skills or commands.
@@ -73,6 +73,8 @@ Built-in quick instructions are like a tiny prompt notepad inside VS Code: usefu
 One shortcut, pick the needed quick instruction, and the prompt is copied/appended to the clipboard. No digging through random notes, no “where did I save that prompt again?” adventure.
 
 ![Quick Instructions](resources/images/quick_instructions.png)
+
+Guess what? These instructions support LiquidJS too!
 
 ### Enhanced Debugging & Tracing
 
