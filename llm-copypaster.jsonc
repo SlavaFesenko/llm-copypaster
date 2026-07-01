@@ -18,29 +18,29 @@
   "presetDependentSettings": {
     "instructionsSettings": {
       "instructionsById": {
-        "llm-response-rules": {
-          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\llm-response-rules.liquid",
-          "skip": false,
-          "showInPresetsMode": true,
-        },
         "codestyle-rules-local": {
           "path": ".user-instructions/codestyle-rules.liquid",
           "skip": false,
           "showInPresetsMode": true,
         },
+        "llm-response-rules": {
+          "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\llm-response-rules.liquid",
+          "skip": true,
+          "showInPresetsMode": true,
+        },
         "web-git": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\web-git.liquid",
-          "skip": false,
+          "skip": true,
           "showInPresetsMode": true,
         },
         "forget-response-rules": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\quick-instructions\\forget-response-rules.liquid",
-          "skip": false,
+          "skip": true,
           "showInQuickInstructionMode": true,
         },
         "return-only-provided-text": {
           "path": "C:\\Users\\Viacheslav_Fesenko\\Documents\\prompting-instructions\\quick-instructions\\return-only-provided-text.liquid",
-          "skip": false,
+          "skip": true,
           "showInQuickInstructionMode": true,
         },
       },
