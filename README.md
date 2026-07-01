@@ -2,9 +2,9 @@
 
 **Lightweight extension for developers who don’t want an AI agent to guess the context.**
 
-Instead of sending an unknown amount of project context to an AI agent, you explicitly choose which files, folders and project instructions should be included in the prompt. The extension then helps you copy that context to any LLM interface and apply structured responses back into your project.
-
 ![`LLM Copypaster` control flow](resources/images/control_flow.png)
+
+Instead of sending an unknown amount of project context to an AI agent, you explicitly choose which files, folders and project instructions should be included in the prompt. The extension then helps you copy that context to any LLM interface and apply structured responses back into your project.
 
 It works with ChatGPT, Claude, Gemini, local models, raw APIs, or any other LLM tool that can accept text input.
 
@@ -42,11 +42,23 @@ The extension can take an LLM response from the clipboard and apply it back to p
 
 TODO: show an example `llm-copypaster.json` with simple overrides compared to the system config, and demonstrate how it affects the final generated prompt.
 
-### Liquid Instructions (aka Commands/Skills)
+### Instructions (aka Commands/Skills)
 
-The key feature of the extension is not just copying files to the clipboard, but automatically adding project-specific instructions.
+The extension can automatically add project instructions to the copied context. Instead of keeping the same rules in random markdown files, notes or half-forgotten chat bookmarks, you store instruction texts in physical files, register those files in the config, and let LLM Copypaster attach them automatically — unless this behavior is disabled in the project config.
 
-### Dynamic Overrides - Cover every context gathering case
+![Instructions](resources/images/instructions.png)
+
+### Liquid.JS support in Instructions
+
+Instructions can be plain text, but they can also be written as [LiquidJS](https://liquidjs.com/) templates. This means an instruction file may contain variables, conditions and small formatting branches, while project-specific values stay in `llm-copypaster.jsonc`.
+
+For example, you can keep one shared instruction template somewhere on your PC, then tune its behavior per project through config: output format, response style, enabled sections, framework-specific rules, strictness level, or any other small difference that would otherwise force you to duplicate the whole prompt.
+
+In other words: the instruction stays reusable, and the config decides how it should behave in this exact project.
+
+![Liquid.js Logic](resources/images/liquid-js-logic.png)
+
+### Dynamic Overrides
 
 Each Copy Action applies the default config. But when you need to tweak something for a specific context-gathering case, you can prepare it beforehand by adding a config override.
 
