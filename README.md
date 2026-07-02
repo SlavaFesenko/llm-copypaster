@@ -24,17 +24,63 @@ Instead of asking an AI agent to guess the right context, you decide what should
 
 ![Explicit context collection with `LLM Copypaster`](resources/images/explicit_context_collection.png)
 
+## How to use
+
+### Step 1: Copy project context from VS Code
+
+Start by choosing exactly which files should be sent to the LLM.
+
+You can copy the current file, selected files or folders from Explorer, files from the current tab group, or all files collected by one of the available `LLM Copypaster` commands.
+
+After the copy action, the extension builds a prompt from the selected project files and registered instructions. The status notification shows how many files were copied, the approximate number of lines, and the estimated token count.
+
+![Step 1 - Copy Context](resources/images/how_to_steps/Step_1.png)
+
+### Step 2: Review the generated prompt
+
+Before sending anything to the LLM, you CAN (but don't have to, prompt is already copied to clipboard) open the generated prompt in an editor tab.
+
+This is useful when you want to verify what exactly was collected: project instructions, project context, selected file paths, and file contents. The prompt is just plain text, so nothing is hidden behind magic agent behavior.
+
+![Step 2 - Review Prompt](resources/images/how_to_steps/Step_2.png)
+
+### Step 3: Paste the prompt into your LLM and add the user request
+
+Paste the copied prompt into ChatGPT, Claude, Gemini, a local model, or any other LLM interface.
+
+Then add the actual task you want the model to perform. For example, you can ask it to update files, refactor code, replace values, add documentation, or make any other focused change based on the provided context.
+
+The important part is that the LLM receives both the selected project files and the output instructions needed to return a response in the `LLM-CPP-FILE` format.
+
+![Step 3 - Paste copied prompt and add user instruction](resources/images/how_to_steps/Step_3.png)
+
+### Step 4: Copy the full LLM response
+
+When the LLM finishes, copy the entire response, not only a single code block.
+
+The response should include the explanation block, every changed file in the `LLM-CPP-FILE` format, and the final `LLM-CPP-EOF-OUTPUT` anchor. The extension uses this structure to understand which files should be edited, created, or deleted.
+
+![Step 4 - Copy LLM response](resources/images/how_to_steps/Step_4.png)
+
+And yes, the obvious question is: “Does the LLM really always follow this output format?”
+
+Honestly, I’m still a bit shocked myself, but yes. I have used this extension for thousands of prompts, and the output format has not been broken even once. As long as the response instructions are included in the copied prompt, the model reliably returns the explanation block, structured `LLM-CPP-FILE` sections, and the final `LLM-CPP-EOF-OUTPUT` anchor.
+
+### Step 5: Paste the LLM response back to files
+
+Return to VS Code and run `LLM Copypaster: Paste Clipboard to Files`.
+
+The extension reads the structured response from your clipboard and applies the described changes to the project files. After that, you can review the result using the regular Git diff, stage the changes, and commit them like any other manual edit.
+
+![Step 5 - Paste to IDE](resources/images/how_to_steps/Step_5.png)
+
+> **WARNING:** Always review everything the LLM returned before committing it.
+>
+> `LLM Copypaster` applies the response exactly as structured, but it does not magically guarantee that the generated code is correct. Use Git diffs as the final source of truth.
+>
+> Personally, I recommend staging your current changes before every paste-shot. This way, after applying the LLM response, the diff shows only the latest generated changes. I use the same habit even when working with agentic tools like Codex, because clean diffs save nerves, time, and occasionally the whole evening ;=)
+
 ## Core capabilities
-
-The basic workflow is intentionally simple:
-
-1. Select files, folders or the current editor context in VS Code.
-2. Let `LLM Copypaster` build a structured prompt with project instructions and selected listings.
-3. Paste the prompt into any LLM interface you like.
-4. Copy the structured LLM response back to the clipboard.
-5. Apply it back into the project with `Paste Clipboard to Files`.
-
-The extension also supports project configs, reusable instructions, LiquidJS-powered prompt templates, quick instructions, dynamic overrides, custom parsing anchors and debugging helpers.
 
 ### IDE ←→ LLM Flow
 
@@ -107,6 +153,6 @@ Guess what? These instructions support LiquidJS too!
 
 Because the extension uses a pretty flexible user-managed three-level config, plus a bunch of read/write operations with the file system, it is kind of vital to understand what went wrong and why without taking a round-the-world trip through the console.
 
-Whenever I personally tripped over something, I added convenient ways to figure out what happened. At least convenient from my point of view, which is legally close enough 😄
+Whenever I personally tripped over something, I added convenient ways to figure out what happened. At least convenient from my point of view, which is legally close enough ;=)
 
 I’m not adding a screenshot here because there are quite a few such places.
