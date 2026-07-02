@@ -4,7 +4,7 @@
 
 ![`LLM Copypaster` control flow](resources/images/control_flow.png)
 
-Instead of sending an unknown amount of project context to an AI agent, you explicitly choose which files, folders and project instructions should be included in the prompt. The extension then helps you copy that context to any LLM interface and apply structured responses back into your project.
+Instead of sending an unknown amount of project context to an AI agent, you explicitly choose which files, folders, and project instructions should be included in the prompt. The extension then helps you copy that context to any LLM interface and apply structured responses back into your project.
 
 In short: `LLM Copypaster` is not trying to replace your favorite AI tool. It gives you a predictable copy → prompt → response → apply workflow around it.
 
@@ -14,7 +14,7 @@ It works with ChatGPT, Claude, Gemini, local models, raw APIs, or any other LLM 
 
 Codex, Cursor, Claude Code and similar tools can be amazing for projects with low to medium codebase complexity, vibe coding, experiments, prototypes, PoCs and fast exploration.
 
-But on mature projects, legacy systems or large codebases, fully agentic tools can easily produce pseudo-positive results: the generated code may look correct at first glance, but after a deeper review it often requires serious rework. In many cases, the problem is not the model itself, but the context: too much irrelevant code, missing project rules, hidden assumptions or automatically selected files that should not have been part of the prompt.
+But on mature projects, legacy systems or large codebases, fully agentic tools can easily produce results that only look correct at first glance: the generated code may seem fine initially, but after a deeper review it often requires serious rework. In many cases, the problem is not the model itself, but the context: too much irrelevant code, missing project rules, hidden assumptions or automatically selected files that should not have been part of the prompt.
 
 ![Noisy automatic context collection](resources/images/auto_context_collection.png)
 
@@ -38,7 +38,7 @@ After the copy action, the extension builds a prompt from the selected project f
 
 ### Step 2: Review the generated prompt
 
-Before sending anything to the LLM, you CAN (but don't have to, prompt is already copied to clipboard) open the generated prompt in an editor tab.
+Before sending anything to the LLM, you can optionally open the generated prompt in an editor tab. The prompt is already copied to the clipboard, so this step is only for review.
 
 This is useful when you want to verify what exactly was collected: project instructions, project context, selected file paths, and file contents. The prompt is just plain text, so nothing is hidden behind magic agent behavior.
 
@@ -121,7 +121,7 @@ Note that everything in the `presetDependentSettings` block may be changed by an
 
 ![Override Flow](resources/images/override_flow.png)
 
-> **WARNING:** Dynamic Override is temporary and applies only to the current copy shot. The next copy shot will use the default config again.
+> **WARNING:** Dynamic Override is temporary and applies only to the current copy-shot. The next copy-shot will use the default config again.
 
 ### Instructions (aka Commands/Skills)
 
@@ -156,3 +156,5 @@ Because the extension uses a pretty flexible user-managed three-level config, pl
 Whenever I personally tripped over something, I added convenient ways to figure out what happened. At least convenient from my point of view, which is legally close enough ;=)
 
 I’m not adding a screenshot here because there are quite a few such places.
+
+This includes output channels, trace-friendly messages, and small diagnostics around config resolution, file collection, parsing, and apply operations.
