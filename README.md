@@ -6,6 +6,8 @@
 
 Instead of sending an unknown amount of project context to an AI agent, you explicitly choose which files, folders and project instructions should be included in the prompt. The extension then helps you copy that context to any LLM interface and apply structured responses back into your project.
 
+In short: `LLM Copypaster` is not trying to replace your favorite AI tool. It gives you a predictable copy → prompt → response → apply workflow around it.
+
 It works with ChatGPT, Claude, Gemini, local models, raw APIs, or any other LLM tool that can accept text input.
 
 ## Why not just use Codex, Cursor or Claude Code?
@@ -24,7 +26,15 @@ Instead of asking an AI agent to guess the right context, you decide what should
 
 ## Core capabilities
 
-TODO: gif/youtube with the basic copy-paste scenario: show `Copy This File` from editor and explorer, then selected folders and files.
+The basic workflow is intentionally simple:
+
+1. Select files, folders or the current editor context in VS Code.
+2. Let `LLM Copypaster` build a structured prompt with project instructions and selected listings.
+3. Paste the prompt into any LLM interface you like.
+4. Copy the structured LLM response back to the clipboard.
+5. Apply it back into the project with `Paste Clipboard to Files`.
+
+The extension also supports project configs, reusable instructions, LiquidJS-powered prompt templates, quick instructions, dynamic overrides, custom parsing anchors and debugging helpers.
 
 ### IDE ←→ LLM Flow
 
@@ -40,7 +50,17 @@ The extension can take an LLM response from the clipboard and apply it back to p
 
 ### Highly Extensible Config
 
-TODO: show an example `llm-copypaster.json` with simple overrides compared to the system config, and demonstrate how it affects the final generated prompt.
+`LLM Copypaster` ships ready to work out of the box. All required default variables, anchors, instruction settings and behavior switches live in the bundled [`sys-config.jsonc`](https://github.com/SlavaFesenko/llm-copypaster/blob/master/sys-config.jsonc), so the extension does not require any additional project config just to start working.
+
+When you want to use more of the extension’s flexibility, add your own `llm-copypaster.jsonc` to the root of your project. This workspace config overrides or extends what is already defined in `sys-config.jsonc`: you can redefine existing settings, add project-specific instructions, provide Liquid variables, tune presets, adjust parsing anchors, or change any other supported config behavior.
+
+As a working example, see this repository’s own [`llm-copypaster.jsonc`](https://github.com/SlavaFesenko/llm-copypaster/blob/master/llm-copypaster.jsonc). It is the config I use for developing `LLM Copypaster` itself, so it shows how the extension author overrides the system config to use Copypaster on its own source code.
+
+> **WARNING:** After changing user config, run `Developer: Reload Window` in the IDE to apply it.
+
+![System Config + User Config](resources/images/sys+user_configs.png)
+
+Of course, this config format deserves proper dedicated docs. Since the project is open-sourced — feel free to contribute :=)
 
 ### Dynamic Overrides
 
@@ -48,7 +68,14 @@ Each Copy Action applies the default config. But when you need to tweak somethin
 
 Because, let’s be honest, sooner or later every dev needs “almost the same thing, but slightly different this time”.
 
-![Override](resources/images/override.png)
+![Override UI](resources/images/override_ui.png)
+
+A bit about how it works. It may seem scary, I know — it’s an advanced feature, and not everyone needs it.
+Note that everything in the `presetDependentSettings` block may be changed by an override. Variables are changed most frequently in practice, however.
+
+![Override Flow](resources/images/override_flow.png)
+
+> **WARNING:** Dynamic Override is temporary and applies only to the current copy shot. The next copy shot will use the default config again.
 
 ### Instructions (aka Commands/Skills)
 
