@@ -5,7 +5,7 @@
     "allowOutsideWorkspaceRead": true,
     "allowOutsideWorkspaceWrite": true,
     "vitalParsingAnchors": {
-      "END_OF_OUTPUT_ANCHOR": "## LLM-CPP-EOF-OUTPUT", // set null when there's a trouble with this flag "## LLM-CPP-EOF-OUTPUT"
+      "END_OF_OUTPUT_ANCHOR": "## LLM-CPP-EOF-OUTPUT",
     },
     "notificationSettings": {
       "configValidation": {
@@ -45,7 +45,6 @@
         },
       },
       "variablesById": {
-        "WEB_GIT_PROMPT_IGNORE": "presetDependentSettings.instructionsSettings.instructionsById.web-git.skip",
         "WEB_GIT_PROMPT_NAME": "Web Git Rules",
         "BRANCH_NAME": "master",
         "RAW_GITHUB_BASE_URL": "https://raw.githubusercontent.com/",
@@ -53,6 +52,9 @@
         "AUTHOR_REPO": "SlavaFesenko/llm-copypaster/",
         "IS_REMOTE_FILE_EDIT_ALLOWED": "true",
         "KEY_REFERENCE_URLS_RELATIVE_PATHS": "package.json | src/extension.ts | src/config/config-service.ts | src/config/system-config-contracts.ts ",
+      },
+      "referencesById": {
+        "WEB_GIT_PROMPT_IGNORE": "presetDependentSettings.instructionsSettings.instructionsById.web-git.skip",
       },
     },
   },

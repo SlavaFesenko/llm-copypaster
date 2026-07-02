@@ -1,65 +1,169 @@
 {
+  // ===================================================================================================
+  // WARNING: After changing this or user config, run "Developer: Reload Window" in the IDE to apply it.
+  // ===================================================================================================
+
+  // System config format version. Used as a human-readable compatibility marker.
   "configVersion": "1.0.0",
+
+  // Users may change these values statically, once per IDE reload.
+  // These settings can't be changed in dynamic overrides; otherwise, extension logic may be broken.
   "presetIndependentSettings": {
+    // Allows IDE → LLM copy commands to read files by absolute paths outside the current workspace.
     "allowOutsideWorkspaceRead": true,
+
+    // Allows LLM → IDE apply commands to write files by absolute paths outside the current workspace.
+    // Example: an output file header can point to C:\temp\file.txt instead of a workspace-relative path.
     "allowOutsideWorkspaceWrite": true,
+
+    // Anchors used to generate prompts and parse LLM responses back into file patches.
+    // If you change these, update your response instructions and any Liquid variables that expose them.
     "vitalParsingAnchors": {
+      // Separates prompt sections, for example instructions from file listings.
       "PROMPT_DELIMITER_ANCHOR": "---",
+
+      // Starts a file block in the LLM output.
+      // Example: ## LLM-CPP-FILE: src/index.ts
       "CODE_LISTING_HEADER_ANCHOR": "## LLM-CPP-FILE:",
+
+      // Prefix before the operation type line inside each file block.
+      // Example: #### FILE WAS EDITED_FULL
       "FILE_STATUS_ANCHOR": "#### FILE WAS ",
+
+      // Operation type for replacing the whole content of an existing file.
       "FILE_EDITED_FULL_ANCHOR": "EDITED_FULL",
+
+      // Operation type for creating a new file.
       "FILE_CREATED_ANCHOR": "CREATED",
+
+      // Operation type for deleting a file.
       "FILE_DELETED_ANCHOR": "DELETED",
+
+      // Optional final marker that tells the parser where the LLM output ends.
       "END_OF_OUTPUT_ANCHOR": "## LLM-CPP-EOF-OUTPUT",
     },
+
+    // Controls config validation toast notifications.
     "notificationSettings": {
       "configValidation": {
+        // Hide warning toasts if true, while still allowing validation/reporting logic to run.
         "suppressWarningIssuesToast": false,
+
+        // Hide recommendation/info toasts if true, for example non-critical config improvement hints.
         "suppressRecommendationIssuesToast": false,
+
+        // Hide the successful "no issues" startup toast if true to avoid notification noise.
         "suppressNoIssuesToast": true,
       },
     },
   },
+
+  // This settings block may be changed in dynamic override mode.
   "presetDependentSettings": {
+    // Do not prepend configured instruction files to IDE → LLM prompts.
+    // Useful for a raw "copy files only" preset, without the need to disable all instructions one by one.
     "skipInstructions": false,
+
+    // Do not include file listings in IDE → LLM prompts if true.
+    // Just a backdoor for who knows what.
     "skipCodeListings": false,
+
+    // Prompt size estimation and warning limits for IDE → LLM copy flow.
     "ideToLlm": {
+      // Hide line/token stats in the copy notification.
       "skipPromptSizeStatsInCopyNotification": false,
+
+      // Approximate tokenizer ratio used for prompt size estimation.
+      // Lower value means a larger estimated token count.
       "charsPerToken": 3.5,
+
+      // Show a warning when copied context exceeds this number of lines.
       "linesMaxToShowWarning": 1000,
+
+      // Show a warning when estimated copied context exceeds this number of tokens.
       "tokensMaxToShowWarning": 12000,
     },
+
+    // Prompt size estimation and warning limits for LLM → IDE apply flow.
     "llmToIde": {
+      // Hide line/token stats in the apply-from-clipboard notification.
       "skipPromptSizeStatsInCopyNotification": false,
+
+      // Approximate tokenizer ratio used for LLM output size estimation.
       "charsPerToken": 3.5,
+
+      // Show a warning when LLM output exceeds this number of lines.
       "linesMaxToShowWarning": 1000,
+
+      // Show a warning when estimated LLM output exceeds this number of tokens.
       "tokensMaxToShowWarning": 12000,
     },
+
+    // Text cleanup rules applied to file contents extracted from LLM responses.
+    // Rules are applied by id, so user config can override or disable specific rules.
     "llmToIdeSanitizationRulesById": {
       "strip-codefence": {
+        // Disable this rule without deleting it from config if true.
+        // Commenting it out below will have the same effect.
         "skip": false,
+
+        // Removes markdown code fence opening/closing lines produced by LLMs.
+        // Example: '`'+'``ts' or '`'+'``' becomes an empty string before writing the file.
         "regexPattern": "`{3}[^\\r\\n]*",
+
+        // Replacement text for every regex match.
         "regexFlags": "g",
         "replaceWith": "",
+
+        // Means "Do not apply this cleanup to these VS Code language ids".
+        // Example: markdown files may legitimately contain code fences.
         "skipForLanguages": ["markdown"],
+
+        // Means "Do not apply this cleanup to files whose paths start with these prefixes".
+        // Example: docs/README.md can keep literal markdown fences.
         "skipForPaths": ["docs/"],
       },
     },
+
+    // Actions to run after applying LLM output to files.
     "postFilePatchActions": {
+      // Save patched files automatically after applying edits if true.
       "enableSaveAfterFilePatch": true,
+
+      // Format patched files after applying edits if true.
+      // Keep false if formatters are slow or may rewrite too much code.
       "enableLintingAfterFilePatch": false,
+
+      // Open patched files in the editor after applying edits if true.
       "enableOpeningPatchedFilesInEditor": true,
     },
+
+    // Reusable instruction files and Liquid variables.
     "instructionsSettings": {
+      // Instruction templates loaded from the extension bundle, workspace, absolute path, or file URI.
       "instructionsById": {
         "llm-response-rules": {
+          // Path to a Liquid instruction file.
+          // System-bundled paths are resolved from the extension; relative paths are resolved from the workspace.
           "path": ".sys-instructions/llm-response-rules.liquid",
+
+          // Exclude this instruction from all instruction-building modes if true.
           "skip": false,
+
+          // Include this instruction in normal preset-based IDE → LLM prompts if true.
           "showInPresetsMode": true,
+
+          // Include this instruction in quick instruction commands if true.
           "showInQuickInstructionMode": false,
         },
       },
+
+      // Literal Liquid variables available inside instruction files.
+      // Example: { "projectName": "LLM Copypaster" } enables {{ projectName }}.
       "variablesById": {},
+
+      // Liquid variables resolved from config paths before instructions are rendered.
+      // This keeps instruction templates synced with changed anchors.
       "referencesById": {
         "CODE_LISTING_HEADER_START_FRAGMENT": "presetIndependentSettings.vitalParsingAnchors.CODE_LISTING_HEADER_ANCHOR",
         "FILE_STATUS_PREFIX": "presetIndependentSettings.vitalParsingAnchors.FILE_STATUS_ANCHOR",
@@ -70,4 +174,35 @@
       },
     },
   },
+
+  // =================================================================================================
+  // OUTPUT EXAMPLE FOR CURRENT SETTINGS
+  // =================================================================================================
+  //
+  // With the current vitalParsingAnchors settings, LLM output is expected to look like this:
+  //
+  // Conceptual solution:
+  // Briefly explain what was changed and why.
+  //
+  // Files changed:
+  // ✏️ `src/index.ts` — edited existing file;
+  // ➕ `src/new-file.ts` — created new file;
+  // ➖ `src/obsolete-file.ts` — deleted obsolete file.
+  //
+  // ## LLM-CPP-FILE: src/index.ts
+  // #### FILE WAS EDITED_FULL
+  // '`'+'``text'
+  // console.log('Updated existing file');
+  // '`'+'``'
+  //
+  // ## LLM-CPP-FILE: src/new-file.ts
+  // #### FILE WAS CREATED
+  // '`'+'``text'
+  // console.log('Created new file');
+  // '`'+'``'
+  //
+  // ## LLM-CPP-FILE: src/obsolete-file.ts
+  // #### FILE WAS DELETED
+  //
+  // ## LLM-CPP-EOF-OUTPUT
 }
